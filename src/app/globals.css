@@ -3342,74 +3342,29 @@
     pointer-events: none;
   }
 
-  /* The wrapper owns the exit (a slow push-in as the overlay fades) so it
-     never fights the logo's own looping animation for `transform`. */
+  /* The mark stays exactly where the animation left it while the overlay
+     fades -- no push-in, no drift. */
   .boot-overlay__mark {
     position: relative;
     display: grid;
     place-items: center;
-    transition: transform var(--boot-fade) cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  html[data-boot="leaving"] .boot-overlay__mark {
-    transform: scale(1.06);
-  }
-
-  /* A soft gold halo breathing behind the mark -- the only "loading" cue. */
-  .boot-overlay__mark::before {
-    content: "";
-    position: absolute;
-    inset: -70%;
-    border-radius: 50%;
-    background: radial-gradient(
-      closest-side,
-      color-mix(in srgb, var(--accent) 20%, transparent),
-      transparent 72%
-    );
-    animation:
-      boot-halo-in 1.6s ease-out both,
-      boot-halo 3.8s ease-in-out 1.6s infinite;
-  }
-
+  /* The logo is an animated WebP that plays once (ink mass painted in, the
+     stencil falling away) and holds its last frame with the mark fixed in
+     place -- see lib/boot/config.ts. The canvas is centred on the mark, so
+     centring the image centres the animation. Width/height attributes on the
+     <img> reserve the box up front, so nothing shifts while the asset arrives. */
   .boot-overlay__logo {
-    position: relative;
-    width: clamp(8.5rem, 15vw, 11.5rem);
+    display: block;
+    width: clamp(14rem, 32vw, 19rem);
     height: auto;
-    animation:
-      boot-logo-in 1.1s cubic-bezier(0.16, 1, 0.3, 1) both,
-      boot-logo-breathe 3.8s ease-in-out 1.1s infinite;
   }
 
-  @keyframes boot-logo-in {
-    from {
-      opacity: 0;
-      transform: scale(0.94);
-      filter: blur(10px);
-    }
-    to {
-      opacity: 1;
-      transform: none;
-      filter: blur(0);
-    }
-  }
-
-  @keyframes boot-logo-breathe {
-    50% {
-      opacity: 0.86;
-      transform: scale(1.018);
-    }
-  }
-
-  @keyframes boot-halo-in {
-    from {
-      opacity: 0;
-    }
-  }
-
-  @keyframes boot-halo {
-    50% {
-      opacity: 0.55;
-      transform: scale(1.06);
+  /* Reduced motion: no animation at all, just the dark overlay and its fade. */
+  @media (prefers-reduced-motion: reduce) {
+    .boot-overlay__logo {
+      display: none;
     }
   }
 

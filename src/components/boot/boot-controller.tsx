@@ -2,11 +2,14 @@
 
 import { useEffect } from "react";
 import {
+  BOOT_ANIMATION_MS,
   BOOT_ATTRIBUTE,
   BOOT_FADE_MS,
+  BOOT_HOLD_MS,
+  BOOT_LOGO_ANIMATION,
   BOOT_MAX_WAIT_MS,
-  BOOT_MIN_VISIBLE_MS,
   BOOT_PENDING_SELECTOR,
+  BOOT_REDUCED_MOTION_MIN_MS,
 } from "@/lib/boot/config";
 
 const POLL_MS = 50;
@@ -21,6 +24,18 @@ const nextFrames = (count: number) =>
     const tick = () => (++seen >= count ? resolve() : requestAnimationFrame(tick));
     requestAnimationFrame(tick);
   });
+
+/**
+ * When the splash may end, in `performance.now()` terms. The logo animation
+ * starts when its file finishes downloading, not at navigation start, so on a
+ * slow connection the clock starts late and it still gets to play in full.
+ */
+function splashEndsAt() {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return BOOT_REDUCED_MOTION_MIN_MS;
+  const [logo] = performance.getEntriesByName(new URL(BOOT_LOGO_ANIMATION, location.href).href);
+  const startedAt = (logo as PerformanceResourceTiming | undefined)?.responseEnd ?? 0;
+  return startedAt + BOOT_ANIMATION_MS + BOOT_HOLD_MS;
+}
 
 function hasPendingContent() {
   return document.querySelector(BOOT_PENDING_SELECTOR) !== null;
@@ -51,7 +66,7 @@ function whenCriticalImagesReady() {
  *     still waiting on localStorage (e.g. the library page).
  *  2. Web fonts are loaded, so text doesn't reflow from the fallback face.
  *  3. The hero/LCP images are decoded, so they don't pop in.
- *  4. The minimum splash time has elapsed.
+ *  4. The logo animation has played out (see splashEndsAt).
  *  5. React has flushed the post-hydration state updates (auth avatar,
  *     "continue watching" rail, ...) -- two frames after everything above.
  *
@@ -61,11 +76,9 @@ function whenCriticalImagesReady() {
 async function waitForCriticalState(isActive: () => boolean) {
   do {
     while (isActive() && hasPendingContent()) await wait(POLL_MS);
-    await Promise.all([
-      document.fonts?.ready ?? Promise.resolve(),
-      whenCriticalImagesReady(),
-      wait(BOOT_MIN_VISIBLE_MS - performance.now()),
-    ]);
+    await Promise.all([document.fonts?.ready ?? Promise.resolve(), whenCriticalImagesReady()]);
+    // After the image gate: the logo's download time is only known once it has arrived.
+    await wait(splashEndsAt() - performance.now());
     await wait(HYDRATION_SETTLE_MS);
     await nextFrames(2);
     // A boundary that suspended again while we waited sends us back to step 1.
