@@ -1,0 +1,2 @@
+export type AnalyticsEvent='episode_view'|'episode_completed'|'video_started'|'video_25_percent'|'video_50_percent'|'video_75_percent'|'video_completed'|'series_started'|'search'|'episode_saved'|'collection_opened';
+export function track(event:AnalyticsEvent,properties:Record<string,string|number|boolean>={}) { if(process.env.NODE_ENV==='development') console.info('[analytics]',event,properties); /* Replace with privacy-conscious server-side provider. */ }

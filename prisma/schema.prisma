@@ -1,0 +1,351 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model User {
+  id         String           @id @default(cuid())
+  email      String           @unique
+  name       String?
+  progresses WatchProgress[]
+  saves      SavedEpisode[]
+  notes      Note[]
+  follows    FollowedSeries[]
+  createdAt  DateTime         @default(now())
+}
+
+model Topic {
+  id             String         @id @default(cuid())
+  title          String
+  slug           String         @unique
+  description    String?
+  imageUrl       String?
+  color          String?
+  seoTitle       String?
+  seoDescription String?
+  episodes       EpisodeTopic[]
+  series         Series[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+model Series {
+  id             String    @id @default(cuid())
+  title          String
+  slug           String    @unique
+  description    String?
+  coverImage     String?
+  heroImage      String?
+  position       Int       @default(0)
+  status         ContentStatus @default(DRAFT)
+  featured       Boolean   @default(false)
+  seoTitle       String?
+  seoDescription String?
+  topicId        String?
+  topic          Topic?    @relation(fields: [topicId], references: [id])
+  episodes       Episode[]
+  followers      FollowedSeries[]
+
+  /// The YouTube playlist this series was originally discovered/created
+  /// from, kept only for traceability. Once set, sync never uses this to
+  /// re-derive title/description/episode membership — the CMS owns those
+  /// from this point on (see docs/data-ownership.md).
+  sourcePlaylistId String? @unique
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model Episode {
+  id   String @id @default(cuid())
+  slug String @unique
+
+  // ---------------------------------------------------------------------
+  // YouTube-owned fields. Every sync run (`syncMetadata`, `importFullChannel`)
+  // freely overwrites these from the YouTube Data API response — they are
+  // never edited by hand in the CMS. `youtubeVideoId` is the stable,
+  // idempotency key for every import/sync operation.
+  // ---------------------------------------------------------------------
+  youtubeVideoId         String   @unique
+  youtubeUrl             String
+  youtubeChannelId       String
+  youtubeTitle           String
+  youtubeDescription     String?
+  youtubeThumbnailUrl    String
+  youtubeDurationSeconds Int
+  youtubePublishedAt     DateTime
+
+  // ---------------------------------------------------------------------
+  // Editorial/CMS-owned fields. Nullable so the repository layer can fall
+  // back to the matching youtube* field when an editor hasn't overridden
+  // it yet. Sync NEVER writes to any field in this block once the episode
+  // row exists — see lib/sync/upsert-episode.ts.
+  // ---------------------------------------------------------------------
+  title          String?
+  description    String?
+  thumbnailUrl   String?
+  // Direct URL of an audio file Waie owns for this episode -- enables real
+  // background playback (HTML5 audio + Media Session). Never sourced from YouTube.
+  audioUrl       String?
+  episodeNumber  Int?
+  seriesOrder    Int?
+  status         ContentStatus @default(PUBLISHED)
+  featured       Boolean       @default(false)
+  seoTitle       String?
+  seoDescription String?
+
+  seriesId String?
+  series   Series? @relation(fields: [seriesId], references: [id])
+
+  topics          EpisodeTopic[]
+  collectionItems CollectionItem[]
+  progresses      WatchProgress[]
+  saves           SavedEpisode[]
+  notes           Note[]
+  transcripts     Transcript[]
+  recommendations Recommendation[]
+  mindMap         MindMap?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([seriesId])
+  @@index([status, youtubePublishedAt])
+}
+
+model EpisodeTopic {
+  episodeId String
+  topicId   String
+  episode   Episode @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  topic     Topic   @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@id([episodeId, topicId])
+}
+
+model Collection {
+  id             String           @id @default(cuid())
+  title          String
+  slug           String           @unique
+  description    String?
+  coverImage     String?
+  kind           String           @default("EDITORIAL")
+  status         ContentStatus    @default(DRAFT)
+  seoTitle       String?
+  seoDescription String?
+  items          CollectionItem[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+}
+
+model CollectionItem {
+  collectionId String
+  episodeId    String
+  position     Int        @default(0)
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  episode      Episode    @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+
+  @@id([collectionId, episodeId])
+}
+
+model WatchProgress {
+  userId    String
+  episodeId String
+  seconds   Int      @default(0)
+  duration  Int      @default(0)
+  completed Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  episode   Episode  @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+
+  @@id([userId, episodeId])
+  /// Powers "History" (recently watched) — derived by ordering on this
+  /// index rather than maintaining a separate History table.
+  @@index([userId, updatedAt])
+}
+
+model SavedEpisode {
+  userId    String
+  episodeId String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  episode   Episode  @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+
+  @@id([userId, episodeId])
+}
+
+model FollowedSeries {
+  userId    String
+  seriesId  String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  series    Series   @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+
+  @@id([userId, seriesId])
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  userId    String
+  episodeId String
+  seconds   Int
+  body      String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  episode   Episode  @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([episodeId, seconds])
+}
+
+model Transcript {
+  id        String   @id @default(cuid())
+  episodeId String
+  language  String   @default("ar")
+  /// Serialized TranscriptSegment[]: { id, startSeconds, endSeconds?, speaker?, text }. The
+  /// structured source of truth -- there is no separate flat-text field to keep in sync.
+  segments  Json
+  source    String?
+  episode   Episode  @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([episodeId, language])
+}
+
+enum RecommendationType {
+  BOOK
+  MOVIE
+  PODCAST
+  WEBSITE
+  PERSON
+  PRODUCT
+  STUDY
+  REFERENCE
+}
+
+/// Something a host/guest mentioned in an episode — powers the "التوصيات" tab.
+model Recommendation {
+  id               String             @id @default(cuid())
+  episodeId        String
+  episode          Episode            @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  type             RecommendationType
+  title            String
+  description      String?
+  /// Why it was mentioned — the editorial value-add over a plain link list.
+  reason           String?
+  imageUrl         String?
+  url              String?
+  /// Nullable on purpose — only set from YouTube chapters, transcript
+  /// segmentation, or manual editorial curation. Never fabricated.
+  timestampSeconds Int?
+  order            Int                @default(0)
+  createdAt        DateTime           @default(now())
+}
+
+/// Manually authored today (see src/types/mind-map.ts); an AI pipeline can
+/// populate the same `nodes` shape later without a schema change.
+model MindMap {
+  id        String   @id @default(cuid())
+  episodeId String   @unique
+  episode   Episode  @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  title     String
+  /// Serialized MindMapNode tree: { id, label, description?, timestampSeconds?, children[] }.
+  nodes     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ===========================================================================
+// YouTube ingestion — see src/lib/youtube (API client) and src/lib/sync
+// (orchestration). These models never hold editorial content themselves;
+// they exist to make sync idempotent, resumable and auditable.
+// ===========================================================================
+
+/// Singleton-ish row per synced channel (in practice: one row for @Waie).
+/// Caches the channel/uploads-playlist IDs so every sync run doesn't have
+/// to re-resolve the handle, and records when each sync kind last ran.
+model YouTubeChannel {
+  id                 String    @id @default(cuid())
+  handle             String    @unique
+  channelId          String    @unique
+  uploadsPlaylistId  String
+  lastFullImportAt   DateTime?
+  lastVideoSyncAt    DateTime?
+  lastMetadataSyncAt DateTime?
+  lastPlaylistSyncAt DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+}
+
+/// A playlist as discovered on YouTube — the *discovery* record, not the
+/// editorial one. A Series may reference the playlist it was created from
+/// via `Series.sourcePlaylistId`; this row keeps existing independently so
+/// "Sync Playlists" can detect new/renamed/resized playlists over time.
+model Playlist {
+  id                String   @id @default(cuid())
+  youtubePlaylistId String   @unique
+  title             String
+  description       String?
+  itemCount         Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+enum SyncType {
+  FULL_IMPORT
+  NEW_VIDEOS
+  METADATA
+  PLAYLISTS
+}
+
+enum SyncRunStatus {
+  RUNNING
+  SUCCEEDED
+  FAILED
+}
+
+/// One row per admin-triggered (or future scheduled) sync operation — what
+/// /admin/sync/youtube reads to show live results and run history.
+model SyncRun {
+  id                  String        @id @default(cuid())
+  type                SyncType
+  status              SyncRunStatus @default(RUNNING)
+  videosDiscovered    Int           @default(0)
+  videosCreated       Int           @default(0)
+  videosUpdated       Int           @default(0)
+  videosSkipped       Int           @default(0)
+  playlistsDiscovered Int           @default(0)
+  seriesCreated       Int           @default(0)
+  /// Array of { videoId?: string, playlistId?: string, message: string } —
+  /// one failed item never aborts the whole run.
+  errors              Json?
+  startedAt           DateTime      @default(now())
+  finishedAt          DateTime?
+
+  @@index([type, startedAt])
+}
+
+/// Minimal event-sourcing table for the analytics layer (src/lib/analytics).
+/// Deliberately loose: no FK to User so a write never fails because of a
+/// stale/anonymous id, and `payload` stays schema-less so new event types
+/// don't need a migration.
+model AnalyticsEvent {
+  id          String   @id @default(cuid())
+  type        String
+  payload     Json?
+  userId      String?
+  anonymousId String?
+  path        String?
+  createdAt   DateTime @default(now())
+
+  @@index([type, createdAt])
+}
