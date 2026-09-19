@@ -30,20 +30,6 @@ export async function SiteFooter() {
         aria-hidden="true"
       />
 
-      {/* Closing brand statement */}
-      <div className="container relative pt-20 pb-14 text-center md:pt-28 md:pb-18">
-        <Reveal className="mx-auto flex max-w-3xl flex-col items-center">
-          <p className="eyebrow-pill eyebrow-pill--on-dark w-fit">وعي</p>
-          <h2 className="mt-6 text-2xl leading-[1.8] font-black tracking-[-.02em] text-white md:text-3xl">
-            اكتشف وعي، واستكشف الحكايات
-            <br className="hidden sm:block" /> والأفكار{" "}
-            <span className="bg-gradient-to-l from-[var(--on-brand-accent)] to-[var(--accent)] bg-clip-text text-transparent">
-              التي تستحق أن تُروى.
-            </span>
-          </h2>
-        </Reveal>
-      </div>
-
       <div
         className="relative h-px bg-gradient-to-l from-transparent via-white/15 to-transparent"
         aria-hidden="true"

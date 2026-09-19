@@ -16,11 +16,12 @@ const thumbnail = (videoId: string) => `https://i.ytimg.com/vi/${videoId}/maxres
  *   most uploads. Left as `""` for the handful of videos with none.
  * - `episodeNumber` is parsed from the title ("وعي ١٠٨ | ...") and is `null`
  *   for the one video with no episode number in its title.
- * - `seriesId`/`topicIds` are only set where the video is actually a member
- *   of one of the channel's 5 named playlists -- episodes outside any named
- *   playlist intentionally have `seriesId: ""` / `topicIds: []` rather than
- *   being force-fit into a series that doesn't reflect the channel's own
- *   organization.
+ * - `seriesId` is only set where the video is actually a member of one of
+ *   the channel's named playlists -- episodes outside any named playlist
+ *   intentionally have `seriesId: ""` rather than being force-fit into a
+ *   series that doesn't reflect the channel's own organization. `topicIds`
+ *   are editor-assigned from the episode's actual subject (data/topics.ts),
+ *   so they're set independently of series membership.
  *
  * A 6th series, "الموسم الأول" (`series-season-one`), was added later: its
  * 22 episodes live on a different channel entirely (see the block comment
@@ -57,7 +58,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-companions",
-    topicIds: ["topic-companions"],
+    topicIds: ["topic-companions", "topic-women-companions"],
   },
   {
     id: "ep-109",
@@ -72,7 +73,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-companions",
-    topicIds: ["topic-companions"],
+    topicIds: ["topic-companions", "topic-promised-paradise"],
   },
   {
     id: "ep-108",
@@ -87,7 +88,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-companions",
-    topicIds: ["topic-companions"],
+    topicIds: ["topic-companions", "topic-promised-paradise"],
   },
   {
     id: "ep-107",
@@ -102,7 +103,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-companions",
-    topicIds: ["topic-companions"],
+    topicIds: ["topic-companions", "topic-promised-paradise"],
   },
   {
     id: "ep-106",
@@ -117,7 +118,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-companions",
-    topicIds: ["topic-companions"],
+    topicIds: ["topic-companions", "topic-women-companions"],
   },
   {
     id: "ep-105",
@@ -132,7 +133,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-companions",
-    topicIds: ["topic-companions"],
+    topicIds: ["topic-companions", "topic-knowledge-carriers"],
   },
   {
     id: "ep-104",
@@ -147,7 +148,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-companions",
-    topicIds: ["topic-companions"],
+    topicIds: ["topic-companions", "topic-knowledge-carriers"],
   },
   {
     id: "ep-103",
@@ -162,7 +163,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-worship-seasons",
-    topicIds: ["topic-worship-seasons"],
+    topicIds: ["topic-worship-seasons", "topic-ramadan"],
   },
   {
     id: "ep-102",
@@ -177,7 +178,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-repentance", "topic-sunnah-stories"],
   },
   {
     id: "ep-101",
@@ -192,7 +193,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-dawah", "topic-social-media"],
   },
   {
     id: "ep-100",
@@ -207,7 +208,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-social-media"],
   },
   {
     id: "ep-99",
@@ -222,7 +223,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-travel", "topic-prayer"],
   },
   {
     id: "ep-98",
@@ -237,7 +238,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-about-waie"],
   },
   {
     id: "ep-97",
@@ -252,7 +253,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-quran", "topic-parents"],
   },
   {
     id: "ep-96",
@@ -267,7 +268,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-travel"],
   },
   {
     id: "ep-95",
@@ -282,7 +283,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-travel"],
   },
   {
     id: "ep-94",
@@ -297,7 +298,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-worship-seasons",
-    topicIds: ["topic-worship-seasons"],
+    topicIds: ["topic-worship-seasons", "topic-dua", "topic-dhul-hijjah"],
   },
   {
     id: "ep-93",
@@ -312,7 +313,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-prophet"],
   },
   {
     id: "ep-92",
@@ -327,7 +328,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-worship-seasons",
-    topicIds: ["topic-worship-seasons"],
+    topicIds: ["topic-worship-seasons", "topic-ramadan", "topic-steadfastness"],
   },
   {
     id: "ep-91",
@@ -342,7 +343,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-worship-seasons",
-    topicIds: ["topic-worship-seasons"],
+    topicIds: ["topic-worship-seasons", "topic-ramadan", "topic-qa"],
   },
   {
     id: "ep-90",
@@ -357,7 +358,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-worship-seasons",
-    topicIds: ["topic-worship-seasons"],
+    topicIds: ["topic-worship-seasons", "topic-ramadan", "topic-qa"],
   },
   {
     id: "ep-89",
@@ -372,7 +373,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-dunya"],
   },
   {
     id: "ep-88",
@@ -447,7 +448,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-self-purification"],
   },
   {
     id: "ep-83",
@@ -462,7 +463,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-qa"],
   },
   {
     id: "ep-82",
@@ -477,7 +478,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-stories",
-    topicIds: ["topic-stories"],
+    topicIds: ["topic-stories", "topic-yusuf"],
   },
   {
     id: "ep-81",
@@ -492,7 +493,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-stories",
-    topicIds: ["topic-stories"],
+    topicIds: ["topic-stories", "topic-yusuf"],
   },
   {
     id: "ep-80",
@@ -507,7 +508,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-stories",
-    topicIds: ["topic-stories"],
+    topicIds: ["topic-stories", "topic-yusuf"],
   },
   {
     id: "ep-79",
@@ -522,7 +523,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-stories",
-    topicIds: ["topic-stories"],
+    topicIds: ["topic-stories", "topic-yusuf"],
   },
   {
     id: "ep-78",
@@ -537,7 +538,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-stories",
-    topicIds: ["topic-stories"],
+    topicIds: ["topic-stories", "topic-yusuf"],
   },
   {
     id: "ep-77",
@@ -552,7 +553,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-stories",
-    topicIds: ["topic-stories"],
+    topicIds: ["topic-stories", "topic-yusuf"],
   },
   {
     id: "ep-76",
@@ -567,7 +568,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-stories",
-    topicIds: ["topic-stories"],
+    topicIds: ["topic-stories", "topic-ibrahim"],
   },
   {
     id: "ep-75",
@@ -582,7 +583,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-stories",
-    topicIds: ["topic-stories"],
+    topicIds: ["topic-stories", "topic-ibrahim"],
   },
   {
     id: "ep-74",
@@ -597,7 +598,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-stories",
-    topicIds: ["topic-stories"],
+    topicIds: ["topic-stories", "topic-ibrahim"],
   },
   {
     id: "ep-73",
@@ -612,7 +613,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-stories",
-    topicIds: ["topic-stories"],
+    topicIds: ["topic-stories", "topic-ibrahim"],
   },
   {
     id: "ep-72",
@@ -627,7 +628,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-palestine"],
   },
   {
     id: "ep-71",
@@ -642,7 +643,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-palestine"],
   },
   {
     id: "ep-70",
@@ -657,7 +658,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-palestine"],
   },
   {
     id: "ep-69",
@@ -672,7 +673,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-palestine"],
   },
   {
     id: "ep-68",
@@ -687,7 +688,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-stories",
-    topicIds: ["topic-stories"],
+    topicIds: ["topic-stories", "topic-trials"],
   },
   {
     id: "ep-67",
@@ -702,7 +703,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-stories",
-    topicIds: ["topic-stories"],
+    topicIds: ["topic-stories", "topic-lut"],
   },
   {
     id: "ep-66",
@@ -747,7 +748,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-stories",
-    topicIds: ["topic-stories"],
+    topicIds: ["topic-stories", "topic-nuh"],
   },
   {
     id: "ep-63",
@@ -762,7 +763,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-stories",
-    topicIds: ["topic-stories"],
+    topicIds: ["topic-stories", "topic-nuh"],
   },
   {
     id: "ep-62",
@@ -777,7 +778,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-stories",
-    topicIds: ["topic-stories"],
+    topicIds: ["topic-stories", "topic-adam", "topic-repentance"],
   },
   {
     id: "ep-61",
@@ -792,7 +793,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-stories",
-    topicIds: ["topic-stories"],
+    topicIds: ["topic-stories", "topic-adam"],
   },
   {
     id: "ep-60",
@@ -822,7 +823,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-ethics",
-    topicIds: ["topic-ethics"],
+    topicIds: ["topic-ethics", "topic-kinship"],
   },
   {
     id: "ep-58",
@@ -837,7 +838,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-relationships", "topic-modesty"],
   },
   {
     id: "ep-57",
@@ -852,7 +853,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-ethics",
-    topicIds: ["topic-ethics"],
+    topicIds: ["topic-ethics", "topic-modesty"],
   },
   {
     id: "ep-56",
@@ -867,7 +868,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-sunnah-stories"],
   },
   {
     id: "ep-55",
@@ -882,7 +883,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-companions", "topic-sunnah-stories"],
   },
   {
     id: "ep-54",
@@ -897,7 +898,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-ethics",
-    topicIds: ["topic-ethics"],
+    topicIds: ["topic-ethics", "topic-humility"],
   },
   {
     id: "ep-53",
@@ -912,7 +913,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-ethics",
-    topicIds: ["topic-ethics"],
+    topicIds: ["topic-ethics", "topic-humility"],
   },
   {
     id: "ep-52",
@@ -927,7 +928,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-ethics",
-    topicIds: ["topic-ethics"],
+    topicIds: ["topic-ethics", "topic-kinship"],
   },
   {
     id: "ep-51",
@@ -942,7 +943,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-ethics",
-    topicIds: ["topic-ethics"],
+    topicIds: ["topic-ethics", "topic-generosity"],
   },
   {
     id: "ep-50",
@@ -957,7 +958,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-ethics",
-    topicIds: ["topic-ethics"],
+    topicIds: ["topic-ethics", "topic-generosity"],
   },
   {
     id: "ep-49",
@@ -972,7 +973,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-ethics",
-    topicIds: ["topic-ethics"],
+    topicIds: ["topic-ethics", "topic-speech"],
   },
   {
     id: "ep-48",
@@ -987,7 +988,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-ethics",
-    topicIds: ["topic-ethics"],
+    topicIds: ["topic-ethics", "topic-speech"],
   },
   {
     id: "ep-47",
@@ -1002,7 +1003,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-ethics",
-    topicIds: ["topic-ethics"],
+    topicIds: ["topic-ethics", "topic-anger"],
   },
   {
     id: "ep-46",
@@ -1017,7 +1018,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-ethics",
-    topicIds: ["topic-ethics"],
+    topicIds: ["topic-ethics", "topic-honesty"],
   },
   {
     id: "ep-45",
@@ -1047,7 +1048,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-worship-seasons",
-    topicIds: ["topic-worship-seasons"],
+    topicIds: ["topic-worship-seasons", "topic-dhul-hijjah"],
   },
   {
     id: "ep-43",
@@ -1062,7 +1063,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-satan"],
   },
   {
     id: "ep-42",
@@ -1077,7 +1078,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-afterlife", "topic-ramadan"],
   },
   {
     id: "ep-41",
@@ -1092,7 +1093,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-afterlife", "topic-trials"],
   },
   {
     id: "ep-40",
@@ -1107,7 +1108,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-worship-seasons",
-    topicIds: ["topic-worship-seasons"],
+    topicIds: ["topic-worship-seasons", "topic-ramadan"],
   },
   {
     id: "ep-39",
@@ -1122,7 +1123,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-afterlife"],
   },
   {
     id: "ep-38",
@@ -1137,7 +1138,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-afterlife"],
   },
   {
     id: "ep-37",
@@ -1152,7 +1153,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-dunya"],
   },
   {
     id: "ep-36",
@@ -1167,7 +1168,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-dunya"],
   },
   {
     id: "ep-35",
@@ -1182,7 +1183,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-afterlife"],
   },
   {
     id: "ep-k0y_BJPIFO4",
@@ -1197,7 +1198,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-afterlife"],
   },
   {
     id: "ep-34",
@@ -1212,7 +1213,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-repentance", "topic-sunnah-stories"],
   },
   {
     id: "ep-33",
@@ -1227,7 +1228,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-repentance"],
   },
   {
     id: "ep-32",
@@ -1242,7 +1243,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-identity"],
   },
   {
     id: "ep-31",
@@ -1257,7 +1258,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-dawah", "topic-lut"],
   },
   {
     id: "ep-30",
@@ -1272,7 +1273,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-dawah"],
   },
   {
     id: "ep-29",
@@ -1287,7 +1288,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-companionship"],
   },
   {
     id: "ep-28",
@@ -1302,7 +1303,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-prophet"],
   },
   {
     id: "ep-27",
@@ -1317,7 +1318,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-dua"],
   },
   {
     id: "ep-26",
@@ -1332,7 +1333,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-quran"],
   },
   {
     id: "ep-25",
@@ -1347,7 +1348,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-quran"],
   },
   {
     id: "ep-24",
@@ -1362,7 +1363,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-relationships"],
   },
   {
     id: "ep-23",
@@ -1377,7 +1378,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-relationships"],
   },
   {
     id: "ep-22",
@@ -1392,7 +1393,7 @@ export const episodes: Episode[] = [
     status: "PUBLISHED",
     featured: false,
     seriesId: "",
-    topicIds: [],
+    topicIds: ["topic-desires"],
   },
 
   /**
@@ -1402,9 +1403,9 @@ export const episodes: Episode[] = [
    * not the main @Waie channel: this is where the podcast lived before it
    * got its own channel, which is why episodeNumber 1-21 don't otherwise
    * exist in this file (ep-22 above is the oldest episode on @Waie itself).
-   * `seriesId: "series-season-one"` (see data/series.ts). `topicIds: []`
-   * for the same reason `topicId` on that series is `null` -- not inferred
-   * from the playlist. `hosts` intentionally left unset (falls back to the
+   * `seriesId: "series-season-one"` (see data/series.ts). `topicIds` are assigned per episode by editor
+   * (this series has no single topic, hence `topicId: null` on it; a
+   * playlist never implies one). `hosts` intentionally left unset (falls back to the
    * show's default lineup, same as every other imported episode) even
    * though the descriptions below show the actual lineup varying between
    * two and three hosts episode to episode -- consistent with how the rest
@@ -1439,7 +1440,7 @@ https://www.amazon.com/shop/hazemelseddiq
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-season-one",
-    topicIds: [],
+    topicIds: ["topic-desires"],
   },
   {
     id: "ep-20",
@@ -1463,7 +1464,7 @@ https://www.amazon.com/shop/hazemelseddiq
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-season-one",
-    topicIds: [],
+    topicIds: ["topic-desires"],
   },
   {
     id: "ep-19",
@@ -1493,7 +1494,7 @@ https://www.amazon.com/shop/hazemelseddiq
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-season-one",
-    topicIds: [],
+    topicIds: ["topic-identity"],
   },
   {
     id: "ep-18",
@@ -1525,7 +1526,7 @@ https://www.amazon.com/shop/hazemelseddiq
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-season-one",
-    topicIds: [],
+    topicIds: ["topic-prayer"],
   },
   {
     id: "ep-pDqpbfkMi-k",
@@ -1557,7 +1558,7 @@ https://www.amazon.com/shop/hazemelseddiq
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-season-one",
-    topicIds: [],
+    topicIds: ["topic-prayer"],
   },
   {
     id: "ep-17",
@@ -1585,7 +1586,7 @@ https://soundcloud.com/hazcast/waie17
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-season-one",
-    topicIds: [],
+    topicIds: ["topic-social-media"],
   },
   {
     id: "ep-16",
@@ -1618,7 +1619,7 @@ https://www.amazon.com/shop/hazemelseddiq
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-season-one",
-    topicIds: [],
+    topicIds: ["topic-worship-seasons", "topic-ibrahim", "topic-dhul-hijjah"],
   },
   {
     id: "ep-15",
@@ -1647,7 +1648,7 @@ https://www.amazon.com/shop/hazemelseddiq
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-season-one",
-    topicIds: [],
+    topicIds: ["topic-worship-seasons", "topic-dhul-hijjah"],
   },
   {
     id: "ep-14",
@@ -1679,7 +1680,7 @@ https://kit.co/hzmsdq/youtube-and-podcast-gear
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-season-one",
-    topicIds: [],
+    topicIds: ["topic-trials"],
   },
   {
     id: "ep-13",
@@ -1715,7 +1716,7 @@ https://www.amazon.com/shop/hazemelseddiq
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-season-one",
-    topicIds: [],
+    topicIds: ["topic-worship-seasons", "topic-ramadan", "topic-steadfastness"],
   },
   {
     id: "ep-12",
@@ -1773,7 +1774,7 @@ https://www.amazon.com/shop/hazemelseddiq
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-season-one",
-    topicIds: [],
+    topicIds: ["topic-palestine"],
   },
   {
     id: "ep-11",
@@ -1800,7 +1801,7 @@ https://www.amazon.com/shop/hazemelseddiq
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-season-one",
-    topicIds: [],
+    topicIds: ["topic-worship-seasons", "topic-ramadan", "topic-steadfastness"],
   },
   {
     id: "ep-10",
@@ -1832,7 +1833,7 @@ https://www.amazon.com/shop/hazemelseddiq
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-season-one",
-    topicIds: [],
+    topicIds: ["topic-worship-seasons", "topic-ramadan"],
   },
   {
     id: "ep-9",
@@ -1864,7 +1865,7 @@ https://www.amazon.com/shop/hazemelseddiq
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-season-one",
-    topicIds: [],
+    topicIds: ["topic-worship-seasons", "topic-ramadan"],
   },
   {
     id: "ep-8",
@@ -1899,7 +1900,7 @@ https://www.amazon.com/shop/hazemelseddiq
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-season-one",
-    topicIds: [],
+    topicIds: ["topic-parents"],
   },
   {
     id: "ep-7",
@@ -1929,7 +1930,7 @@ https://www.amazon.com/shop/hazemelseddiq
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-season-one",
-    topicIds: [],
+    topicIds: ["topic-knowledge"],
   },
   {
     id: "ep-6",
@@ -1963,7 +1964,7 @@ https://www.amazon.com/shop/hazemelseddiq
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-season-one",
-    topicIds: [],
+    topicIds: ["topic-self-purification", "topic-repentance", "topic-qa"],
   },
   {
     id: "ep-5",
@@ -1995,7 +1996,7 @@ https://www.amazon.com/shop/hazemelseddiq
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-season-one",
-    topicIds: [],
+    topicIds: ["topic-knowledge"],
   },
   {
     id: "ep-4",
@@ -2028,7 +2029,7 @@ https://www.amazon.com/shop/hazemelseddiq
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-season-one",
-    topicIds: [],
+    topicIds: ["topic-prayer"],
   },
   {
     id: "ep-3",
@@ -2060,7 +2061,7 @@ https://www.amazon.com/shop/hazemelseddiq
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-season-one",
-    topicIds: [],
+    topicIds: ["topic-identity"],
   },
   {
     id: "ep-2",
@@ -2095,7 +2096,7 @@ https://www.amazon.com/shop/hazemelseddiq
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-season-one",
-    topicIds: [],
+    topicIds: ["topic-self-purification"],
   },
   {
     id: "ep-1",
@@ -2127,7 +2128,7 @@ https://www.amazon.com/shop/hazemelseddiq
     status: "PUBLISHED",
     featured: false,
     seriesId: "series-season-one",
-    topicIds: [],
+    topicIds: ["topic-about-waie"],
   },
 ];
 
