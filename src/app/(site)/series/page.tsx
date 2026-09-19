@@ -6,7 +6,7 @@ import { findSeriesCoverEpisode } from "@/lib/utils/content";
 
 export const metadata: Metadata = {
   title: "السلاسل",
-  description: "كل سلاسل وعي في مكان واحد، كل سلسلة رحلة واضحة تبدأ من حيث ينبغي.",
+  description: "حلقات وعي مجمّعة حسب الموضوع، من سِيَر الصحابة وقصص الأنبياء إلى الأخلاق ومواسم العبادات.",
 };
 
 export default async function SeriesPage() {
@@ -17,10 +17,10 @@ export default async function SeriesPage() {
 
   return (
     <main className="container py-12 md:py-16">
-      <p className="eyebrow-pill w-fit">رحلات معرفية</p>
+      <p className="eyebrow-pill w-fit">حسب الموضوع</p>
       <h1 className="mt-4 text-3xl font-black leading-[1.2] tracking-[-.03em] md:text-5xl">كل السلاسل</h1>
       <p className="mt-4 max-w-xl text-lg leading-8 text-[var(--ink-soft)]">
-        بدلًا من قوائم تشغيل متفرقة، اجعل كل سلسلة رحلة واضحة تبدأ من حيث ينبغي.
+        حلقات وعي مجمّعة في سلاسل، من سِيَر الصحابة وقصص الأنبياء إلى الأخلاق ومواسم العبادات. اختر سلسلة وابدأ من أول حلقة.
       </p>
 
       {series.length > 0 ? (
@@ -33,7 +33,7 @@ export default async function SeriesPage() {
         </div>
       ) : (
         <div className="mt-10">
-          <EmptyState title="لا توجد سلاسل بعد" description="سيتم نشر السلاسل هنا قريبًا." />
+          <EmptyState title="لا توجد سلاسل بعد" description="ستظهر السلاسل هنا عند نشرها." />
         </div>
       )}
     </main>

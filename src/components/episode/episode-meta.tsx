@@ -18,20 +18,11 @@ export function EpisodeMeta({
         <Clock3 size={13} aria-hidden="true" />
         {formatDuration(episode.durationSeconds)}
       </span>
-      <span>
-        <span aria-hidden="true" className="me-[0.45rem]">
-          ·
-        </span>
+      {/* The completed check rides with the date (one nowrap unit) so a narrow row can never strand a lone "· ✓" on its own line. */}
+      <span className="inline-flex items-center gap-[0.45rem] whitespace-nowrap">
+        <span aria-hidden="true">·</span>
         {formatArabicDate(episode.publishedAt)}
       </span>
-      {isCompleted && (
-        <span className="inline-flex items-center gap-1 text-[var(--brand)]">
-          <span aria-hidden="true" className="me-[0.45rem]">
-            ·
-          </span>
-          <CheckCircle2 size={14} aria-label="تمّت مشاهدتها" />
-        </span>
-      )}
     </p>
   );
 }

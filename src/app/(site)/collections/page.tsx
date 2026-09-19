@@ -4,7 +4,7 @@ import { CollectionCard } from "@/components/content/collection-card";
 
 export const metadata: Metadata = {
   title: "المختارات",
-  description: "مجموعات تحريرية منظمة حول فكرة واحدة.",
+  description: "حلقات من وعي مجمّعة حول فكرة واحدة.",
 };
 
 export default async function CollectionsPage() {
@@ -18,10 +18,10 @@ export default async function CollectionsPage() {
 
   return (
     <main className="container py-12 md:py-16">
-      <p className="eyebrow-pill w-fit">اختيارات منظمة</p>
+      <p className="eyebrow-pill w-fit">مختارات وعي</p>
       <h1 className="mt-4 text-3xl font-black leading-[1.2] tracking-[-.03em] md:text-5xl">المختارات</h1>
       <p className="mt-4 max-w-xl text-lg leading-8 text-(--ink-soft)">
-        مجموعات تحريرية منظمة حول فكرة واحدة، تختصر عليك رحلة البحث.
+        حلقات جمعناها حول فكرة واحدة، لتبدأ من مكان واحد بدل أن تبحث عنها حلقة حلقة.
       </p>
       <div className="mt-12 grid gap-6 md:grid-cols-2">
         {collections.map((collection, index) => {

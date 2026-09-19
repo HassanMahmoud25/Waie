@@ -10,7 +10,7 @@ export function SectionHeading({ eyebrow, title, href }: { eyebrow?: string; tit
       </div>
       {href && (
         <Link href={href} className="section-link">
-          استكشف المزيد <ArrowLeft size={15} />
+          عرض الكل <ArrowLeft size={15} />
         </Link>
       )}
     </div>

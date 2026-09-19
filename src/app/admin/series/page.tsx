@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { contentRepository } from "@/lib/repositories";
+import { EPISODE_FORMS, SERIES_FORMS, formatCount } from "@/lib/utils/format";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { ComingNextPanel } from "@/components/admin/coming-next-panel";
@@ -12,7 +13,7 @@ export default async function AdminSeriesPage() {
   return (
     <AdminShell
       title="السلاسل"
-      description={`${series.length} سلسلة.`}
+      description={`${formatCount(series.length, SERIES_FORMS)}.`}
       back={{ label: "لوحة الإدارة", href: "/admin" }}
     >
       <div className="border-t border-[var(--line)]">
@@ -23,7 +24,7 @@ export default async function AdminSeriesPage() {
                 <StatusBadge status={s.status} />
               </div>
               <b className="mt-2 block truncate text-lg">{s.title}</b>
-              <p className="mt-1 text-sm text-[var(--ink-soft)]">{s.episodeCount} حلقة</p>
+              <p className="mt-1 text-sm text-[var(--ink-soft)]">{formatCount(s.episodeCount, EPISODE_FORMS)}</p>
             </div>
           </div>
         ))}

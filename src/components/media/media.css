@@ -20,6 +20,17 @@ body {
   padding-bottom: var(--media-dock-clearance, 0px);
 }
 
+/* Site pages end in the dark footer: give the dock's clearance to the footer so
+   it extends the footer's own background, instead of leaving a strip of bare
+   page canvas below it. Pages without a footer (admin, auth) keep the body padding. */
+body:has(.site-footer) {
+  padding-bottom: 0;
+}
+
+.site-footer {
+  padding-bottom: var(--media-dock-clearance, 0px);
+}
+
 @media (max-width: 1023.98px) {
   body:has(.mobile-tab-bar) {
     --media-dock-offset: calc(var(--mobile-tab-bar-height) + 8px);

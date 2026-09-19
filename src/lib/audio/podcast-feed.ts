@@ -1,4 +1,5 @@
 import { siteConfig } from "@/config/site";
+import type { AudioSource } from "@/lib/playback/item";
 import type { Episode } from "@/types/episode";
 
 /**
@@ -16,15 +17,6 @@ import type { Episode } from "@/types/episode";
  *
  * Server-only: call from Server Components / server code, never a Client Component.
  */
-
-/**
- * How far the podcast cut's length may differ from the video's before we
- * refuse to pair them. Switching modes carries the playback position across, which
- * is only honest when both are the same edit -- a podcast trimmed or extended by
- * minutes would land the listener at the wrong moment, so those episodes simply
- * stay watch-only.
- */
-export const MAX_DURATION_DRIFT_SECONDS = 5;
 
 const FETCH_TIMEOUT_MS = 4000;
 const CACHE_SECONDS = 3600;
@@ -50,10 +42,10 @@ function toAsciiDigits(value: string): string {
   return value.replace(/[٠-٩۰-۹]/g, (digit) => String(digit.charCodeAt(0) - (digit.charCodeAt(0) >= 0x06f0 ? 0x06f0 : 0x0660)));
 }
 
-/** The number in "وعي 111 | ..."; null if the title isn't numbered. */
+/** The number in "وعي 111 | ..." (or the feed's bare "٩٥ | ..."); null if the title isn't numbered. */
 export function parseEpisodeNumber(title: string): number | null {
-  const match = toAsciiDigits(title).match(/^\s*وعي\s+(\d+)/);
-  return match ? Number(match[1]) : null;
+  const match = toAsciiDigits(title).match(/^\s*(?:وعي\s+(\d+)|(\d+)\s*\|)/);
+  return match ? Number(match[1] ?? match[2]) : null;
 }
 
 /** Title comparison that survives the spelling drift between YouTube and the feed (hamza forms, diacritics, punctuation). */
@@ -101,22 +93,25 @@ export function parseFeed(xml: string): FeedItem[] {
   return items;
 }
 
-/**
- * The feed item that is the same recording as `episode`: same number or same
- * title, AND the same length to within MAX_DURATION_DRIFT_SECONDS. The length
- * check is what makes the number match safe (the feed even reuses a number or
- * two) -- a wrong pairing fails it and yields no audio rather than the wrong audio.
- */
-export function matchFeedItem(episode: Pick<Episode, "title" | "episodeNumber" | "durationSeconds">, items: FeedItem[]): FeedItem | null {
+/** The feed items that are this episode: same number, or same normalised title. */
+function sameEpisodeItems(episode: Pick<Episode, "title" | "episodeNumber">, items: FeedItem[]): FeedItem[] {
   const number = episode.episodeNumber ?? parseEpisodeNumber(episode.title);
   const titleKey = normalizeTitle(episode.title);
+  return items.filter((item) => (number !== null && item.number === number) || item.titleKey === titleKey);
+}
+
+/**
+ * The feed item for `episode`: the same episode (same number or title) whose length is closest to
+ * the video's. The podcast sometimes carries a differently cut edit (trimmed intro, extended
+ * discussion); that is still this episode's audio, and the player converts positions between the
+ * two timelines (see convertPosition in lib/playback/item.ts). null only when the feed has no such episode.
+ */
+export function matchFeedItem(episode: Pick<Episode, "title" | "episodeNumber" | "durationSeconds">, items: FeedItem[]): FeedItem | null {
   let best: FeedItem | null = null;
   let bestDrift = Infinity;
-
-  for (const item of items) {
-    if (!((number !== null && item.number === number) || item.titleKey === titleKey)) continue;
+  for (const item of sameEpisodeItems(episode, items)) {
     const drift = Math.abs(item.durationSeconds - episode.durationSeconds);
-    if (drift <= MAX_DURATION_DRIFT_SECONDS && drift < bestDrift) {
+    if (drift < bestDrift) {
       best = item;
       bestDrift = drift;
     }
@@ -155,21 +150,23 @@ async function loadFeed(): Promise<FeedItem[]> {
 }
 
 /**
- * The audio URL for each episode, keyed by episode id (only episodes that have
- * audio appear). An explicit `Episode.audioUrl` -- set by an editor, e.g. for an
- * episode the podcast doesn't carry -- always wins over the feed.
+ * The audio for each episode, keyed by episode id. An explicit `Episode.audioUrl`
+ * -- set by an editor, e.g. for an episode the podcast doesn't carry -- always wins
+ * over the feed (a full-length file, so it shares the video's timeline).
  */
-export async function resolveAudioUrls(episodes: Pick<Episode, "id" | "title" | "episodeNumber" | "durationSeconds" | "audioUrl">[]): Promise<Map<string, string>> {
-  const resolved = new Map<string, string>();
+export async function resolveAudioUrls(episodes: Pick<Episode, "id" | "title" | "episodeNumber" | "durationSeconds" | "audioUrl">[]): Promise<Map<string, AudioSource>> {
+  const resolved = new Map<string, AudioSource>();
   const needsFeed = episodes.filter((episode) => !episode.audioUrl);
 
-  for (const episode of episodes) if (episode.audioUrl) resolved.set(episode.id, episode.audioUrl);
+  for (const episode of episodes) {
+    if (episode.audioUrl) resolved.set(episode.id, { url: episode.audioUrl, durationSeconds: episode.durationSeconds });
+  }
   if (needsFeed.length === 0) return resolved;
 
   const items = await loadFeed();
   for (const episode of needsFeed) {
     const match = matchFeedItem(episode, items);
-    if (match) resolved.set(episode.id, match.url);
+    if (match) resolved.set(episode.id, { url: match.url, durationSeconds: match.durationSeconds });
   }
   return resolved;
 }

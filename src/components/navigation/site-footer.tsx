@@ -20,7 +20,7 @@ export async function SiteFooter() {
   const featuredSeries = await getFeaturedSeries();
 
   return (
-    <footer className="relative overflow-hidden bg-[var(--cinematic)] text-[var(--on-brand-soft)]">
+    <footer className="site-footer relative overflow-hidden bg-[var(--cinematic)] text-[var(--on-brand-soft)]">
       <div
         className="pointer-events-none absolute inset-0"
         style={{
@@ -39,7 +39,7 @@ export async function SiteFooter() {
       <div className="container relative grid gap-10 py-14 md:hidden">
         <BrandBlock />
         <div className="grid grid-cols-2 gap-8">
-          <FooterSection title="استكشف">
+          <FooterSection title="تصفّح">
             <LinkList items={footerNav} />
           </FooterSection>
           {featuredSeries.length > 0 && (
@@ -86,7 +86,7 @@ export async function SiteFooter() {
       {/* Desktop layout */}
       <div className="container relative hidden gap-10 py-16 md:grid md:grid-cols-[1.3fr_0.85fr_1fr_1.1fr_1fr] lg:gap-8">
         <BrandBlock />
-        <FooterSection title="استكشف">
+        <FooterSection title="تصفّح">
           <LinkList items={footerNav} />
         </FooterSection>
         {featuredSeries.length > 0 && (
@@ -161,13 +161,13 @@ function BrandBlock() {
         className="h-11 w-auto"
       />
       <p className="mt-5 max-w-xs text-[.95rem] leading-8">
-        وعي — مساحة لاكتشاف الأفكار، القصص، والتجارب التي تستحق أن تُروى.
+        بودكاست أحمد عامر وحازم الصديق وشريف علي، عن الدين والحياة اليومية.
       </p>
       <Link
         href="/series"
         className="glass-dark mt-7 inline-flex items-center gap-2 rounded-[var(--radius-pill)] px-5 py-3 text-sm font-bold text-white transition-transform hover:scale-[1.02]"
       >
-        استكشف وعي <ArrowUpLeft size={15} aria-hidden="true" />
+        تصفّح السلاسل <ArrowUpLeft size={15} aria-hidden="true" />
       </Link>
     </div>
   );

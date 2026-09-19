@@ -25,9 +25,8 @@ export function EpisodeCardGridSkeleton({ count = 3 }: { count?: number }) {
 
 export function EpisodeListItemSkeleton() {
   return (
-    <div className="flex items-center gap-5 py-4">
-      <Skeleton className="hidden aspect-video w-40 shrink-0 sm:block" />
-      <Skeleton className="aspect-video w-32 shrink-0 sm:hidden" />
+    <div className="flex items-center gap-4 py-4 sm:gap-5">
+      <Skeleton className="aspect-video w-[46%] shrink-0 sm:w-44" />
       <div className="flex-1">
         <Skeleton className="h-5 w-3/4" />
         <Skeleton className="mt-2 h-4 w-1/2" />

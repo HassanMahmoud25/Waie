@@ -16,7 +16,7 @@ export function MarkWatchedButton({ episodeId }: { episodeId: string }) {
       onClick={() => toggleCompleted(episodeId)}
     >
       {completed && <Check size={16} />}
-      {completed ? "تمّت المشاهدة" : "تمّت المشاهدة؟"}
+      {completed ? "أنهيت الحلقة" : "أنهيت الحلقة؟"}
     </button>
   );
 }

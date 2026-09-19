@@ -10,7 +10,7 @@ export default function ForgotPasswordPage() {
       eyebrow="استعادة الحساب"
       title="نسيت كلمة المرور؟"
       subtitle="أدخل بريدك الإلكتروني وسنرسل لك رابطًا لإعادة تعيين كلمة المرور."
-      quote="«العودة إلى ما فاتك أسهل مما تظن.»"
+      quote="بعد إعادة التعيين، تعود إلى مكتبتك كما تركتها."
     >
       <ForgotPasswordForm />
     </AuthShell>

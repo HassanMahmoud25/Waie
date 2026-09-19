@@ -8,7 +8,7 @@ import { ArrowLeft, Play, Search, SearchX, X } from "lucide-react";
 import type { Episode } from "@/types/episode";
 import type { SearchResults } from "@/types/search";
 import type { Topic } from "@/types/topic";
-import { formatDuration } from "@/lib/utils/format";
+import { RESULT_FORMS, formatCount, formatDuration } from "@/lib/utils/format";
 import { listQuickTopicsAction, searchContentAction } from "@/app/(site)/search/actions";
 import { SearchResultRow } from "./search-result-row";
 
@@ -130,7 +130,7 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
             ref={inputRef}
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="ابحث عن صحابي، فكرة، أو حلقة..."
+            placeholder="ابحث عن صحابي، أو موضوع، أو حلقة..."
             className="w-full min-w-0 bg-transparent text-base font-bold outline-none placeholder:font-normal placeholder:text-[var(--muted)] sm:text-lg"
             aria-label="ابحث في وعي"
           />
@@ -151,7 +151,7 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
           {!trimmed && (
             <div className="px-1 py-1">
               <p className="mb-3.5 text-xs font-black tracking-[.02em] text-[var(--muted)]">
-                ابدأ من هذه الموضوعات
+                ابدأ من موضوع
               </p>
               <div className="flex flex-wrap gap-2">
                 {(topics ?? []).map((topic) => (
@@ -175,7 +175,7 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
               <p className="font-bold text-[var(--ink)]">
                 لم نجد نتائج مطابقة لـ«<span className="text-[var(--accent-strong)]">{trimmed}</span>»
               </p>
-              <p className="mt-1 text-sm">جرّب كلمة أبسط، أو تصفّح الموضوعات أعلاه.</p>
+              <p className="mt-1 text-sm">جرّب كلمة أبسط، أو تصفّح المواضيع أعلاه.</p>
             </div>
           )}
 
@@ -208,7 +208,7 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
         {trimmed && (
           <div className="flex items-center justify-between gap-3 border-t border-white/50 px-5 py-3.5 sm:px-6">
             <span className="text-xs font-bold text-[var(--muted)]">
-              {results && totalResults > 0 ? `${totalResults} نتيجة` : ""}
+              {results && totalResults > 0 ? formatCount(totalResults, RESULT_FORMS) : ""}
             </span>
             <Link href={`/search?q=${encodeURIComponent(trimmed)}`} onClick={onClose} className="section-link">
               عرض كل النتائج في صفحة البحث <ArrowLeft size={14} aria-hidden="true" />

@@ -6,9 +6,12 @@ import type { Series } from "@/types/series";
 import { EpisodeMeta } from "./episode-meta";
 
 /**
- * Landscape row card: thumbnail beside text rather than above it. Used for
- * mobile rail slides and as the "supporting" tile in the related-episodes
- * hierarchy, where a full standard card would be too tall.
+ * Compact episode card that adapts to its width: on narrow screens the
+ * thumbnail sits above the text (a row would squeeze both into ~140px
+ * slivers), and from `sm` up it becomes a landscape row. In row form the
+ * thumbnail is stretched to the text block's height (see `.media-stretch`),
+ * so the image and the title/description beside it read as one balanced unit
+ * rather than a small 16:9 floating next to a taller column of text.
  */
 export function HorizontalEpisodeCard({
   episode,
@@ -18,31 +21,32 @@ export function HorizontalEpisodeCard({
   series?: Series | null;
 }) {
   return (
-    <article className="hover-zoom grid min-w-0 grid-cols-[42%_minmax(0,1fr)] gap-4 items-start">
-      <Link
-        href={`/episodes/${episode.slug}`}
-        className="media relative aspect-video min-w-0 self-start overflow-hidden"
-      >
-        <Image
-          src={episode.thumbnailUrl}
-          alt=""
-          fill
-          sizes="42vw"
-          className="object-cover"
-        />
-        <span className="play-mark">
-          <Play size={13} fill="currentColor" />
+    <article className="hover-zoom flex min-w-0 flex-col sm:grid sm:grid-cols-[42%_minmax(0,1fr)] sm:gap-4">
+      <Link href={`/episodes/${episode.slug}`} className="media-stretch block">
+        <div aria-hidden="true" className="aspect-video" />
+        <span className="media">
+          <Image
+            src={episode.thumbnailUrl}
+            alt=""
+            fill
+            sizes="(max-width: 640px) 100vw, 220px"
+            className="object-cover"
+          />
+          <span className="play-mark">
+            <Play size={13} fill="currentColor" />
+          </span>
         </span>
       </Link>
 
-      <div className="flex min-w-0 flex-col py-1">
+      <div className="flex min-w-0 flex-col pt-3 sm:py-1">
         <p className="episode-card__series">{series?.title ?? "وعي"}</p>
         <Link href={`/episodes/${episode.slug}`}>
-          <h3 className="episode-card__title line-clamp-2 text-[.98rem]">
-            {episode.title}
-          </h3>
+          <h3 className="episode-card__title mt-1 line-clamp-2">{episode.title}</h3>
         </Link>
-        <EpisodeMeta episode={episode} className="meta mt-auto pt-2" />
+        <div className="hidden sm:block">
+          <p className="episode-card__description line-clamp-2">{episode.description}</p>
+        </div>
+        <EpisodeMeta episode={episode} className="meta mt-2 sm:mt-auto sm:pt-2" />
       </div>
     </article>
   );

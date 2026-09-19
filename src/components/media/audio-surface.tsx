@@ -6,7 +6,7 @@ import { Headphones, Loader2, Pause, Play, RotateCcw, RotateCw, SkipBack, SkipFo
 import { useLibrary } from "@/hooks/use-library";
 import { usePlayback, usePlaybackTime } from "@/hooks/use-playback";
 import { pausePlayback, playItem, registerSlot, seekBy, seekTo, setMode, skipToNext, skipToPrevious } from "@/lib/playback/engine";
-import { getResumePosition } from "@/lib/playback/item";
+import { durationIn, getResumePosition } from "@/lib/playback/item";
 import type { MediaItem, PlaybackNeighbors } from "@/lib/playback/item";
 import { DEFAULT_SEEK_OFFSET_SECONDS } from "@/lib/playback/media-session";
 import { formatDuration } from "@/lib/utils/format";
@@ -31,7 +31,8 @@ export function AudioSurface({ item, neighbors }: { item: MediaItem; neighbors: 
   const isPlaying = isCurrent && playback.isLoaded && playback.isPlaying;
   const isBuffering = isPlaying && playback.isBuffering;
   const hasError = isCurrent && playback.hasError;
-  const savedPosition = isHydrated ? (getResumePosition(progress[item.episodeId], item.durationSeconds) ?? 0) : 0;
+  const audioLength = durationIn(item, "audio");
+  const savedPosition = isHydrated ? (getResumePosition(progress[item.episodeId], audioLength) ?? 0) : 0;
 
   const togglePlay = () => {
     if (isPlaying) pausePlayback();
@@ -60,7 +61,7 @@ export function AudioSurface({ item, neighbors }: { item: MediaItem; neighbors: 
           <div className="hidden min-w-0 sm:block">
             <p className="line-clamp-2 text-lg font-black leading-snug md:text-xl">{item.title}</p>
             <p className="mt-1 text-sm font-bold text-[var(--on-brand-soft)]">
-              {[item.subtitle, formatDuration(item.durationSeconds)].filter(Boolean).join(" · ")}
+              {[item.subtitle, formatDuration(audioLength)].filter(Boolean).join(" · ")}
             </p>
           </div>
 
@@ -74,11 +75,11 @@ export function AudioSurface({ item, neighbors }: { item: MediaItem; neighbors: 
           )}
 
           {isCurrent ? (
-            <LiveSlider fallbackDuration={item.durationSeconds} />
+            <LiveSlider fallbackDuration={audioLength} />
           ) : (
             <TimeSlider
               value={savedPosition}
-              max={item.durationSeconds}
+              max={audioLength}
               onCommit={(seconds) => playItem(item, { mode: "audio", startAt: seconds, neighbors })}
             />
           )}

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Pencil } from "lucide-react";
 import { contentRepository } from "@/lib/repositories";
+import { EPISODE_FORMS, formatCount } from "@/lib/utils/format";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { Tag } from "@/components/ui/tag";
@@ -19,7 +20,7 @@ export default async function AdminEpisodesPage() {
   return (
     <AdminShell
       title="الحلقات"
-      description={`${episodes.length} حلقة — عدّل العنوان والوصف والحالة، أو أضف حلقة جديدة من لوحة الإدارة.`}
+      description={`${formatCount(episodes.length, EPISODE_FORMS)} — عدّل العنوان والوصف والحالة، أو أضف حلقة جديدة من لوحة الإدارة.`}
       back={{ label: "لوحة الإدارة", href: "/admin" }}
     >
       <div className="border-t border-[var(--line)]">

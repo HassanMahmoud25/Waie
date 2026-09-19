@@ -7,10 +7,10 @@ export type NavLink = { label: string; href: string };
 
 export const siteConfig = {
   name: "وعي",
-  tagline: "مساحة للفهم والتأمل",
-  defaultTitle: "وعي | مساحة للفهم والتأمل",
+  tagline: "حوارات عن الدين وما يشغلنا في حياتنا",
+  defaultTitle: "وعي | حوارات عن الدين وما يشغلنا في حياتنا",
   description:
-    "منصة وعي تنظّم محتوى القناة في سلاسل وموضوعات ومختارات معرفية، وتقدّم لكل حلقة توصيات ونصًّا كاملًا وخريطة أفكار.",
+    "أحمد عامر وحازم الصديق وشريف علي يتحدثون عن الصلاة والتوبة والأخلاق، وعن سِيَر الصحابة وقصص الأنبياء ورمضان.",
   url: process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
   /**
    * Waie's own podcast RSS feed (the source of every episode's audio -- see

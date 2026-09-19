@@ -39,7 +39,7 @@ export default async function TopicDetailPage({
       <Breadcrumbs
         items={[
           { label: "الرئيسية", href: "/" },
-          { label: "الموضوعات" },
+          { label: "المواضيع" },
           { label: topic.title },
         ]}
       />

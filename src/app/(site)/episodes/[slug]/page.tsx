@@ -235,22 +235,22 @@ export default async function EpisodePage({
               )}
             </article> */}
 
-            <p className="eyebrow-pill w-fit">تصفح الحلقات</p>
+            <p className="eyebrow-pill w-fit">تصفّح الحلقات</p>
             <h2 className="mt-3 text-xl font-black leading-[1.8] tracking-[-.03em] md:text-2xl">
               الحلقة السابقة والتالية
             </h2>
-            <div className="mt-8">
+            <div className="mt-4">
               <PrevNextNav previous={adjacent.previous} next={adjacent.next} />
             </div>
           </section>
 
           <section className=" pb-14 md:pb-20">
             <div className="container">
-              <p className="eyebrow-pill w-fit">الحلقة في ثلاث طبقات</p>
+              <p className="eyebrow-pill w-fit">للمراجعة والتوسّع</p>
               <h2 className="mt-3 text-xl font-black leading-[1.8] tracking-[-.03em] md:text-2xl">
-                أكمل تجربة الحلقة
+                ارجع لما قيل في الحلقة
               </h2>
-              <div className="mt-8">
+              <div className="mt-4">
                 <EpisodeKnowledgeTabs
                   recommendations={recommendations}
                   transcript={transcript}
@@ -264,9 +264,9 @@ export default async function EpisodePage({
         {related.length > 0 && (
           <section className="section pt-0">
             <div className="container">
-              <p className="eyebrow-pill w-fit">استكشف أكثر</p>
+              <p className="eyebrow-pill w-fit">للمتابعة</p>
               <h2 className="mt-3 text-xl font-black leading-[1.8] tracking-[-.03em] md:text-2xl">
-                حلقات قد تهمك
+                حلقات من نفس السلسلة أو الموضوع
               </h2>
               <div className="mt-8">
                 <RelatedEpisodes episodes={related} seriesById={seriesById} />

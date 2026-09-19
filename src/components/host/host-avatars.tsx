@@ -37,7 +37,7 @@ export function HostAvatars({
     <div
       className={cn("flex items-center", className)}
       role="group"
-      aria-label={`المتحدثون: ${hosts.map((host) => host.name).join("، ")}`}
+      aria-label={`المقدّمون: ${hosts.map((host) => host.name).join("، ")}`}
     >
       {hosts.map((host, index) => (
         <div

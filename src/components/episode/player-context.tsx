@@ -3,7 +3,7 @@
 import { createContext, useContext, useMemo } from "react";
 import type { ReactNode } from "react";
 import { getPlaybackTime, getSlotElement, getSnapshot, jumpTo } from "@/lib/playback/engine";
-import type { MediaItem } from "@/lib/playback/item";
+import { convertPosition, type MediaItem } from "@/lib/playback/item";
 
 type PlayerContextValue = {
   /** Plays this episode from `seconds`, in whichever mode its page is showing, and brings the player into view. */
@@ -37,7 +37,11 @@ export function EpisodePlayerProvider({ item, children }: { item: MediaItem; chi
         jumpTo(item, seconds);
         getSlotElement()?.scrollIntoView({ behavior: "smooth", block: "center" });
       },
-      getCurrentTime: () => (getSnapshot().item?.episodeId === item.episodeId ? getPlaybackTime() : 0),
+      // Notes and transcripts live on the video's timeline, so audio positions are converted back to it.
+      getCurrentTime: () => {
+        const snapshot = getSnapshot();
+        return snapshot.item?.episodeId === item.episodeId ? convertPosition(item, getPlaybackTime(), snapshot.mode, "video") : 0;
+      },
     }),
     [item],
   );

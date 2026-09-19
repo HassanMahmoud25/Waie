@@ -5,7 +5,7 @@ import { EmptyState } from "@/components/content/empty-state";
 /** The "النص الكامل" tab: a real reading experience (Naskh serif, generous line-height), not a text dump. */
 export function TranscriptReader({ transcript }: { transcript: Transcript | null }) {
   if (!transcript || transcript.segments.length === 0) {
-    return <EmptyState title="النص الكامل للحلقة غير متاح حاليًا." />;
+    return <EmptyState title="النص الكامل لهذه الحلقة غير متاح بعد." />;
   }
 
   return (

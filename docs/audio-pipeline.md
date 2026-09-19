@@ -14,19 +14,22 @@ SoundCloud, all fed by one public RSS feed
 by its owner, so there is nothing to prepare or upload and nothing extra in the content model.
 
 `src/lib/audio/podcast-feed.ts` (server-only) reads the feed (cached for an hour, 4 s timeout,
-never fatal) and pairs each episode with its item:
+never fatal) and pairs each episode with its item: **same episode** = same number (`وعي 111`, or the
+feed's bare `٩٥ | ...`) or same normalised title; if several match, the one whose length is closest
+to the video's.
 
-1. **Same episode**: same number (`وعي 111`) or same normalised title.
-2. **Same recording**: lengths agree to within 5 s (`MAX_DURATION_DRIFT_SECONDS`).
+The podcast sometimes carries a differently cut edit of an episode (trimmed intro, longer
+discussion). That is still the episode's audio, so it is paired, and its own length travels with the
+item as `MediaItem.audioDurationSeconds`. Where the two lengths agree to within 5 s
+(`MAX_DURATION_DRIFT_SECONDS`) the timelines are identical; otherwise `convertPosition` /
+`getResumePosition` (`src/lib/playback/item.ts`) map positions proportionally between the video's
+timeline and the audio's -- for the Watch/Listen switch, resume-from-saved-progress, and transcript/notes
+timestamps (which are always on the video's timeline). For those episodes the landing spot after a
+mode switch is approximate; for everything else it is exact.
 
-Step 2 is what makes the pairing safe. Video ↔ Audio switching carries the playback position
-across, which is only honest if both are the same edit. Where the podcast cut differs (trimmed or
-extended by minutes) the episode stays watch-only rather than land the listener at the wrong
-moment; the feed also reuses a number or two, which the length check disambiguates.
-
-Result today: 100 of 113 episodes pair; the rest are episodes with no podcast counterpart (clips,
-the separate season-one channel) or a different cut. Those show Listen dimmed with
-«النسخة الصوتية لهذه الحلقة قيد الإعداد» and behave exactly as watch-only.
+Result today: 111 of 113 episodes have audio (102 identical cuts, 9 differing ones: 14, 24, 30, 32, 42,
+91, 100, 101, 102). The two without are standalone short clips the podcast never published; Listen
+stays dimmed for them (no message) until an editor sets `Episode.audioUrl`.
 
 New episodes pick up their audio automatically once the podcast publishes them.
 

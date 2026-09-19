@@ -6,7 +6,6 @@ import type { Episode } from "@/types/episode";
 import type { SeriesWithStats } from "@/types/series";
 import { useLibrary } from "@/hooks/use-library";
 import { EpisodeCard } from "@/components/episode/episode-card";
-import { HorizontalEpisodeCard } from "@/components/episode/horizontal-episode-card";
 import { EmptyState } from "@/components/content/empty-state";
 import { EpisodeCardGridSkeleton } from "@/components/content/loading-skeletons";
 import { SectionHeading } from "@/components/content/section-heading";
@@ -38,22 +37,13 @@ export function LibraryContent({ episodes, series }: { episodes: Episode[]; seri
   return (
     <>
       <section className="mt-10">
-        <SectionHeading eyebrow="مساحتك الخاصة" title="الحلقات المحفوظة" />
+        <SectionHeading eyebrow="للرجوع إليها" title="الحلقات المحفوظة" />
         {savedEpisodes.length > 0 ? (
-          <>
-            <div className="flex flex-col sm:hidden">
-              {savedEpisodes.map((episode) => (
-                <div className="border-b border-[var(--line-soft)] py-3 last:border-0" key={episode.id}>
-                  <HorizontalEpisodeCard episode={episode} series={seriesById.get(episode.seriesId) ?? null} />
-                </div>
-              ))}
-            </div>
-            <div className="hidden gap-8 sm:grid sm:grid-cols-2 lg:grid-cols-3">
-              {savedEpisodes.map((episode) => (
-                <EpisodeCard episode={episode} series={seriesById.get(episode.seriesId) ?? null} key={episode.id} />
-              ))}
-            </div>
-          </>
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            {savedEpisodes.map((episode) => (
+              <EpisodeCard episode={episode} series={seriesById.get(episode.seriesId) ?? null} key={episode.id} />
+            ))}
+          </div>
         ) : (
           <EmptyState
             icon={Bookmark}
@@ -64,24 +54,15 @@ export function LibraryContent({ episodes, series }: { episodes: Episode[]; seri
       </section>
 
       <section className="mt-14">
-        <SectionHeading eyebrow="أرشيفك" title="حلقات أنهيت مشاهدتها" />
+        <SectionHeading eyebrow="أرشيفك" title="حلقات أنهيتها" />
         {completedEpisodes.length > 0 ? (
-          <>
-            <div className="flex flex-col sm:hidden">
-              {completedEpisodes.map((episode) => (
-                <div className="border-b border-[var(--line-soft)] py-3 last:border-0" key={episode.id}>
-                  <HorizontalEpisodeCard episode={episode} series={seriesById.get(episode.seriesId) ?? null} />
-                </div>
-              ))}
-            </div>
-            <div className="hidden gap-8 sm:grid sm:grid-cols-2 lg:grid-cols-3">
-              {completedEpisodes.map((episode) => (
-                <EpisodeCard episode={episode} series={seriesById.get(episode.seriesId) ?? null} key={episode.id} />
-              ))}
-            </div>
-          </>
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            {completedEpisodes.map((episode) => (
+              <EpisodeCard episode={episode} series={seriesById.get(episode.seriesId) ?? null} key={episode.id} />
+            ))}
+          </div>
         ) : (
-          <EmptyState icon={CheckCircle2} title="لم تُنهِ مشاهدة أي حلقة بعد." />
+          <EmptyState icon={CheckCircle2} title="لم تُنهِ أي حلقة بعد." />
         )}
       </section>
     </>

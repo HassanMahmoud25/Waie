@@ -78,3 +78,23 @@ export function toIso8601Duration(totalSeconds: number): string {
   if (seconds > 0 || (hours === 0 && minutes === 0)) result += `${seconds}S`;
   return result;
 }
+
+/** The four number-dependent forms of a noun in Arabic: 1, 2, 3-10, and 11+ (also used for the singular label next to a bare count). */
+export type ArabicNounForms = { one: string; two: string; few: string; many: string };
+
+export const EPISODE_FORMS: ArabicNounForms = { one: "حلقة واحدة", two: "حلقتان", few: "حلقات", many: "حلقة" };
+export const SERIES_FORMS: ArabicNounForms = { one: "سلسلة واحدة", two: "سلسلتان", few: "سلاسل", many: "سلسلة" };
+export const TOPIC_FORMS: ArabicNounForms = { one: "موضوع واحد", two: "موضوعان", few: "مواضيع", many: "موضوع" };
+export const RESULT_FORMS: ArabicNounForms = { one: "نتيجة واحدة", two: "نتيجتان", few: "نتائج", many: "نتيجة" };
+
+/** The noun alone, agreeing with `count` -- for layouts that render the number separately (e.g. "6" beside "سلاسل"). */
+export function pluralNoun(count: number, forms: ArabicNounForms): string {
+  return count === 0 || (count >= 3 && count <= 10) ? forms.few : forms.many;
+}
+
+/** Number plus noun in correct Arabic agreement: "حلقة واحدة"، "حلقتان"، "8 حلقات"، "22 حلقة". */
+export function formatCount(count: number, forms: ArabicNounForms): string {
+  if (count === 1) return forms.one;
+  if (count === 2) return forms.two;
+  return `${count} ${pluralNoun(count, forms)}`;
+}

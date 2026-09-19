@@ -28,11 +28,6 @@ export function EpisodeMedia({ item, neighbors }: { item: MediaItem; neighbors: 
     <div>
       <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2">
         <MediaModeSwitch mode={mode} audioAvailable={audioAvailable} onChange={handleChange} />
-        {!audioAvailable && (
-          <p id="mode-switch-hint" className="text-sm font-bold text-[var(--ink-soft)]">
-            النسخة الصوتية لهذه الحلقة قيد الإعداد.
-          </p>
-        )}
       </div>
       <div className="overflow-hidden rounded-[var(--radius-banner)]">
         {mode === "audio" ? <AudioSurface item={item} neighbors={neighbors} /> : <VideoSlot item={item} neighbors={neighbors} />}

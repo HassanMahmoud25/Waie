@@ -65,7 +65,7 @@ export function ContinueWatchingCard({
           <h3 className="episode-card__title line-clamp-2">{episode.title}</h3>
         </Link>
         <Link href={`/episodes/${episode.slug}`} className="continue-cta">
-          متابعة المشاهدة
+          أكمل الحلقة
           <ArrowLeft size={15} aria-hidden="true" />
         </Link>
       </div>

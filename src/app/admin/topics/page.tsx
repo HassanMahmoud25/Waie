@@ -1,17 +1,18 @@
 import type { Metadata } from "next";
 import { contentRepository } from "@/lib/repositories";
+import { EPISODE_FORMS, SERIES_FORMS, TOPIC_FORMS, formatCount } from "@/lib/utils/format";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { ComingNextPanel } from "@/components/admin/coming-next-panel";
 
-export const metadata: Metadata = { title: "الموضوعات" };
+export const metadata: Metadata = { title: "المواضيع" };
 
 export default async function AdminTopicsPage() {
   const topics = await contentRepository.listTopics();
 
   return (
     <AdminShell
-      title="الموضوعات"
-      description={`${topics.length} موضوعات.`}
+      title="المواضيع"
+      description={`${formatCount(topics.length, TOPIC_FORMS)}.`}
       back={{ label: "لوحة الإدارة", href: "/admin" }}
     >
       <div className="border-t border-[var(--line)]">
@@ -26,7 +27,7 @@ export default async function AdminTopicsPage() {
               <div className="min-w-0">
                 <b className="block truncate text-lg">{topic.title}</b>
                 <p className="mt-1 text-sm text-[var(--ink-soft)]">
-                  {topic.episodeCount} حلقة · {topic.seriesCount} سلسلة
+                  {formatCount(topic.episodeCount, EPISODE_FORMS)} · {formatCount(topic.seriesCount, SERIES_FORMS)}
                 </p>
               </div>
             </div>
@@ -35,9 +36,9 @@ export default async function AdminTopicsPage() {
       </div>
 
       <div className="mt-8">
-        <ComingNextPanel title="إنشاء وتعديل الموضوعات">
+        <ComingNextPanel title="إنشاء وتعديل المواضيع">
           يحتاج هذا القسم إلى قاعدة بيانات موصولة (Prisma) ليصبح قابلًا للتعديل من هنا. حاليًا يمكن تعديل بيانات
-          الموضوعات مباشرة في <code className="rounded bg-[var(--surface)] px-1.5 py-0.5 text-sm">src/data/topics.ts</code>.
+          المواضيع مباشرة في <code className="rounded bg-[var(--surface)] px-1.5 py-0.5 text-sm">src/data/topics.ts</code>.
         </ComingNextPanel>
       </div>
     </AdminShell>

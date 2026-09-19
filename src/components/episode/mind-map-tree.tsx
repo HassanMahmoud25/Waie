@@ -54,7 +54,7 @@ function MindMapNodeItem({ node, depth }: { node: MindMapNode; depth: number }) 
  */
 export function MindMapTree({ mindMap }: { mindMap: MindMap | null }) {
   if (!mindMap) {
-    return <EmptyState title="خريطة الحلقة قيد الإعداد." />;
+    return <EmptyState title="خريطة هذه الحلقة قيد الإعداد." />;
   }
 
   return (

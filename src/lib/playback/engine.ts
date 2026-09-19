@@ -1,5 +1,5 @@
 import { getStoredProgress, recordProgress } from "@/hooks/use-library";
-import { NO_NEIGHBORS, getResumePosition } from "./item";
+import { NO_NEIGHBORS, convertPosition, durationIn, getResumePosition } from "./item";
 import type { MediaItem, MediaMode, PlaybackNeighbors } from "./item";
 import {
   bindMediaSessionActions,
@@ -256,13 +256,14 @@ function audioActive(): boolean {
   return item !== null && mode === "audio" && isLoaded && audio !== null;
 }
 
-function resumeFor(target: MediaItem): number {
-  return getResumePosition(getStoredProgress(target.episodeId), target.durationSeconds) ?? 0;
+/** Where saved watch progress resumes `target` in `forMode`, on that mode's own timeline. */
+function resumeFor(target: MediaItem, forMode: MediaMode): number {
+  return getResumePosition(getStoredProgress(target.episodeId), durationIn(target, forMode)) ?? 0;
 }
 
 /** Where a not-yet-started iframe for `target` should begin: the held position if it's the held episode, else the saved watch progress. */
 function startFor(target: MediaItem): number {
-  return item?.episodeId === target.episodeId ? basePosition : resumeFor(target);
+  return item?.episodeId === target.episodeId ? basePosition : resumeFor(target, "video");
 }
 
 /** The mode a fresh play of `target` should use: its own if it's the held episode, otherwise the visitor's preference (audio only where audio exists). */
@@ -709,13 +710,13 @@ export function playItem(target: MediaItem, options: { mode?: MediaMode; startAt
     return;
   }
 
-  const startAt = options.startAt ?? (same ? getPlaybackTime() : resumeFor(target));
+  const startAt = options.startAt ?? (same && item ? convertPosition(item, getPlaybackTime(), mode, wanted) : resumeFor(target, wanted));
   start(target, wanted, startAt, true, options.neighbors);
 }
 
-/** A transcript/notes/recommendation timestamp: play `target` from `seconds`, in whatever mode its page is showing. */
+/** A transcript/notes/recommendation timestamp (on the video's timeline): play `target` from `seconds`, in whatever mode its page is showing. */
 export function jumpTo(target: MediaItem, seconds: number) {
-  playItem(target, { startAt: seconds });
+  playItem(target, { startAt: convertPosition(target, seconds, "video", modeFor(target)) });
 }
 
 export function seekTo(seconds: number, fastSeek = false) {
@@ -761,7 +762,8 @@ export function seekBy(deltaSeconds: number) {
 /**
  * Switches the held episode between its video and audio representations,
  * keeping the position and the playing/paused state. The two are the same
- * recording, so their timelines line up.
+ * recording, so their timelines line up (proportionally so where the audio is
+ * a differently cut edit -- see convertPosition).
  */
 export function setMode(next: MediaMode) {
   if (next === "audio" && item && !item.audioUrl) return;
@@ -773,13 +775,14 @@ export function setMode(next: MediaMode) {
     return;
   }
   if (!isLoaded) {
+    basePosition = convertPosition(item, basePosition, mode, next);
     mode = next;
     persist();
     settleVideoRequest();
     publish();
     return;
   }
-  start(item, next, getPlaybackTime(), isPlaying || isBuffering);
+  start(item, next, convertPosition(item, getPlaybackTime(), mode, next), isPlaying || isBuffering);
 }
 
 /** For an episode page whose episode isn't the held one: remember the choice for when it's played, without touching what's playing. */
@@ -833,7 +836,7 @@ function skipTo(target: MediaItem, nextNeighbors: PlaybackNeighbors) {
   const from = item;
   if (!from) return;
   const nextMode = mode === "audio" && target.audioUrl ? "audio" : "video";
-  start(target, nextMode, resumeFor(target), true, nextNeighbors);
+  start(target, nextMode, resumeFor(target, nextMode), true, nextNeighbors);
   skipHandler?.(from, target);
 }
 

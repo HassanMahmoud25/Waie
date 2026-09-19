@@ -17,7 +17,7 @@ export function SearchBar({ defaultValue = "" }: { defaultValue?: string }) {
           id="search-input"
           name="q"
           defaultValue={defaultValue}
-          placeholder="ابحث عن صحابي، فكرة، أو حلقة..."
+          placeholder="ابحث عن صحابي، أو موضوع، أو حلقة..."
           className="w-full min-w-0 bg-transparent py-3 text-[.95rem] font-bold outline-none placeholder:font-normal placeholder:text-[var(--muted)] sm:text-base"
         />
       </div>

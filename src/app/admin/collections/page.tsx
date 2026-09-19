@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { contentRepository } from "@/lib/repositories";
+import { EPISODE_FORMS, formatCount } from "@/lib/utils/format";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { ComingNextPanel } from "@/components/admin/coming-next-panel";
 
@@ -19,7 +20,7 @@ export default async function AdminCollectionsPage() {
           <div key={collection.id} className="border-b border-[var(--line)] py-4">
             <b className="block text-lg">{collection.title}</b>
             <p className="mt-1 max-w-xl text-sm leading-6 text-[var(--ink-soft)]">{collection.description}</p>
-            <p className="mt-2 text-xs font-bold text-[var(--muted)]">{collection.episodeIds.length} حلقة</p>
+            <p className="mt-2 text-xs font-bold text-[var(--muted)]">{formatCount(collection.episodeIds.length, EPISODE_FORMS)}</p>
           </div>
         ))}
       </div>

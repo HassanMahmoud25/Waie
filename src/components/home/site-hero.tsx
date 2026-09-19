@@ -33,7 +33,8 @@ const heroStatIcons: Record<HeroStatKey, LucideIcon> = {
  */
 const HERO_IMAGE = "/brand/hero-stage.jpg";
 const HERO_IMAGE_MOBILE = "/brand/hero-stage-mobile.jpg";
-const HERO_IMAGE_ALT = "جلسة حوارية على خشبة المسرح في أحد لقاءات وعي أمام جمهور حاشد";
+const HERO_IMAGE_ALT =
+  "جلسة حوارية على خشبة المسرح في أحد لقاءات وعي أمام جمهور حاشد";
 
 export function SiteHero({
   stats,
@@ -77,11 +78,11 @@ export function SiteHero({
           className="glass-dark glass-pill home-eyebrow--on-dark hero-in mt-5 px-4 py-1.5 text-xs"
           style={{ "--hero-delay": "0.08s" } as CSSProperties}
         >
-          منصة معرفية عربية
+          بودكاست وعي
         </p>
 
         <h1
-          className="hero-title hero-in mt-4 max-w-2xl text-balance text-3xl font-black leading-[1.3] tracking-[-.02em] sm:text-4xl sm:leading-[1.25] sm:tracking-[-.03em] md:text-5xl"
+          className="hero-title hero-in mt-4 max-w-3xl text-balance text-xl font-black leading-[1.3] tracking-[-.02em] sm:text-4xl sm:leading-[1.4] sm:tracking-[-.03em] md:text-5xl"
           style={{ "--hero-delay": "0.16s" } as CSSProperties}
         >
           {siteConfig.tagline}
@@ -122,7 +123,11 @@ export function SiteHero({
               const Icon = heroStatIcons[stat.key];
               return (
                 <div className="hero-stat" key={stat.key}>
-                  <Icon className="hero-stat__icon" size={18} aria-hidden="true" />
+                  <Icon
+                    className="hero-stat__icon"
+                    size={18}
+                    aria-hidden="true"
+                  />
                   <div>
                     <b>{stat.value}</b>
                     <span>{stat.label}</span>

@@ -7,12 +7,16 @@ import { ProgressBar } from "@/components/shared/progress-bar";
 import { cn } from "@/lib/utils/cn";
 
 /**
- * A single row in a series' episode list. Unchanged from the site's plain
- * numbered-list layout (see EpisodeMeta / ProgressBar for the watch-state
- * bits, both pre-existing) -- the only addition is `mediaRef`, which
- * SeriesEpisodeList uses to measure this row's thumbnail so the single
- * continuous route path (see `.journey-*` in globals.css) can thread
- * through its middle.
+ * A single row in a series' episode list. `mediaRef` is how SeriesEpisodeList
+ * measures this row's thumbnail so the single continuous route path (see
+ * `.journey-*` in globals.css) can thread through its middle.
+ *
+ * It stays a row on mobile (unlike the stacked library/related cards): the
+ * route runs *behind* each thumbnail and only shows in the gaps between
+ * rows, so stacking the text under a full-width image would put the route
+ * line straight through the text. Instead the thumbnail takes a proportional
+ * share of the row and is stretched to the text block's height
+ * (`.media-stretch`), so image and text stay visually matched.
  */
 export function EpisodeListItem({
   episode,
@@ -40,34 +44,37 @@ export function EpisodeListItem({
     >
       <Link
         href={`/episodes/${episode.slug}`}
-        className="hover-zoom group flex min-w-0 items-center gap-5 sm:w-fit"
+        className="hover-zoom group flex min-w-0 items-center gap-4 sm:w-fit sm:gap-5"
       >
         <span className="hidden w-10 shrink-0 text-center text-2xl font-black tracking-[-.04em] text-[var(--muted)] sm:block">
           {order}
         </span>
 
-        <div ref={mediaRef} className="media relative aspect-video w-36 shrink-0 overflow-hidden sm:w-44">
-          <Image src={episode.thumbnailUrl} alt="" fill sizes="176px" className="object-cover" />
-          <span className="play-mark">
-            <Play size={13} fill="currentColor" />
-          </span>
-          {isCompleted ? (
-            <span className="journey-episode-badge journey-episode-badge--completed" aria-hidden="true">
-              <Check size={13} strokeWidth={3} />
+        <div className="media-stretch w-[46%] shrink-0 sm:w-44">
+          <div aria-hidden="true" className="aspect-video" />
+          <div ref={mediaRef} className="media">
+            <Image src={episode.thumbnailUrl} alt="" fill sizes="(max-width: 640px) 46vw, 176px" className="object-cover" />
+            <span className="play-mark">
+              <Play size={13} fill="currentColor" />
             </span>
-          ) : (
-            isCurrent && (
-              <span className="journey-episode-badge journey-episode-badge--current" aria-hidden="true">
-                <Play size={10} fill="currentColor" />
+            {isCompleted ? (
+              <span className="journey-episode-badge journey-episode-badge--completed" aria-hidden="true">
+                <Check size={13} strokeWidth={3} />
               </span>
-            )
-          )}
+            ) : (
+              isCurrent && (
+                <span className="journey-episode-badge journey-episode-badge--current" aria-hidden="true">
+                  <Play size={10} fill="currentColor" />
+                </span>
+              )
+            )}
+          </div>
         </div>
 
-        <div className="min-w-0 max-w-xl flex-1">
-          <h3 className="episode-card__title mt-0 line-clamp-1">{episode.title}</h3>
-          <p className="episode-card__description mt-1 line-clamp-1 sm:line-clamp-2">{episode.description}</p>
-          <EpisodeMeta episode={episode} className="meta mt-2" isCompleted={isCompleted} />
+        <div className="min-w-0 max-w-xl flex flex-col gap-1">
+          <h3 className="episode-card__title line-clamp-2 sm:line-clamp-1">{episode.title}</h3>
+          <p className="episode-card__description line-clamp-1 sm:line-clamp-2">{episode.description}</p>
+          <EpisodeMeta episode={episode} className="meta" isCompleted={isCompleted} />
           {typeof progressPercent === "number" && progressPercent > 0 && !isCompleted && (
             <ProgressBar percent={progressPercent} tone={isCurrent ? "current" : "default"} />
           )}

@@ -36,8 +36,8 @@ export function RecommendationsPanel({ recommendations }: { recommendations: Rec
     return (
       <EmptyState
         icon={Sparkles}
-        title="لم تتم إضافة توصيات لهذه الحلقة بعد."
-        description="كل ما يُذكر في الحلقة من كتب وروابط ومحتوى يستحق المتابعة سيظهر هنا."
+        title="لم تُضَف توصيات لهذه الحلقة بعد."
+        description="الكتب والروابط والمحتوى الذي يُذكر في الحلقة سيظهر هنا."
       />
     );
   }

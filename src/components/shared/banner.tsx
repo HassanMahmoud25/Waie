@@ -40,6 +40,13 @@ type BannerProps = {
  * color panel) is the visual identity, with a dark scrim carrying the text.
  * Backs the homepage series bento, collection tiles, and anywhere the product wants
  * a large, image-driven editorial slab instead of another bordered card.
+ *
+ * The "feature" size only overlays its text on the photo from `md` up, where
+ * the slab is wide enough for the copy to sit over a small part of it. Below
+ * that, a fixed-ratio box can't hold a title + description + CTA without
+ * covering (and clipping) most of the artwork, so it stacks instead: the
+ * image stays whole and clear on top, and the same text sits on the dark
+ * cinematic surface directly beneath it, inside the same rounded shell.
  */
 export function Banner({
   href,
@@ -49,7 +56,7 @@ export function Banner({
   title,
   description,
   meta,
-  ctaLabel = "استكشف",
+  ctaLabel = "عرض الحلقات",
   size = "compact",
   stretch = false,
   align = "block",
@@ -74,7 +81,9 @@ export function Banner({
       <h3
         className={cn(
           "font-black tracking-[-.03em] text-balance",
-          isFeature ? "text-3xl md:text-5xl" : "text-xl md:text-2xl",
+          isFeature
+            ? "text-2xl leading-[1.3] md:text-4xl md:leading-[1.2] min-[1200px]:text-5xl"
+            : "text-xl md:text-2xl",
         )}
       >
         {title}
@@ -83,7 +92,7 @@ export function Banner({
         <p
           className={cn(
             "max-w-lg leading-7 text-[var(--on-brand-soft)]",
-            isFeature ? "text-base" : "hidden text-sm sm:block",
+            isFeature ? "line-clamp-2 text-sm md:text-base" : "hidden text-sm sm:block",
           )}
         >
           {description}
@@ -103,30 +112,43 @@ export function Banner({
     <Link
       href={href}
       className={cn(
-        "hover-zoom group relative block overflow-hidden",
+        "hover-zoom group relative overflow-hidden",
+        isFeature ? "flex flex-col bg-[var(--cinematic)] md:block" : "block",
         stretch
           ? "h-full"
           : isFeature
-            ? "aspect-video sm:aspect-[16/8] md:aspect-[21/9]"
+            ? "md:max-[1199px]:aspect-[16/8] min-[1200px]:aspect-[21/9]"
             : "aspect-[4/3] sm:aspect-[16/10]",
         align === "block" && "rounded-[var(--radius-banner)]",
         className,
       )}
     >
-      <div className={cn("media absolute inset-0", align === "block" && "rounded-[var(--radius-banner)]")}>
+      <div
+        className={cn(
+          "media",
+          isFeature ? "relative aspect-video shrink-0 md:absolute md:inset-0 md:aspect-auto" : "absolute inset-0",
+          // Stacked (feature, < md): the image butts flush against the text panel, so only the outer shell rounds.
+          align === "block" && (isFeature ? "rounded-none md:rounded-[var(--radius-banner)]" : "rounded-[var(--radius-banner)]"),
+        )}
+      >
         <Image src={imageUrl} alt={imageAlt} fill priority={priority} sizes={sizes} className="object-cover" />
-        <span className="scrim" aria-hidden="true" />
+        <span className={cn("scrim", isFeature && "hidden md:block")} aria-hidden="true" />
       </div>
 
       {align === "container" ? (
-        <div className="container relative flex h-full flex-col justify-end gap-3 py-8 text-white md:py-14">
+        <div
+          className={cn(
+            "container relative flex flex-col gap-3 text-white md:h-full md:justify-end md:py-14",
+            isFeature ? "py-5" : "h-full justify-end py-8",
+          )}
+        >
           {text}
         </div>
       ) : (
         <div
           className={cn(
-            "relative flex h-full flex-col justify-end text-white",
-            isFeature ? "gap-3 p-6 md:p-12" : "gap-1.5 p-5 md:p-7",
+            "relative flex flex-col text-white",
+            isFeature ? "gap-3 p-5 md:h-full md:justify-end md:p-8 min-[1200px]:p-12" : "h-full justify-end gap-1.5 p-5 md:p-7",
           )}
         >
           {text}

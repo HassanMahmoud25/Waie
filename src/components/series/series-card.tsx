@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import type { SeriesWithStats } from "@/types/series";
+import { EPISODE_FORMS, formatCount } from "@/lib/utils/format";
 
 /** Series showcase: one full-bleed cinematic photo per series, text carried on a scrim like the homepage banners. */
 export function SeriesCard({
@@ -45,7 +46,7 @@ export function SeriesCard({
       />
 
       <div className="relative flex h-full flex-col justify-end gap-2.5 p-5 text-white sm:gap-3 sm:p-8">
-        <p className="eyebrow-pill eyebrow-pill--on-dark w-fit text-[.68rem]">{series.episodeCount} حلقة</p>
+        <p className="eyebrow-pill eyebrow-pill--on-dark w-fit text-[.68rem]">{formatCount(series.episodeCount, EPISODE_FORMS)}</p>
         <h2 className="text-xl font-black leading-[1.25] tracking-[-.02em] text-balance sm:text-2xl md:text-3xl">
           {series.title}
         </h2>

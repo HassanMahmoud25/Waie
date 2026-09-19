@@ -11,6 +11,7 @@ import { Banner } from "@/components/shared/banner";
 import { Reveal } from "@/components/shared/reveal";
 import { HostsShowcase } from "@/components/host/hosts-showcase";
 import { findSeriesCoverEpisode } from "@/lib/utils/content";
+import { EPISODE_FORMS, SERIES_FORMS, TOPIC_FORMS, formatCount, pluralNoun } from "@/lib/utils/format";
 
 export default async function Home() {
   const [latest, popular, series, topics, collections, allEpisodes] =
@@ -60,9 +61,9 @@ export default async function Home() {
     | undefined =
     allEpisodes.length > 0
       ? [
-          { key: "episodes", value: `${allEpisodes.length}`, label: "حلقة" },
-          { key: "series", value: `${series.length}`, label: "سلسلة" },
-          { key: "topics", value: `${topics.length}`, label: "موضوع" },
+          { key: "episodes", value: `${allEpisodes.length}`, label: pluralNoun(allEpisodes.length, EPISODE_FORMS) },
+          { key: "series", value: `${series.length}`, label: pluralNoun(series.length, SERIES_FORMS) },
+          { key: "topics", value: `${topics.length}`, label: pluralNoun(topics.length, TOPIC_FORMS) },
         ]
       : undefined;
 
@@ -80,7 +81,7 @@ export default async function Home() {
                 <div>
                   <span className="home-eyebrow">سلاسل وعي</span>
                   <h2 className="mt-3 text-xl font-black leading-[1.25] tracking-[-.02em] sm:text-2xl">
-                    استكشف حسب السلسلة
+                    ابدأ من سلسلة
                   </h2>
                 </div>
                 <Link href="/series" className="section-link">
@@ -97,8 +98,8 @@ export default async function Home() {
                     eyebrow="السلسلة الأبرز"
                     title={bentoSeries[0].series.title}
                     description={bentoSeries[0].series.description}
-                    meta={`${bentoSeries[0].series.episodeCount} حلقة`}
-                    ctaLabel="استكشف السلسلة"
+                    meta={formatCount(bentoSeries[0].series.episodeCount, EPISODE_FORMS)}
+                    ctaLabel="عرض الحلقات"
                     size="feature"
                     sizes="100vw"
                   />
@@ -112,8 +113,8 @@ export default async function Home() {
                         imageAlt={s.title}
                         eyebrow="سلسلة"
                         title={s.title}
-                        meta={`${s.episodeCount} حلقة`}
-                        ctaLabel="استكشف السلسلة"
+                        meta={formatCount(s.episodeCount, EPISODE_FORMS)}
+                        ctaLabel="عرض الحلقات"
                         size="compact"
                         sizes="88vw"
                         key={s.id}
@@ -134,14 +135,14 @@ export default async function Home() {
                       eyebrow={isFirst ? "السلسلة الأبرز" : "سلسلة"}
                       title={s.title}
                       description={isFirst ? s.description : undefined}
-                      meta={`${s.episodeCount} حلقة`}
-                      ctaLabel="استكشف السلسلة"
+                      meta={formatCount(s.episodeCount, EPISODE_FORMS)}
+                      ctaLabel="عرض الحلقات"
                       size={isFirst ? "feature" : "compact"}
                       stretch={index === 1}
                       sizes={
                         isFirst
-                          ? "(max-width: 860px) 100vw, 66vw"
-                          : "(max-width: 860px) 100vw, 33vw"
+                          ? "(max-width: 1199px) 100vw, 66vw"
+                          : "(max-width: 1199px) 50vw, 33vw"
                       }
                       key={s.id}
                     />
@@ -159,13 +160,13 @@ export default async function Home() {
             <Reveal>
               <div className="flex flex-wrap items-end justify-between gap-4">
                 <div>
-                  <span className="home-eyebrow">وصل حديثًا</span>
+                  <span className="home-eyebrow">الجديد</span>
                   <h2 className="mt-3 text-xl font-black leading-[1.25] tracking-[-.02em] sm:text-2xl">
                     أحدث الحلقات
                   </h2>
                 </div>
                 <Link href="/search" className="section-link">
-                  استكشف المزيد <ArrowLeft size={15} />
+                  ابحث في الحلقات <ArrowLeft size={15} />
                 </Link>
               </div>
 
@@ -188,9 +189,9 @@ export default async function Home() {
         <section className="section section-tint pt-0">
           <div className="container">
             <Reveal>
-              <span className="home-eyebrow">الأكثر تفاعلًا</span>
+              <span className="home-eyebrow">على يوتيوب</span>
               <h2 className="mt-3 text-xl font-black leading-[1.25] tracking-[-.02em] sm:text-2xl">
-                الأكثر استماعًا
+                الأكثر مشاهدة
               </h2>
               <ContentRail className="rail--wide mt-8">
                 {popular.map((episode) => (
@@ -215,13 +216,13 @@ export default async function Home() {
             <Reveal>
               <span className="home-eyebrow">المزيد من وعي</span>
               <h2 className="mt-3 max-w-xl text-2xl font-black leading-[1.25] tracking-[-.02em] sm:text-3xl">
-                استمر في رحلة الاستكشاف
+                حلقات مجمّعة حول فكرة واحدة
               </h2>
             </Reveal>
 
             <Reveal delayMs={80} className="mt-10">
               <p className="mb-4 text-sm font-bold text-(--ink-soft)">
-                مجموعات تحريرية
+                المختارات
               </p>
               <ContentRail className="rail--wide md:hidden">
                 {collections.map((collection) => {
@@ -287,8 +288,8 @@ export default async function Home() {
                 احفظ ما تريد العودة إليه
               </h2>
               <p className="mt-2 text-sm leading-7 text-(--on-brand-soft) sm:text-base">
-                تابع ما بدأت، واحفظ الحلقات التي تستحق وقتًا آخر، في مكتبتك
-                الخاصة.
+                احفظ الحلقات التي تريد العودة إليها، ودوّن ملاحظاتك، وأكمل من
+                حيث توقفت.
               </p>
             </div>
             <Link href="/library" className="btn btn-glass--solid">

@@ -35,7 +35,7 @@ export function HostDiscoverCard({ host, profile }: { host: Host; profile: HostP
                 <Users size={12} aria-hidden="true" /> {profile.subscribers}
               </span>
               <span className="glass-dark inline-flex w-fit items-center gap-1.5 rounded-[var(--radius-pill)] px-3.5 py-1.5 text-xs font-bold transition-[gap] group-hover:gap-2.5">
-                استكشف محتواه <ChevronLeft size={13} aria-hidden="true" />
+                تعرّف عليه <ChevronLeft size={13} aria-hidden="true" />
               </span>
             </div>
           </div>

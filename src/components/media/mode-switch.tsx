@@ -58,7 +58,6 @@ export function MediaModeSwitch({
             data-mode={optionMode}
             aria-checked={mode === optionMode}
             aria-disabled={disabled || undefined}
-            aria-describedby={disabled ? "mode-switch-hint" : undefined}
             tabIndex={mode === optionMode ? 0 : -1}
             className="mode-switch__option"
             onClick={() => choose(optionMode)}

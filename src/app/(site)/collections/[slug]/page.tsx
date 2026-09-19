@@ -29,7 +29,7 @@ export default async function CollectionDetailPage({ params }: { params: Promise
         <Breadcrumbs
           items={[{ label: "الرئيسية", href: "/" }, { label: "المختارات", href: "/collections" }, { label: collection.title }]}
         />
-        <p className="eyebrow-pill mt-6 w-fit">مجموعة تحريرية</p>
+        <p className="eyebrow-pill mt-6 w-fit">من المختارات</p>
         <h1 className="mt-4 text-3xl font-black leading-[1.2] tracking-[-.03em] md:text-5xl">{collection.title}</h1>
         <p className="mt-4 max-w-xl text-lg leading-8 text-[var(--ink-soft)]">{collection.description}</p>
       </section>
@@ -42,7 +42,7 @@ export default async function CollectionDetailPage({ params }: { params: Promise
             ))}
           </div>
         ) : (
-          <EmptyState title="لا توجد حلقات في هذه المجموعة بعد" />
+          <EmptyState title="لم تُضَف حلقات إلى هذه المجموعة بعد" />
         )}
       </section>
     </main>

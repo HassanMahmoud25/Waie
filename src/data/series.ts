@@ -15,7 +15,7 @@ export const series: Series[] = [
     id: "series-companions",
     slug: "companions",
     title: "سلسلة الصحابة",
-    description: "حكايات صادقة عن رجال ونساء صنعوا المعنى قبل أن يصنعوا التاريخ.",
+    description: "في كل حلقة سيرة صحابي أو صحابية، من ابن أم مكتوم وأبي عبيدة إلى أم سليم وأبي هريرة، وما يمكن أن نتعلمه منهم اليوم.",
     coverImage: "/series/companions.png",
     coverImageMobile: "/series/companions-mobile.png",
     topicId: "topic-companions",
@@ -25,7 +25,7 @@ export const series: Series[] = [
     id: "series-stories",
     slug: "stories",
     title: "سلسلة القصص",
-    description: "أحسن القصص كما وردت في القرآن، بقلم يعيد قراءتها بوعي معاصر.",
+    description: "قصص الأنبياء كما وردت في القرآن، من آدم ونوح إلى إبراهيم ويوسف، وما نتعلمه منها في حياتنا.",
     coverImage: "/series/stories.png",
     coverImageMobile: "/series/stories-mobile.png",
     topicId: "topic-stories",
@@ -35,7 +35,7 @@ export const series: Series[] = [
     id: "series-worship-seasons",
     slug: "worship-seasons",
     title: "مواسم العبادات",
-    description: "حلقات مرتبطة بمواسم العبادة كرمضان والحج وعشر ذي الحجة.",
+    description: "حلقات مع كل موسم عبادة: قبل رمضان وفي أثنائه وبعده، وعشر ذي الحجة ويوم عرفة.",
     coverImage: "/series/worship-seasons.png",
     coverImageMobile: "/series/worship-seasons-mobile.png",
     topicId: "topic-worship-seasons",
@@ -45,7 +45,7 @@ export const series: Series[] = [
     id: "series-ethics",
     slug: "ethics",
     title: "سلسلة الأخلاق",
-    description: "حلقات في الأخلاق والقيم وأثرها في حياة الفرد والمجتمع.",
+    description: "الصدق والحلم والحياء والتواضع والكرم، وحفظ اللسان وصلة الرحم: حلقات عن الأخلاق وأثرها في تعاملنا مع الناس.",
     coverImage: "/series/ethics.png",
     coverImageMobile: "/series/ethics-mobile.png",
     topicId: "topic-ethics",
@@ -55,7 +55,7 @@ export const series: Series[] = [
     id: "series-commitment",
     slug: "commitment",
     title: "التدين والالتزام",
-    description: "حلقات حول معنى الالتزام الديني وكيفية بنائه خطوة بخطوة.",
+    description: "ماذا يعني أن تكون ملتزمًا؟ حلقات عن معنى التدين، ولماذا ليس اختيارًا، وكيف نبدأ الطريق، وماذا نكسب منه.",
     coverImage: "/series/commitment.png",
     coverImageMobile: "/series/commitment-mobile.png",
     topicId: "topic-commitment",
@@ -66,8 +66,9 @@ export const series: Series[] = [
    * channel (https://www.youtube.com/playlist?list=PLcaLjDlQePQU3dpVNUzTSQQapGgtxPtts),
    * not the main @Waie channel -- these are the show's original 22 episodes
    * from before it had its own channel. `title` and `description` are the
-   * real playlist title/description as read from YouTube (the playlist has
-   * no description set, hence `""`). `coverImage` is the show's wordmark
+   * real playlist title as read from YouTube. The playlist has no description
+   * of its own, so `description` is editor-written from the subjects of its
+   * 22 episodes. `coverImage` is the show's wordmark
    * (editor-supplied, not from YouTube) -- square source, so used as-is for
    * both desktop and mobile (`coverImageMobile` falls back to it). `topicId`
    * is `null`: never inferred from a YouTube playlist, only ever set by an
@@ -77,7 +78,7 @@ export const series: Series[] = [
     id: "series-season-one",
     slug: "season-one",
     title: "وعي",
-    description: "",
+    description: "أولى حلقات وعي، من قبل أن تكون له قناته الخاصة: حوارات مفتوحة عن الصلاة وتزكية النفس وطلب العلم وبر الوالدين ورمضان.",
     coverImage: "/series/season-one.png",
     topicId: null,
     status: "PUBLISHED",

@@ -10,7 +10,7 @@ import { hostProfiles } from "@/data/host-profiles";
 export const metadata: Metadata = {
   title: "المقدّمون",
   description:
-    "تعرّف على أحمد عامر وشريف علي وحازم الصديق، المقدّمون الثلاثة خلف بودكاست وعي — من هم، وماذا يصنعون على قنواتهم الخاصة.",
+    "تعرّف على أحمد عامر وحازم الصديق وشريف علي، المقدّمين الثلاثة خلف بودكاست وعي: من هم، وماذا يصنعون على قنواتهم الخاصة.",
 };
 
 /**
@@ -33,7 +33,7 @@ export default function HostsPage() {
       <section className="section">
         <div className="container">
           <Reveal className="mx-auto max-w-xl text-center">
-            <span className="home-eyebrow">قابل المقدّمون</span>
+            <span className="home-eyebrow">قابل المقدّمين</span>
             <h2 className="mt-3 text-2xl font-black leading-[1.25] tracking-[-.02em] sm:text-3xl">من هم خلف الميكروفون</h2>
             <p className="mt-3 leading-7 text-[var(--ink-soft)]">
               لكل واحد منهم قناته الخاصة وجمهوره الذي بناه على مدى سنوات، قبل أن يجتمعوا معًا في وعي.
@@ -66,7 +66,7 @@ export default function HostsPage() {
             <span className="home-eyebrow">محتواهم الشخصي</span>
             <h2 className="mt-3 text-2xl font-black leading-[1.25] tracking-[-.02em] sm:text-3xl">ماذا يصنعون على قنواتهم</h2>
             <p className="mt-3 leading-7 text-[var(--ink-soft)]">
-              محتوى حقيقي من قنوات المقدّمون الثلاثة — ليس من حلقات وعي، بل مما يصنعونه بشكل مستقل.
+              فيديوهات مختارة من قنوات المقدّمين الثلاثة، وهي ليست من حلقات وعي، بل مما يقدّمه كل واحد منهم على قناته.
             </p>
           </Reveal>
 

@@ -48,11 +48,11 @@ export function HostsShowcase() {
         <Reveal className="mx-auto max-w-xl text-center">
           <span className="home-eyebrow">أصوات وعي</span>
           <h2 className="mt-3 text-2xl font-black leading-[1.25] tracking-[-.02em] sm:text-3xl">
-            المقدّمون خلف كل حلقة
+            المقدّمون خلف وعي
           </h2>
           <p className="mt-3 leading-7 text-[var(--ink-soft)]">
-            ثلاثة أصوات يجمعهم فضول واحد نحو المعرفة، يقودون الحوار حلقة بعد
-            حلقة.
+            أحمد عامر وحازم الصديق وشريف علي: لكل منهم قناته وجمهوره، ويجتمعون
+            هنا في حوار واحد.
           </p>
         </Reveal>
 
@@ -105,7 +105,7 @@ export function HostsShowcase() {
 
         <Reveal className="mt-20 flex justify-center">
           <Link href="/hosts" className="btn btn-secondary">
-            تعرّف على المقدّمون <ArrowLeft size={15} />
+            تعرّف على المقدّمين <ArrowLeft size={15} />
           </Link>
         </Reveal>
       </div>

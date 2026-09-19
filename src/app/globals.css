@@ -376,7 +376,7 @@
      busy content behind it: translucent enough for scrolled content to show
      through the blur, with saturation boosted so it doesn't wash out. */
   .site-header-bar {
-    background: color-mix(in srgb, var(--canvas) 80%, transparent);
+    background: rgb(255 255 255 / 0.6);
     backdrop-filter: blur(var(--glass-blur)) saturate(180%);
     -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
     border: 1px solid var(--glass-light-border);
@@ -1012,13 +1012,25 @@
   /* ==========================================================================
      Episode card text
      ========================================================================== */
+  /* Mobile-first scale: a slightly smaller title on narrow screens keeps it
+     from out-weighing the thumbnail and the description under it, then
+     steps up once there's room (sm+). Call sites that need a different
+     size should override with a utility rather than re-declaring the scale. */
   .episode-card__title {
-    margin: 0.7rem 0 0.3rem;
-    font-size: 1.05rem;
-    font-weight: 800;
-    line-height: 1.45;
+    margin: 0.55rem 0 0.25rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    line-height: 1.6;
     letter-spacing: -0.015em;
     transition: color 0.2s ease;
+  }
+
+  @media (min-width: 640px) {
+    .episode-card__title {
+      margin: 0.7rem 0 0.3rem;
+      font-size: 1rem;
+      line-height: 1.45;
+    }
   }
 
   .hover-zoom:hover .episode-card__title {
@@ -1034,8 +1046,32 @@
 
   .episode-card__description {
     color: var(--ink-soft);
-    font-size: 0.86rem;
-    line-height: 1.7;
+    font-size: 0.82rem;
+    line-height: 1.65;
+  }
+
+  @media (min-width: 640px) {
+    .episode-card__description {
+      font-size: 0.86rem;
+      line-height: 1.7;
+    }
+  }
+
+  /* A row's thumbnail wrapper: the `aspect-video` spacer inside gives it a
+     16:9 floor, `align-self: stretch` (via the grid/flex row) grows it to the
+     text block's height when that is taller, and the image fills whatever
+     box results (absolutely positioned, so it never sizes the row itself).
+     This is what keeps a row's image visually matched to the title +
+     description beside it instead of a fixed-width 16:9 that floats short. */
+  .media-stretch {
+    position: relative;
+    align-self: stretch;
+    min-width: 0;
+  }
+
+  .media-stretch > .media {
+    position: absolute;
+    inset: 0;
   }
 
   /* ==========================================================================
@@ -1151,7 +1187,7 @@
      flourish, not a hard-edged divider. */
   .journey-pin__rule {
     display: inline-block;
-    width: clamp(6.5rem, 10vw, 12rem);
+    width: clamp(9rem, 16vw, 16rem);
     height: 2px;
     border-radius: 1px;
     background: linear-gradient(to left, currentColor, transparent);
@@ -1374,7 +1410,7 @@
      unmissable animated transition whenever progress changes. */
   .journey-progress__trail-fill {
     fill: none;
-    stroke: var(--accent-strong);
+    stroke: var(--on-brand-soft);
     stroke-width: 1.8;
     stroke-linecap: round;
     filter: drop-shadow(
@@ -2413,9 +2449,14 @@
      so each tile keeps controlling its own aspect-ratio -- the first tile
      simply renders wider (and, via its own "feature" size prop, differently
      proportioned), which is enough to break the uniform-card feeling. ------- */
+  /* Two columns with the feature spanning both until the container is wide
+     enough (1200px) for the feature to sit in two of three columns: any
+     narrower and a two-thirds-wide feature is too small a box for its
+     title + description + CTA, and the copy ends up covering the artwork.
+     (Below 768px the homepage swaps this grid for its stacked mobile layout.) */
   .series-bento {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 1.25rem;
   }
 
@@ -2423,13 +2464,9 @@
     grid-column: span 2;
   }
 
-  @media (max-width: 860px) {
+  @media (min-width: 1200px) {
     .series-bento {
-      grid-template-columns: 1fr;
-    }
-
-    .series-bento > :first-child {
-      grid-column: span 1;
+      grid-template-columns: repeat(3, 1fr);
     }
   }
 
@@ -2547,7 +2584,6 @@
     position: absolute;
     z-index: -1;
     inset: -10% 0 auto 0;
-    height: 340px;
     background:
       radial-gradient(
         560px 280px at 18% 0%,

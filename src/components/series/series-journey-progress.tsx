@@ -1,6 +1,7 @@
 import type { Episode } from "@/types/episode";
 import { getProgressPercent, type ProgressEntry } from "@/hooks/use-library";
 import { cn } from "@/lib/utils/cn";
+import { EPISODE_FORMS, pluralNoun } from "@/lib/utils/format";
 
 /**
  * Fixed proportions of the trail's own coordinate space (0-100 wide), not
@@ -83,7 +84,7 @@ export function SeriesJourneyProgress({
       <div className="journey-progress__row">
         <div className="journey-progress__stat justify-between">
           <p className="journey-progress__count">
-            أكملت <strong key={completedCount}>{completedCount}</strong> من {total} حلقة
+            أكملت <strong key={completedCount}>{completedCount}</strong> من {total} {pluralNoun(total, EPISODE_FORMS)}
           </p>
           <p className="journey-progress__percent">{percentComplete}% مكتمل</p>
         </div>

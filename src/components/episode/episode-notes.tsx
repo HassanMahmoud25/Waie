@@ -159,8 +159,8 @@ export function EpisodeNotes({ episodeId, durationSeconds }: { episodeId: string
                 {notes.length === 0 && composer === null && (
                   <EmptyState
                     icon={NotebookPen}
-                    title="لسه مفيش ملاحظات"
-                    description="دوّن أفكارك ونقاطك المهمة أثناء المشاهدة، وارجع لها في أي وقت."
+                    title="لا توجد ملاحظات بعد"
+                    description="دوّن ما يستوقفك أثناء الحلقة، وارجع إليه في أي وقت."
                     action={
                       <Button
                         variant="secondary"

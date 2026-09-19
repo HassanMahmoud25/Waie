@@ -17,8 +17,8 @@ export default async function LibraryPage() {
         مكتبتي
       </h1>
       <p className="mt-4 max-w-xl text-lg leading-8 text-[var(--ink-soft)]">
-        تُحفظ الحلقات والمشاهدات هنا على هذا الجهاز. سجّل الدخول لاحقًا
-        لمزامنتها عبر أجهزتك.
+        تُحفظ حلقاتك وتقدّمك فيها هنا على هذا الجهاز. سجّل الدخول لمزامنتها
+        عبر أجهزتك.
       </p>
 
       <LibraryContent episodes={episodes} series={series} />

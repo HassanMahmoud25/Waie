@@ -20,14 +20,14 @@ export default async function AdminPage() {
   const sections = [
     { label: "الحلقات", count: episodes.length, href: "/admin/episodes" },
     { label: "السلاسل", count: series.length, href: "/admin/series" },
-    { label: "الموضوعات", count: topics.length, href: "/admin/topics" },
+    { label: "المواضيع", count: topics.length, href: "/admin/topics" },
     { label: "المختارات", count: collections.length, href: "/admin/collections" },
   ];
 
   const recentEpisodes = episodes.slice(0, 5);
 
   return (
-    <AdminShell title="لوحة وعي" description="إدارة الحلقات والسلاسل والموضوعات والمختارات.">
+    <AdminShell title="لوحة وعي" description="إدارة الحلقات والسلاسل والمواضيع والمختارات.">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {sections.map((section) => (
           <Link
@@ -49,7 +49,7 @@ export default async function AdminPage() {
             <p className="eyebrow">خطوة سريعة</p>
             <h2 className="mt-1 text-xl font-black">أضف حلقة من يوتيوب</h2>
             <p className="mt-2 max-w-xl text-sm leading-6 text-[var(--ink-soft)]">
-              الصق الرابط، اجلب بيانات الفيديو، ثم اختر السلسلة والموضوعات قبل النشر.
+              الصق الرابط، اجلب بيانات الفيديو، ثم اختر السلسلة والمواضيع قبل النشر.
             </p>
           </div>
         </div>

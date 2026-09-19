@@ -5,6 +5,12 @@ import type { HostProfile } from "@/data/host-profiles";
 import { Reveal } from "@/components/shared/reveal";
 import { cn } from "@/lib/utils/cn";
 
+/** What each host brings to Waie, drawn from `roleInWaie` in data/host-profiles.ts. */
+const HOST_FOCUS: Record<string, string> = {
+  "ahmed-amer": "القرآن والسيرة",
+  "hazem-elseddiq": "الحوار والحياة المعاصرة",
+  "sherif-ali": "الحديث إلى الشباب",
+};
 const ORDINALS = ["الصوت الأول", "الصوت الثاني", "الصوت الثالث"];
 
 type HostFeatureProps = {
@@ -21,7 +27,7 @@ type HostFeatureProps = {
 function HostFeatureBody({ host, profile, index }: Pick<HostFeatureProps, "host" | "profile" | "index">) {
   return (
     <div className="host-feature__body min-w-0">
-      <p className="eyebrow-pill w-fit">{ORDINALS[index] ?? "أحد أصوات وعي"}</p>
+      <p className="eyebrow-pill w-fit">{HOST_FOCUS[host.id] ?? ORDINALS[index] ?? "أحد أصوات وعي"}</p>
       <h2 className="mt-4 text-2xl font-black leading-[1.25] tracking-[-.02em] sm:text-4xl">{host.name}</h2>
       <p className="mt-5 max-w-xl text-base leading-8 text-[var(--ink-soft)] sm:text-lg">{profile.bio}</p>
 
