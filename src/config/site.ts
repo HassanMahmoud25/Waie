@@ -24,6 +24,7 @@ export const siteConfig = {
 export const primaryNav: NavLink[] = [
   { label: "الرئيسية", href: "/" },
   { label: "السلاسل", href: "/series" },
+  { label: "المواضيع", href: "/topics" },
   { label: "المقدّمون", href: "/hosts" },
   { label: "المكتبة", href: "/library" },
 ];
@@ -31,6 +32,7 @@ export const primaryNav: NavLink[] = [
 export const footerNav: NavLink[] = [
   { label: "الرئيسية", href: "/" },
   { label: "السلاسل", href: "/series" },
+  { label: "المواضيع", href: "/topics" },
   { label: "المكتبة", href: "/library" },
   { label: "المقدّمون", href: "/hosts" },
 ];

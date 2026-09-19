@@ -1,0 +1,576 @@
+/* ==========================================================================
+   Topics (/topics) — the editorial index of everything Waie talks about.
+   Same tokens as the rest of the site (cream canvas, glass surfaces, 22/32px
+   radii, gold outlined numerals like the series tiles, black-pill "active",
+   ambient shadows); the layout idea is a book's contents page: a numbered
+   chapter index up top, then one chapter at a time, each with a photographic
+   lead tile and typographic topic tiles.
+
+   Imported from app/globals.css (not from a component) and wrapped in
+   `@layer components`, for the same reason as media.css and admin.css: a
+   separate, unlayered sheet would beat every Tailwind utility on the same
+   element.
+   ========================================================================== */
+
+@layer components {
+  /* ------------------------------------------------------------------------
+     Hero stats + chapter index
+     ------------------------------------------------------------------------ */
+  .topics-stats {
+    display: inline-flex;
+    max-width: 100%;
+    border-radius: 18px;
+  }
+
+  .topics-stat {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.8rem 1.25rem;
+  }
+
+  .topics-stat + .topics-stat {
+    border-inline-start: 1px solid var(--line-soft);
+  }
+
+  .topics-stat__icon {
+    flex-shrink: 0;
+    color: var(--accent-strong);
+  }
+
+  .topics-stat b {
+    display: block;
+    font-size: 1.1rem;
+    font-weight: 900;
+    line-height: 1.25;
+  }
+
+  .topics-stat span {
+    display: block;
+    font-size: 0.68rem;
+    color: var(--ink-soft);
+  }
+
+  @media (max-width: 479px) {
+    .topics-stat {
+      padding: 0.7rem 0.85rem;
+      gap: 0.5rem;
+    }
+    .topics-stat__icon {
+      display: none;
+    }
+  }
+
+  /* Below `lg` the index is a swipeable strip of pills that bleeds to the
+     screen edge (the scroll affordance); from `lg` it is a panel of rows. */
+  .topics-toc__list {
+    display: flex;
+    gap: 0.5rem;
+    margin-inline: -14px;
+    padding: 0.35rem 14px;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scroll-padding-inline: 14px;
+    scrollbar-width: none;
+  }
+
+  .topics-toc__list::-webkit-scrollbar {
+    display: none;
+  }
+
+  .topics-toc__link {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 0.55rem;
+    scroll-snap-align: start;
+    padding: 0.6rem 1rem 0.6rem 1.1rem;
+    border-radius: var(--radius-pill);
+    font-size: 0.85rem;
+    font-weight: 800;
+    white-space: nowrap;
+    background: var(--glass-light);
+    backdrop-filter: blur(14px) saturate(150%);
+    -webkit-backdrop-filter: blur(14px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: var(--shadow-xs);
+    transition:
+      background 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+
+  .topics-toc__link:hover {
+    background: var(--glass-light-strong);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .topics-toc__num {
+    font-size: 0.8rem;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    color: var(--accent-strong);
+  }
+
+  .topics-toc__detail,
+  .topics-toc__heading,
+  .topics-toc__leader {
+    display: none;
+  }
+
+  @media (min-width: 1024px) {
+    .topics-toc {
+      padding: 0.6rem;
+      border-radius: var(--radius-banner);
+      background: var(--glass-light);
+      backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+      -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+      border: 1px solid var(--glass-light-border);
+      box-shadow: var(--shadow-md);
+    }
+
+    .topics-toc__heading {
+      display: block;
+      padding: 0.9rem 1rem 0.5rem;
+    }
+
+    .topics-toc__list {
+      flex-direction: column;
+      gap: 0.15rem;
+      margin: 0;
+      padding: 0;
+      overflow: visible;
+    }
+
+    .topics-toc__link {
+      gap: 1rem;
+      padding: 0.7rem 1rem;
+      border-radius: 20px;
+      font-size: 0.95rem;
+      white-space: normal;
+      background: transparent;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      border-color: transparent;
+      box-shadow: none;
+    }
+
+    .topics-toc__link:hover {
+      background: rgba(255, 255, 255, 0.78);
+      box-shadow: var(--shadow-xs);
+    }
+
+    .topics-toc__num {
+      min-width: 2.2rem;
+      font-size: 1.5rem;
+      line-height: 1;
+      color: transparent;
+      -webkit-text-stroke: 1.2px var(--accent);
+    }
+
+    .topics-toc__title {
+      min-width: 0;
+    }
+
+    /* Dotted leader, as in a printed table of contents. */
+    .topics-toc__leader {
+      display: block;
+      flex: 1;
+      min-width: 1rem;
+      align-self: flex-end;
+      margin-bottom: 0.5rem;
+      border-bottom: 2px dotted color-mix(in srgb, var(--ink) 16%, transparent);
+    }
+
+    .topics-toc__detail {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .topics-toc__arrow {
+      color: var(--muted);
+      transition:
+        transform 0.2s ease,
+        color 0.2s ease;
+    }
+
+    .topics-toc__link:hover .topics-toc__arrow {
+      color: var(--ink);
+      transform: translateX(-3px);
+    }
+  }
+
+  /* The chapter's topic colours as a little overlapping palette. */
+  .topics-dots {
+    display: flex;
+    align-items: center;
+    flex-direction: row-reverse;
+  }
+
+  .topics-dots i {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    border: 2px solid var(--paper);
+    box-sizing: content-box;
+  }
+
+  .topics-dots i + i {
+    margin-inline-end: -5px;
+  }
+
+  /* ------------------------------------------------------------------------
+     Chapter header
+     ------------------------------------------------------------------------ */
+  .topics-chapter {
+    scroll-margin-top: 6.5rem;
+  }
+
+  .topics-chapter__head {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    column-gap: 1rem;
+    row-gap: 0.9rem;
+    margin-bottom: 1.75rem;
+  }
+
+  .topics-chapter__num {
+    font-size: 3.4rem;
+    font-weight: 900;
+    line-height: 0.9;
+    font-variant-numeric: tabular-nums;
+    color: transparent;
+    -webkit-text-stroke: 1.5px var(--accent);
+    user-select: none;
+  }
+
+  .topics-chapter__title {
+    margin: 0.35rem 0 0;
+    font-size: clamp(1.4rem, 2.8vw, 2rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+  }
+
+  .topics-chapter__blurb {
+    margin: 0.5rem 0 0;
+    max-width: 38rem;
+    font-size: 0.95rem;
+    line-height: 1.85;
+    color: var(--ink-soft);
+  }
+
+  .topics-chapter__count {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  @media (min-width: 640px) {
+    .topics-chapter__head {
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      column-gap: 1.5rem;
+      align-items: end;
+      margin-bottom: 2.25rem;
+    }
+
+    .topics-chapter__num {
+      font-size: 4.75rem;
+    }
+
+    .topics-chapter__count {
+      grid-column: auto;
+      justify-self: end;
+      margin-bottom: 0.3rem;
+    }
+  }
+
+  /* ------------------------------------------------------------------------
+     Topic tile — typographic, tinted by the topic's own colour
+     ------------------------------------------------------------------------ */
+  .topic-tile {
+    --topic-ink: color-mix(in srgb, var(--topic-color) 58%, #000);
+
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.1rem 1.2rem 1rem;
+    border-radius: var(--radius-card);
+    background:
+      radial-gradient(
+        130% 100% at 100% 0%,
+        color-mix(in srgb, var(--topic-color) 17%, transparent),
+        transparent 62%
+      ),
+      var(--glass-light);
+    backdrop-filter: blur(16px) saturate(150%);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: var(--shadow-xs);
+    transition:
+      transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+      box-shadow 0.3s ease,
+      background-color 0.3s ease;
+  }
+
+  /* Same hairline the series tiles draw on hover, in the topic's colour. */
+  .topic-tile::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 3px;
+    background: linear-gradient(
+      270deg,
+      transparent,
+      var(--topic-color),
+      transparent
+    );
+    opacity: 0;
+    transform: scaleX(0);
+    transition:
+      transform 0.5s ease-out,
+      opacity 0.5s ease-out;
+  }
+
+  .topic-tile:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+    background-color: var(--glass-light-strong);
+  }
+
+  .topic-tile:hover::before {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+
+  .topic-tile:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 3px;
+  }
+
+  /* The topic's glyph, blown up and cropped off the tile's end corner. */
+  .topic-tile__watermark {
+    position: absolute;
+    z-index: -1;
+    inset-inline-end: -0.9rem;
+    bottom: -1.5rem;
+    width: 7.5rem;
+    height: 7.5rem;
+    stroke-width: 1.25;
+    color: var(--topic-color);
+    opacity: 0.16;
+    transform: rotate(-10deg);
+    pointer-events: none;
+    transition:
+      transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+      opacity 0.4s ease;
+  }
+
+  .topic-tile:hover .topic-tile__watermark {
+    opacity: 0.24;
+    transform: rotate(-4deg) scale(1.08);
+  }
+
+  .topic-tile__head {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+  }
+
+  .topic-tile__icon {
+    display: grid;
+    flex-shrink: 0;
+    place-items: center;
+    width: 2.65rem;
+    height: 2.65rem;
+    border-radius: 15px;
+    color: var(--topic-ink);
+    background: color-mix(in srgb, var(--topic-color) 24%, rgba(255, 255, 255, 0.55));
+    border: 1px solid color-mix(in srgb, var(--topic-color) 34%, transparent);
+    transition:
+      background 0.3s ease,
+      transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .topic-tile:hover .topic-tile__icon {
+    background: color-mix(in srgb, var(--topic-color) 42%, rgba(255, 255, 255, 0.4));
+    transform: scale(1.06) rotate(-4deg);
+  }
+
+  .topic-tile__title {
+    margin: 0;
+    padding-top: 0.15rem;
+    font-size: 1.05rem;
+    font-weight: 900;
+    letter-spacing: -0.015em;
+    line-height: 1.5;
+    text-wrap: balance;
+  }
+
+  .topic-tile__desc {
+    margin: 0;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+    font-size: 0.85rem;
+    line-height: 1.85;
+    color: var(--ink-soft);
+  }
+
+  .topic-tile__foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: auto;
+    padding-top: 0.15rem;
+  }
+
+  .topic-tile__count {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: var(--ink-soft);
+  }
+
+  .topic-tile__count i {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--topic-color);
+  }
+
+  .topic-tile__go {
+    display: grid;
+    place-items: center;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 50%;
+    color: var(--ink-soft);
+    background: rgba(255, 255, 255, 0.7);
+    box-shadow: var(--shadow-xs);
+    transition:
+      background 0.25s ease,
+      color 0.25s ease,
+      transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .topic-tile:hover .topic-tile__go {
+    color: #fff;
+    background: #000;
+    transform: translateX(-3px);
+  }
+
+  /* Phones: a compact row (glyph, title + one line, chevron), so a long
+     chapter scrolls like a list instead of stacking tall cards. */
+  @media (max-width: 639px) {
+    .topic-tile {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: center;
+      column-gap: 0.9rem;
+      row-gap: 0.15rem;
+      padding: 0.9rem 1rem;
+    }
+
+    .topic-tile__head {
+      display: contents;
+    }
+
+    .topic-tile__icon {
+      grid-column: 1;
+      grid-row: 1 / span 3;
+    }
+
+    .topic-tile__title {
+      grid-column: 2;
+      padding-top: 0;
+      font-size: 1rem;
+      line-height: 1.55;
+    }
+
+    .topic-tile__desc {
+      grid-column: 2;
+      -webkit-line-clamp: 1;
+      line-clamp: 1;
+      font-size: 0.8rem;
+      line-height: 1.7;
+    }
+
+    .topic-tile__foot {
+      display: contents;
+    }
+
+    .topic-tile__count {
+      grid-column: 2;
+      margin-top: 0.2rem;
+      font-size: 0.74rem;
+    }
+
+    .topic-tile__go {
+      grid-column: 3;
+      grid-row: 1 / span 3;
+      width: 1.75rem;
+      height: 1.75rem;
+    }
+
+    .topic-tile__watermark {
+      width: 5.5rem;
+      height: 5.5rem;
+      bottom: -1.2rem;
+      opacity: 0.13;
+    }
+  }
+
+  /* ------------------------------------------------------------------------
+     Lead tile — the chapter's photographic anchor
+     ------------------------------------------------------------------------ */
+  .topic-lead-emblem {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 16px;
+    color: #fff;
+  }
+
+  /* ------------------------------------------------------------------------
+     Closing prompt
+     ------------------------------------------------------------------------ */
+  .topics-finale {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border-radius: var(--radius-banner);
+  }
+
+  .topics-finale::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    background:
+      radial-gradient(
+        420px 240px at 8% 0%,
+        color-mix(in srgb, var(--accent) 22%, transparent),
+        transparent 70%
+      ),
+      radial-gradient(
+        380px 240px at 96% 100%,
+        color-mix(in srgb, var(--brand) 16%, transparent),
+        transparent 70%
+      );
+    pointer-events: none;
+  }
+}
