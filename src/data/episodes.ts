@@ -2154,7 +2154,7 @@ export const popularEpisodeSlugs = [
  */
 export function updateEpisodeEditorialFields(
   id: string,
-  patch: Partial<Pick<Episode, "title" | "description" | "status">>,
+  patch: Partial<Pick<Episode, "title" | "description" | "status" | "audioUrl">>,
 ): Episode | null {
   const episode = episodes.find((item) => item.id === id);
   if (!episode) return null;

@@ -41,7 +41,7 @@ export interface ContentRepository {
   getEpisodeById(id: string): Promise<Episode | null>;
   updateEpisode(
     id: string,
-    patch: Partial<Pick<Episode, "title" | "description" | "status">>,
+    patch: Partial<Pick<Episode, "title" | "description" | "status" | "audioUrl">>,
   ): Promise<Episode | null>;
 
   getRecommendationsByEpisode(episodeId: string): Promise<Recommendation[]>;

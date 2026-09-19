@@ -23,6 +23,7 @@ export async function updateEpisodeAction(
     title: formData.get("title"),
     description: formData.get("description"),
     status: formData.get("status"),
+    audioUrl: formData.get("audioUrl") ?? "",
   });
 
   if (!parsed.success) {

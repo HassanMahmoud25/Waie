@@ -8,7 +8,7 @@ import { Breadcrumbs } from "@/components/navigation/breadcrumbs";
 import { EpisodeIdentity } from "@/components/episode/episode-identity";
 import { EpisodeMeta } from "@/components/episode/episode-meta";
 import { EpisodePlayerProvider } from "@/components/episode/player-context";
-import { MediaPlayer } from "@/components/episode/media-player";
+import { EpisodeMedia } from "@/components/media/episode-media";
 import { EpisodeKnowledgeTabs } from "@/components/episode/episode-knowledge-tabs";
 import { EpisodeNotes } from "@/components/episode/episode-notes";
 import { EpisodeDescription } from "@/components/episode/episode-description";
@@ -19,7 +19,8 @@ import { ShareButton } from "@/components/shared/share-button";
 import { MarkWatchedButton } from "@/components/shared/mark-watched-button";
 import { HostAvatars } from "@/components/host/host-avatars";
 import { Tag } from "@/components/ui/tag";
-import { toPlaybackTrack } from "@/lib/playback/track";
+import { resolveAudioUrls } from "@/lib/audio/podcast-feed";
+import { NO_NEIGHBORS, toMediaItem } from "@/lib/playback/item";
 import { toIso8601Duration } from "@/lib/utils/format";
 import { resolveEpisodeHosts } from "@/lib/utils/content";
 
@@ -78,6 +79,18 @@ export default async function EpisodePage({
   );
   const episodeUrl = `${siteConfig.url}/episodes/${episode.slug}`;
   const episodeHosts = resolveEpisodeHosts(episode);
+  const subtitle = series?.title ?? "";
+  // Audio for this episode and its neighbours (for the player's previous/next): the podcast feed's
+  // recording of the same episode, unless an editor set an explicit audioUrl.
+  const audioUrls = await resolveAudioUrls(
+    [episode, adjacent.previous, adjacent.next].filter((item) => item !== null),
+  );
+  const toItem = (item: typeof episode) => toMediaItem(item, subtitle, audioUrls.get(item.id) ?? null);
+  const mediaItem = toItem(episode);
+  const mediaNeighbors = {
+    previous: adjacent.previous ? toItem(adjacent.previous) : NO_NEIGHBORS.previous,
+    next: adjacent.next ? toItem(adjacent.next) : NO_NEIGHBORS.next,
+  };
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -128,7 +141,7 @@ export default async function EpisodePage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <main>
-        <EpisodePlayerProvider>
+        <EpisodePlayerProvider item={mediaItem}>
           {/* A softly blurred still of the episode's own thumbnail sits behind the
               title block — a cinematic backdrop instead of a flat canvas, fading
               back to the page background before the player starts. Pulled up by
@@ -195,18 +208,8 @@ export default async function EpisodePage({
                 </div>
               </div>
 
-              <div className="my-10 overflow-hidden rounded-[var(--radius-banner)]">
-                <MediaPlayer
-                  videoId={episode.youtubeVideoId}
-                  title={episode.title}
-                  episodeId={episode.id}
-                  durationSeconds={episode.durationSeconds}
-                  audioTrack={toPlaybackTrack(episode)}
-                  adjacentTracks={{
-                    previous: adjacent.previous && toPlaybackTrack(adjacent.previous),
-                    next: adjacent.next && toPlaybackTrack(adjacent.next),
-                  }}
-                />
+              <div className="my-10">
+                <EpisodeMedia item={mediaItem} neighbors={mediaNeighbors} />
               </div>
             </div>
           </section>

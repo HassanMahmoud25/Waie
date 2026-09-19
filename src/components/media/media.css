@@ -1,0 +1,405 @@
+/* ==========================================================================
+   Global media player -- the Now Playing dock, the persistent video host, the
+   Watch/Listen switch and the shared player controls (components/media/*).
+   Plain CSS on purpose: everything here is either a self-contained component
+   or needs :has()/keyframes, and it only reads the design tokens declared in
+   app/globals.css.
+
+   IMPORTANT: everything is inside `@layer components`, matching app/globals.css.
+   Unlayered rules always beat layered ones, so plain rules here would silently
+   override Tailwind utilities (`hidden`, `sm:grid`, ...) on the same element.
+   ========================================================================== */
+
+@layer components {
+/* Space the dock's bottom edge from the screen. Above the mobile tab bar
+   whenever one is on the page (it's `lg:hidden`, so the offset only applies
+   below lg); on screens without one -- desktop, admin, auth -- a small gap. */
+body {
+  --media-dock-offset: 12px;
+  --media-card-width: 356px;
+  padding-bottom: var(--media-dock-clearance, 0px);
+}
+
+@media (max-width: 1023.98px) {
+  body:has(.mobile-tab-bar) {
+    --media-dock-offset: calc(var(--mobile-tab-bar-height) + 8px);
+  }
+}
+
+/* --- Shared controls ---------------------------------------------------- */
+
+.media-btn {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  color: var(--on-brand);
+  background: transparent;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.15s ease;
+}
+
+.media-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.media-btn:active {
+  transform: scale(0.94);
+}
+
+.media-btn--primary {
+  color: var(--cinematic);
+  background: var(--on-brand);
+}
+
+.media-btn--primary:hover {
+  background: var(--on-brand-accent);
+}
+
+.media-btn--lg {
+  width: 60px;
+  height: 60px;
+}
+
+.media-chip {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.18rem 0.6rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.7rem;
+  font-weight: 800;
+  line-height: 1.5;
+  color: var(--on-brand-accent);
+  background: color-mix(in srgb, var(--on-brand-accent) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--on-brand-accent) 28%, transparent);
+}
+
+.media-time {
+  flex: none;
+  min-width: 2.6rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--on-brand-soft);
+}
+
+.media-time--end {
+  text-align: end;
+}
+
+/* The seek/volume track: filled gold up to --fill, set inline by the component. */
+.media-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 28px; /* a comfortable touch target around a slim track */
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.media-range::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(
+    90deg,
+    var(--accent) var(--fill, 0%),
+    rgba(255, 255, 255, 0.26) var(--fill, 0%)
+  );
+}
+
+.media-range::-moz-range-track {
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(
+    90deg,
+    var(--accent) var(--fill, 0%),
+    rgba(255, 255, 255, 0.26) var(--fill, 0%)
+  );
+}
+
+.media-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  margin-top: -5px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--on-brand);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.media-range::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--on-brand);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+/* --- Watch / Listen switch (components/media/mode-switch.tsx) ------------ */
+
+.mode-switch {
+  --pad: 0.35rem;
+  position: relative;
+  display: inline-grid;
+  grid-template-columns: 1fr 1fr;
+  padding: var(--pad);
+  border-radius: var(--radius-pill);
+  background: var(--glass-light);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow: var(--shadow-xs);
+}
+
+.mode-switch__thumb {
+  position: absolute;
+  top: var(--pad);
+  bottom: var(--pad);
+  inset-inline-start: var(--pad);
+  width: calc(50% - var(--pad));
+  border-radius: var(--radius-pill);
+  background: linear-gradient(160deg, #2a2a2a 0%, #000 65%);
+  box-shadow: var(--shadow-sm);
+  transition: inset-inline-start 0.34s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mode-switch[data-active="audio"] .mode-switch__thumb {
+  inset-inline-start: 50%;
+}
+
+.mode-switch__option {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding-inline: 1.5rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.92rem;
+  font-weight: 800;
+  white-space: nowrap;
+  color: var(--ink-soft);
+  transition: color 0.25s ease;
+}
+
+.mode-switch__option[aria-checked="true"] {
+  color: var(--on-brand);
+}
+
+.mode-switch__option[aria-checked="true"] svg {
+  color: var(--on-brand-accent);
+}
+
+.mode-switch__option[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* --- Progress hairline ---------------------------------------------------- */
+
+.media-progress {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 3px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.16);
+  pointer-events: none;
+}
+
+.media-progress > span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-strong), var(--accent));
+}
+
+/* --- Now Playing dock (audio / restored video) ---------------------------- */
+
+.media-dock,
+.media-host[data-placement="mini"] {
+  position: fixed;
+  z-index: 45;
+  top: auto;
+  left: 50%;
+  translate: -50% 0;
+  bottom: calc(var(--media-dock-offset) + env(safe-area-inset-bottom));
+  color: var(--on-brand);
+  background: color-mix(in srgb, var(--cinematic) 92%, transparent);
+  border: 1px solid var(--on-brand-line);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+/* Blur only on the dock: an iframe inside a backdrop-filtered ancestor can fail to composite, and the video card must never. */
+.media-dock {
+  animation: media-rise 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: min(100vw - 16px, 720px);
+  min-height: 64px;
+  padding: 10px 10px 8px 6px; /* thumbnail side 10px, controls side a little tighter */
+  padding-inline: 10px 6px;
+  border-radius: 20px;
+}
+
+.media-dock__open {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 0;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: 14px;
+  color: inherit;
+}
+
+.media-dock__thumb {
+  position: relative;
+  flex: none;
+  width: 78px;
+  height: 44px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: var(--cinematic);
+}
+
+.media-dock__title {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9rem;
+  font-weight: 800;
+  line-height: 1.6;
+}
+
+.media-dock__meta {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--on-brand-soft);
+}
+
+.media-dock__controls {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 0.1rem;
+}
+
+@media (min-width: 768px) {
+  .media-dock__open {
+    flex: 0 1 260px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .media-dock {
+    width: min(100vw - 48px, 900px);
+  }
+}
+
+/* --- Persistent video host (components/media/video-host.tsx) -------------- */
+
+.media-host {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 30;
+  overflow: hidden;
+  background: #000;
+  /* No entrance animation or opacity/transform effects on this element or its
+     ancestors: an animated ancestor of a cross-origin iframe can leave the
+     embed unpainted (black) until something else forces a repaint. */
+}
+
+.media-host[data-placement="slot"] {
+  border-radius: var(--radius-banner);
+}
+
+.media-host[data-hidden] {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.media-host__frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.media-host__iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* The mini card keeps the embed at least 200px tall: YouTube's embedded-player
+   terms require a viewport of at least 200x200, so it can't shrink further. */
+.media-host[data-placement="mini"] {
+  /* Centered with auto margins rather than a transform, for the same reason as above. */
+  left: 0;
+  right: 0;
+  margin-inline: auto;
+  translate: none;
+  width: min(100vw - 16px, var(--media-card-width));
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--cinematic) 92%, transparent);
+}
+
+.media-host[data-placement="mini"] .media-host__frame {
+  height: 200px;
+  background: #000;
+}
+
+.media-strip {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 10px 12px 8px 6px;
+  padding-inline: 12px 6px;
+}
+
+@media (min-width: 640px) {
+  .media-host[data-placement="mini"] {
+    left: 16px;
+    right: auto;
+    margin-inline: 0;
+  }
+}
+
+/* --- Motion --------------------------------------------------------------- */
+
+@keyframes media-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .media-dock,
+  .mode-switch__thumb {
+    animation: none;
+    transition: none;
+  }
+}
+}

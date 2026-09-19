@@ -64,6 +64,26 @@ export function EpisodeEditForm({ episode }: { episode: Episode }) {
         </select>
       </div>
 
+      <div>
+        <label htmlFor="audioUrl" className="block text-sm font-bold">
+          رابط النسخة الصوتية
+        </label>
+        <input
+          id="audioUrl"
+          name="audioUrl"
+          type="url"
+          dir="ltr"
+          inputMode="url"
+          defaultValue={episode.audioUrl ?? ""}
+          placeholder="https://media.example.com/episodes/waie-111.m4a"
+          aria-describedby="audioUrl-hint"
+          className="mt-2 w-full border border-[var(--line)] bg-white px-4 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)]"
+        />
+        <p id="audioUrl-hint" className="mt-2 text-sm text-[var(--ink-soft)]">
+          اختياري. يُستخدم تلقائيًا صوت الحلقة من بودكاست وعي عند توفره؛ هذا الحقل لتجاوزه أو لحلقة غير موجودة في البودكاست (ملف صوتي تملكه وعي، مثل M4A). اتركه فارغًا للاعتماد على البودكاست. لا تُقبل روابط يوتيوب.
+        </p>
+      </div>
+
       {state.error && (
         <p role="alert" className="border border-[var(--accent-strong)] bg-white px-4 py-3 text-sm font-bold text-[var(--accent-strong)]">
           {state.error}

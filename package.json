@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts",
+    "audio:encode": "node scripts/encode-audio.mjs"
   },
   "dependencies": {
     "@prisma/client": "^6.15.0",

@@ -12,6 +12,13 @@ export const siteConfig = {
   description:
     "منصة وعي تنظّم محتوى القناة في سلاسل وموضوعات ومختارات معرفية، وتقدّم لكل حلقة توصيات ونصًّا كاملًا وخريطة أفكار.",
   url: process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
+  /**
+   * Waie's own podcast RSS feed (the source of every episode's audio -- see
+   * lib/audio/podcast-feed.ts). Set PODCAST_FEED_URL to point elsewhere, or to an
+   * empty string to turn Listen mode off.
+   */
+  podcastFeedUrl:
+    process.env.PODCAST_FEED_URL ?? "https://feeds.soundcloud.com/users/soundcloud:users:1073536591/sounds.rss",
 } as const;
 
 export const primaryNav: NavLink[] = [

@@ -1,24 +1,20 @@
 "use client";
 
-import { createContext, useCallback, useContext, useRef } from "react";
+import { createContext, useContext, useMemo } from "react";
 import type { ReactNode } from "react";
-
-const YOUTUBE_ORIGIN = "https://www.youtube-nocookie.com";
+import { getPlaybackTime, getSlotElement, getSnapshot, jumpTo } from "@/lib/playback/engine";
+import type { MediaItem } from "@/lib/playback/item";
 
 type PlayerContextValue = {
+  /** Plays this episode from `seconds`, in whichever mode its page is showing, and brings the player into view. */
   seekTo: (seconds: number) => void;
-  /** Registers the player's root element: the YouTube iframe, or the audio surface. Used to bring the player into view on a timestamp jump, and (iframe only) as the postMessage target. */
-  registerPlayer: (element: HTMLElement | null) => void;
-  /** The audio engine registers how to seek itself; while set, timestamp jumps go there instead of through the YouTube iframe. */
-  registerSeekHandler: (handler: ((seconds: number) => void) | null) => void;
-  /** Registers the real YT.Player's getCurrentTime, kept out of this context's own state -- see MediaPlayer, which owns the actual player instance. */
-  registerTimeSource: (getTime: (() => number) | null) => void;
+  /** Where this episode's playback is right now, or 0 if it isn't the one the player holds. */
   getCurrentTime: () => number;
 };
 
 const PlayerContext = createContext<PlayerContextValue | null>(null);
 
-/** Read by transcript/recommendation timestamps to jump the video, and by episode notes to capture/seek to a moment (see MediaPlayer). */
+/** Read by transcript/recommendation timestamps to jump the player, and by episode notes to capture/seek to a moment. */
 export function usePlayer() {
   const context = useContext(PlayerContext);
   if (!context) {
@@ -28,53 +24,23 @@ export function usePlayer() {
 }
 
 /**
- * The one client boundary on the episode page: wraps the video player and
- * the knowledge tabs so a timestamp anywhere inside can seek the player via
- * the YouTube embed's postMessage API (or, for episodes with real audio, the audio
- * engine), without loading YouTube's full JS SDK.
+ * The one client boundary on the episode page: gives the knowledge tabs and
+ * notes a way to talk to the player for *this* episode. There's no player
+ * state here -- playback lives in the global engine (lib/playback/engine.ts),
+ * which is why a timestamp works the same whether the video, the audio, or
+ * neither is currently playing.
  */
-export function EpisodePlayerProvider({ children }: { children: ReactNode }) {
-  const playerElementRef = useRef<HTMLElement | null>(null);
-  const timeSourceRef = useRef<(() => number) | null>(null);
-  const seekHandlerRef = useRef<((seconds: number) => void) | null>(null);
-
-  const registerPlayer = useCallback((element: HTMLElement | null) => {
-    playerElementRef.current = element;
-  }, []);
-
-  const registerSeekHandler = useCallback((handler: ((seconds: number) => void) | null) => {
-    seekHandlerRef.current = handler;
-  }, []);
-
-  const registerTimeSource = useCallback((getTime: (() => number) | null) => {
-    timeSourceRef.current = getTime;
-  }, []);
-
-  const getCurrentTime = useCallback(() => timeSourceRef.current?.() ?? 0, []);
-
-  const seekTo = useCallback((seconds: number) => {
-    const player = playerElementRef.current;
-
-    if (seekHandlerRef.current) {
-      seekHandlerRef.current(seconds);
-      player?.scrollIntoView({ behavior: "smooth", block: "center" });
-      return;
-    }
-
-    if (!(player instanceof HTMLIFrameElement) || !player.contentWindow) return;
-    const iframe = player;
-
-    const post = (func: string, args: unknown[] = []) =>
-      iframe.contentWindow!.postMessage(JSON.stringify({ event: "command", func, args }), YOUTUBE_ORIGIN);
-
-    post("seekTo", [seconds, true]);
-    post("playVideo");
-    iframe.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, []);
-
-  return (
-    <PlayerContext.Provider value={{ seekTo, registerPlayer, registerSeekHandler, registerTimeSource, getCurrentTime }}>
-      {children}
-    </PlayerContext.Provider>
+export function EpisodePlayerProvider({ item, children }: { item: MediaItem; children: ReactNode }) {
+  const value = useMemo<PlayerContextValue>(
+    () => ({
+      seekTo: (seconds) => {
+        jumpTo(item, seconds);
+        getSlotElement()?.scrollIntoView({ behavior: "smooth", block: "center" });
+      },
+      getCurrentTime: () => (getSnapshot().item?.episodeId === item.episodeId ? getPlaybackTime() : 0),
+    }),
+    [item],
   );
+
+  return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>;
 }

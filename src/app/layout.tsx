@@ -7,6 +7,7 @@ import {
 import { siteConfig } from "@/config/site";
 import { bootInlineScript } from "@/lib/boot/config";
 import { BootOverlay } from "@/components/boot/boot-overlay";
+import { GlobalPlayer } from "@/components/media/global-player";
 import "./globals.css";
 
 /**
@@ -93,6 +94,8 @@ export default function RootLayout({
       <body className="header-glow">
         <BootOverlay />
         {children}
+        {/* Outside every route group so playback and its controls survive navigation between them. */}
+        <GlobalPlayer />
       </body>
     </html>
   );

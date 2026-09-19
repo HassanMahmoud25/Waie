@@ -1,5 +1,5 @@
 import { siteConfig } from "@/config/site";
-import type { PlaybackTrack } from "./track";
+import type { MediaItem } from "./item";
 
 /** Default step for the native skip buttons when the OS doesn't specify one. */
 export const DEFAULT_SEEK_OFFSET_SECONDS = 10;
@@ -46,19 +46,19 @@ export function setSkipActions(actions: Pick<MediaSessionActions, "previous" | "
 }
 
 /** Title + show name + artwork shown on the lock screen / notification / media hub. */
-export function setMediaSessionMetadata(track: PlaybackTrack | null) {
+export function setMediaSessionMetadata(item: MediaItem | null) {
   const session = getSession();
   if (!session) return;
-  if (!track) {
+  if (!item) {
     session.metadata = null;
     return;
   }
   try {
     session.metadata = new MediaMetadata({
-      title: track.title,
+      title: item.title,
       artist: siteConfig.name,
-      album: siteConfig.name,
-      artwork: [{ src: track.artworkUrl, sizes: "1280x720", type: "image/jpeg" }],
+      album: item.subtitle || siteConfig.name,
+      artwork: [{ src: item.thumbnailUrl, sizes: "1280x720", type: "image/jpeg" }],
     });
   } catch {
     // MediaMetadata rejects malformed artwork; the title/controls are still worth having.

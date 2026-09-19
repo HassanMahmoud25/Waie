@@ -1,4 +1,8 @@
 @import "tailwindcss";
+/* Global media player styles. Imported here (not from the component) so they land
+   in this same stylesheet: as a separate file they'd load first and their
+   `@layer components` would rank below Tailwind's `base` layer. */
+@import "../components/media/media.css";
 
 /* ==========================================================================
    Design tokens — the single source of truth for color, radius and type.
