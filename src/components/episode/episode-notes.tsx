@@ -9,6 +9,7 @@ import { NoteComposer } from "./note-composer";
 import { NoteModal } from "./note-modal";
 import { NoteDeleteModal } from "./note-delete-modal";
 import { EmptyState } from "@/components/content/empty-state";
+import { EpisodeNotesSkeleton } from "@/components/content/loading-skeletons";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils/cn";
 import type { EpisodeNote } from "@/types/note";
@@ -42,7 +43,7 @@ export function EpisodeNotes({ episodeId, durationSeconds }: { episodeId: string
     setIsCollapsed(notes.length > AUTO_COLLAPSE_THRESHOLD);
   }, [isHydrated, notes.length]);
 
-  if (!isHydrated) return null;
+  if (!isHydrated) return <EpisodeNotesSkeleton />;
 
   const hasCollapsibleContent = isAuthenticated && notes.length > 0;
   const collapsed = hasCollapsibleContent && isCollapsed;

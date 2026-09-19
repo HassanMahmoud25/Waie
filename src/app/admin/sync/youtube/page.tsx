@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
-import { TriangleAlert } from "lucide-react";
+import { History, TriangleAlert } from "lucide-react";
 import { AdminShell } from "@/components/admin/admin-shell";
+import { EmptyState } from "@/components/content/empty-state";
 import { prisma } from "@/lib/db/prisma";
+import { cn } from "@/lib/utils/cn";
 import { formatArabicDate } from "@/lib/utils/format";
 import { SyncPanel } from "./sync-panel";
 
@@ -19,6 +21,21 @@ const statusLabel: Record<string, string> = {
   SUCCEEDED: "نجح",
   FAILED: "فشل",
 };
+
+const statusClass: Record<string, string> = {
+  RUNNING: "admin-status--draft admin-status--running",
+  SUCCEEDED: "admin-status--published",
+  FAILED: "admin-status--failed",
+};
+
+/** File names and env vars are LTR tokens; isolating them stops the RTL bidi algorithm from moving the leading dot of ".env.local". */
+function Code({ children }: { children: string }) {
+  return (
+    <code dir="ltr" className="rounded-md bg-white/70 px-1.5 py-0.5 text-[.8rem] text-[var(--ink)]">
+      {children}
+    </code>
+  );
+}
 
 export default async function AdminYouTubeSyncPage() {
   const hasDatabase = Boolean(process.env.DATABASE_URL);
@@ -38,42 +55,53 @@ export default async function AdminYouTubeSyncPage() {
       back={{ label: "لوحة الإدارة", href: "/admin" }}
     >
       {!isConfigured && (
-        <div className="mb-8 flex items-start gap-3 border border-dashed border-[var(--accent-strong)] bg-[var(--surface)] p-5">
-          <TriangleAlert className="mt-0.5 shrink-0 text-[var(--accent-strong)]" size={20} aria-hidden />
-          <div className="text-sm leading-7 text-[var(--ink-soft)]">
+        <div className="admin-notice admin-notice--warning mb-6" role="status">
+          <TriangleAlert size={20} aria-hidden="true" />
+          <div>
             <b className="block text-[var(--ink)]">الإعداد غير مكتمل</b>
-            {!hasDatabase && <p>أضف DATABASE_URL في .env.local لتفعيل قاعدة البيانات.</p>}
-            {!hasApiKey && <p>أضف YOUTUBE_API_KEY في .env.local لتفعيل الاتصال بواجهة يوتيوب.</p>}
-            <p className="mt-1">
-              أعد تشغيل الخادم بعد إضافة المتغيرات، ثم عُد لهذه الصفحة.
-            </p>
+            {!hasDatabase && (
+              <p>
+                أضف <Code>DATABASE_URL</Code> في <Code>.env.local</Code> لتفعيل قاعدة البيانات.
+              </p>
+            )}
+            {!hasApiKey && (
+              <p>
+                أضف <Code>YOUTUBE_API_KEY</Code> في <Code>.env.local</Code> لتفعيل الاتصال بواجهة يوتيوب.
+              </p>
+            )}
+            <p className="mt-1">أعد تشغيل الخادم بعد إضافة المتغيرات، ثم عُد لهذه الصفحة.</p>
           </div>
         </div>
       )}
 
       <SyncPanel />
 
-      <section className="mt-10">
-        <h2 className="font-black">سجل عمليات المزامنة</h2>
+      <section className="mt-10 sm:mt-12" aria-labelledby="sync-history-title">
+        <h2 id="sync-history-title" className="mb-4 text-lg font-black tracking-[-.01em]">
+          سجل عمليات المزامنة
+        </h2>
         {recentRuns.length === 0 ? (
-          <p className="mt-3 text-sm text-[var(--ink-soft)]">لا توجد عمليات مزامنة بعد.</p>
+          <EmptyState icon={History} title="لا توجد عمليات مزامنة بعد." description="ستظهر هنا آخر عشر عمليات بعد تشغيل أول مزامنة." />
         ) : (
-          <div className="mt-4 flex flex-col gap-2">
+          <div className="admin-panel">
             {recentRuns.map((run) => (
-              <div
-                key={run.id}
-                className="flex flex-wrap items-center justify-between gap-3 bg-[var(--surface)] px-5 py-3 text-sm"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="font-bold">{typeLabel[run.type] ?? run.type}</span>
-                  <span className="text-[var(--ink-soft)]">{formatArabicDate(run.startedAt)}</span>
+              <div key={run.id} className="admin-row flex-wrap gap-y-2">
+                <div className="min-w-0 flex-1 basis-48">
+                  <p className="text-[.95rem] font-extrabold leading-[1.8]">{typeLabel[run.type] ?? run.type}</p>
+                  <p className="meta">
+                    <span>{formatArabicDate(run.startedAt)}</span>
+                  </p>
                 </div>
-                <div className="flex items-center gap-4 text-[var(--ink-soft)]">
-                  <span>{statusLabel[run.status] ?? run.status}</span>
-                  <span>
-                    +{run.videosCreated} / ~{run.videosUpdated} / تجاوز {run.videosSkipped}
+                <p className="meta">
+                  <span>جديدة {run.videosCreated}</span>
+                  <span>محدَّثة {run.videosUpdated}</span>
+                  <span>تجاوز {run.videosSkipped}</span>
+                </p>
+                <div className="flex items-center gap-2">
+                  {run.errors ? <span className="admin-status admin-status--draft">أخطاء</span> : null}
+                  <span className={cn("admin-status", statusClass[run.status])}>
+                    {statusLabel[run.status] ?? run.status}
                   </span>
-                  {run.errors ? <span className="font-bold text-[var(--accent-strong)]">أخطاء</span> : null}
                 </div>
               </div>
             ))}

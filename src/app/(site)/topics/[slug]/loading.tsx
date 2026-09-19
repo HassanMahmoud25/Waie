@@ -1,20 +1,29 @@
-import { Skeleton } from "@/components/ui/skeleton";
-import { EpisodeCardGridSkeleton } from "@/components/content/loading-skeletons";
+import {
+  BreadcrumbsSkeleton,
+  EpisodeCardGridSkeleton,
+  EyebrowPillSkeleton,
+  SkeletonText,
+} from "@/components/content/loading-skeletons";
 
+/** Mirrors /topics/[slug]: breadcrumbs, eyebrow + title, description, then the episode grid. */
 export default function TopicDetailLoading() {
   return (
     <main className="container py-14">
-      <Skeleton className="h-4 w-48" />
-      <div className="mt-6 flex items-center gap-5">
-        <Skeleton className="size-16 rounded-full" />
-        <div>
-          <Skeleton className="h-3 w-16" />
-          <Skeleton className="mt-2 h-9 w-48" />
-        </div>
+      <BreadcrumbsSkeleton crumbs={["w-14", "w-16", "w-28"]} />
+      <div className="mt-6">
+        <EyebrowPillSkeleton width="w-16" />
+        <SkeletonText
+          className="mt-2 text-3xl leading-[1.2] md:text-4xl"
+          lines={["w-48 md:w-60"]}
+          barHeight="h-[.6em]"
+        />
       </div>
-      <Skeleton className="mt-6 h-4 w-full max-w-xl" />
-      <section className="mt-12">
-        <Skeleton className="h-7 w-40" />
+      <SkeletonText
+        className="mt-6 max-w-xl text-lg leading-8"
+        lines={["w-full sm:w-4/5", { bar: "w-1/2", line: "sm:hidden" }]}
+      />
+      <section className="mt-14">
+        <SkeletonText className="text-2xl md:text-3xl" lines={["w-52"]} barHeight="h-[.6em]" />
         <div className="mt-7">
           <EpisodeCardGridSkeleton />
         </div>

@@ -1,15 +1,13 @@
-import { Skeleton } from "@/components/ui/skeleton";
-import { EpisodeListItemSkeleton } from "@/components/content/loading-skeletons";
+import { INTRO_LONG, PageHeaderSkeleton, SeriesCardSkeleton } from "@/components/content/loading-skeletons";
 
+/** Mirrors /series: page header, then the 2-column grid of series tiles. */
 export default function SeriesLoading() {
   return (
-    <main className="container py-14">
-      <Skeleton className="h-4 w-24" />
-      <Skeleton className="mt-3 h-9 w-64" />
-      <Skeleton className="mt-4 h-4 w-96 max-w-full" />
-      <div className="mt-10">
+    <main className="container py-12 md:py-16">
+      <PageHeaderSkeleton eyebrowWidth="w-28" titleBar="w-40 md:w-64" intro={INTRO_LONG} />
+      <div className="mt-14 grid grid-cols-1 gap-x-8 gap-y-12 lg:grid-cols-2">
         {Array.from({ length: 4 }).map((_, index) => (
-          <EpisodeListItemSkeleton key={index} />
+          <SeriesCardSkeleton key={index} />
         ))}
       </div>
     </main>

@@ -1,0 +1,608 @@
+/* ==========================================================================
+   Admin dashboard (/admin) — the application-side of the landing page's
+   design language. Same tokens (cream canvas, glass surfaces, 22px radii,
+   ambient shadows, black-pill "active", gold eyebrows, Cairo headings);
+   only the layout is different: a floating sidebar instead of a floating
+   header, denser lists instead of photo rails.
+
+   Imported from app/globals.css (not from a component) and wrapped in
+   `@layer components` for the same reason media.css is: a separate,
+   unlayered sheet would beat every Tailwind utility on the same element.
+   ========================================================================== */
+
+@layer components {
+  /* ------------------------------------------------------------------------
+     Frame: sidebar + content column
+     ------------------------------------------------------------------------ */
+  .admin-frame {
+    width: 100%;
+    max-width: 1680px;
+    margin-inline: auto;
+    padding-inline: 0.875rem; /* matches .container below 640px */
+  }
+
+  @media (min-width: 640px) {
+    .admin-frame {
+      padding-inline: 1.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .admin-frame {
+      display: flex;
+      /* The site is RTL, so plain `row` would seat the sidebar on the right.
+         `row-reverse` puts it on the physical left; delete it to follow the
+         reading direction instead. */
+      flex-direction: row-reverse;
+      align-items: flex-start;
+      gap: 1.5rem;
+      padding-block: 1rem;
+    }
+  }
+
+  .admin-main {
+    min-width: 0;
+    padding-block: 1.5rem calc(var(--mobile-nav-clearance) + 1rem);
+  }
+
+  @media (min-width: 1024px) {
+    .admin-main {
+      flex: 1;
+      padding-block: 1.25rem 3rem;
+    }
+  }
+
+  .admin-content {
+    max-width: 1080px;
+    margin-inline: auto;
+  }
+
+  /* ------------------------------------------------------------------------
+     Sidebar (desktop)
+     ------------------------------------------------------------------------ */
+  .admin-sidebar {
+    display: none;
+  }
+
+  @media (min-width: 1024px) {
+    .admin-sidebar {
+      display: flex;
+      flex-direction: column;
+      flex: none;
+      width: 268px;
+      position: sticky;
+      top: 1rem;
+      height: calc(100svh - 2rem);
+      padding: 1.1rem 0.9rem 0.9rem;
+      border-radius: 26px;
+    }
+  }
+
+  .admin-sidebar__brand {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.2rem 0.6rem 1.1rem;
+    border-bottom: 1px solid var(--line-soft);
+  }
+
+  .admin-sidebar__scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: none;
+    padding-block: 0.4rem;
+  }
+
+  .admin-sidebar__scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .admin-sidebar__footer {
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--line-soft);
+  }
+
+  .admin-nav__label {
+    margin: 1.1rem 0 0.35rem;
+    padding-inline: 0.85rem;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.09em;
+    color: var(--muted);
+  }
+
+  .admin-nav__list {
+    display: grid;
+    gap: 0.2rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .admin-nav__link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 44px;
+    padding-inline: 0.85rem;
+    border-radius: 14px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--ink-soft);
+    transition:
+      background 0.2s ease,
+      color 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+
+  .admin-nav__link svg {
+    flex: none;
+    color: var(--muted);
+    transition: color 0.2s ease;
+  }
+
+  .admin-nav__link:hover {
+    background: var(--glass-light-strong);
+    color: var(--ink);
+  }
+
+  .admin-nav__link:hover svg {
+    color: var(--ink);
+  }
+
+  /* Same "active" language as the landing header pill and the mobile tab bar:
+     a matte black chip, no colour. */
+  .admin-nav__link[aria-current="page"] {
+    color: #fff;
+    background: linear-gradient(160deg, #2a2a2a 0%, #000 65%);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .admin-nav__link[aria-current="page"] svg {
+    color: #fff;
+  }
+
+  .admin-nav__trailing {
+    margin-inline-start: auto;
+    opacity: 0.55;
+  }
+
+  /* ------------------------------------------------------------------------
+     Top bar (< lg). Same floating glass bar as the landing header.
+     ------------------------------------------------------------------------ */
+  .admin-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    padding: 0.75rem 0.875rem 0;
+  }
+
+  @media (min-width: 640px) {
+    .admin-topbar {
+      padding: 1rem 1.5rem 0;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .admin-topbar {
+      display: none;
+    }
+  }
+
+  /* The site's tab bar is a 4-up grid; the dashboard has six destinations. */
+  .mobile-tab-bar__list--fluid {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+  }
+
+  /* ------------------------------------------------------------------------
+     Page header
+     ------------------------------------------------------------------------ */
+  .admin-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    min-height: 32px;
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: var(--ink-soft);
+    transition:
+      color 0.2s ease,
+      gap 0.2s ease;
+  }
+
+  .admin-back:hover {
+    color: var(--ink);
+    gap: 0.45rem;
+  }
+
+  /* ------------------------------------------------------------------------
+     Surfaces
+     ------------------------------------------------------------------------ */
+  /* Same recipe as .glass-panel, minus its press-scale: that rule would shrink
+     an entire list when any row inside it is tapped. */
+  .admin-panel {
+    background: var(--glass-light);
+    backdrop-filter: blur(16px) saturate(150%);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-xs);
+  }
+
+  .admin-panel--dashed {
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border: 1.5px dashed color-mix(in srgb, var(--accent-strong) 38%, transparent);
+    box-shadow: none;
+  }
+
+  .admin-panel__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.1rem 1.25rem;
+    border-bottom: 1px solid var(--line-soft);
+  }
+
+  .admin-panel__title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+
+  /* Rounded icon tile — the dashboard's stand-in for a thumbnail. */
+  .admin-tile {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    color: var(--brand);
+    background: color-mix(in srgb, var(--brand) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--brand) 14%, transparent);
+  }
+
+  .admin-tile--gold {
+    color: var(--accent-strong);
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
+    border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+  }
+
+  /* ------------------------------------------------------------------------
+     Stat cards (overview)
+     ------------------------------------------------------------------------ */
+  .admin-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 1.15rem 1.25rem 1.1rem;
+    transition:
+      transform 0.25s ease,
+      box-shadow 0.25s ease,
+      background 0.25s ease;
+  }
+
+  .admin-stat:hover {
+    transform: translateY(-2px);
+    background: var(--glass-light-strong);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .admin-stat__value {
+    font-family: var(--font-display, "Cairo", Tahoma, sans-serif);
+    font-size: 2.35rem;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .admin-stat__value--zero {
+    color: var(--muted);
+  }
+
+  /* ------------------------------------------------------------------------
+     Lists
+     ------------------------------------------------------------------------ */
+  .admin-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.85rem 1.25rem;
+    transition: background 0.2s ease;
+  }
+
+  .admin-row + .admin-row {
+    border-top: 1px solid var(--line-soft);
+  }
+
+  .admin-row:hover {
+    background: rgba(255, 255, 255, 0.45);
+  }
+
+  .admin-row:last-child:hover {
+    border-end-start-radius: var(--radius-card);
+    border-end-end-radius: var(--radius-card);
+  }
+
+  .admin-thumb {
+    position: relative;
+    flex: none;
+    width: 92px;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border-radius: 12px;
+    background: var(--surface);
+  }
+
+  @media (min-width: 640px) {
+    .admin-thumb {
+      width: 128px;
+      border-radius: 14px;
+    }
+  }
+
+  .admin-row__title {
+    margin: 0.4rem 0 0;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+    font-size: 0.95rem;
+    font-weight: 800;
+    line-height: 1.6;
+  }
+
+  /* Beside a 92px thumbnail and the edit button a phone has little width, so
+     titles get a third line there rather than being cut mid-name. */
+  @media (min-width: 640px) {
+    .admin-row__title {
+      -webkit-line-clamp: 2;
+    }
+  }
+
+  /* Status pill: tinted, with a dot, instead of an outlined chip. */
+  .admin-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.18rem 0.65rem;
+    border-radius: var(--radius-pill);
+    font-size: 0.72rem;
+    font-weight: 800;
+    line-height: 1.6;
+    white-space: nowrap;
+    color: var(--muted);
+    background: color-mix(in srgb, var(--muted) 14%, transparent);
+  }
+
+  .admin-status::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .admin-status--published {
+    color: var(--brand);
+    background: color-mix(in srgb, var(--brand) 12%, transparent);
+  }
+
+  .admin-status--draft {
+    color: var(--accent-strong);
+    background: color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+
+  .admin-status--featured {
+    color: var(--ink);
+    background: var(--glass-light-strong);
+    box-shadow: inset 0 0 0 1px var(--line);
+  }
+
+  .admin-status--featured::before {
+    display: none;
+  }
+
+  .admin-status--running::before {
+    animation: admin-pulse 1.4s ease-in-out infinite;
+  }
+
+  .admin-status--failed {
+    color: #a3392c;
+    background: color-mix(in srgb, #c0392b 12%, transparent);
+  }
+
+  @keyframes admin-pulse {
+    50% {
+      opacity: 0.25;
+    }
+  }
+
+  /* ------------------------------------------------------------------------
+     Forms
+     ------------------------------------------------------------------------ */
+  .admin-label {
+    display: block;
+    font-size: 0.88rem;
+    font-weight: 800;
+  }
+
+  .admin-field {
+    display: block;
+    width: 100%;
+    min-height: 48px;
+    margin-top: 0.5rem;
+    padding: 0.75rem 1rem;
+    color: var(--ink);
+    background-color: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadow-xs);
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+
+  .admin-field::placeholder {
+    color: var(--muted);
+  }
+
+  .admin-field:hover {
+    border-color: color-mix(in srgb, var(--ink) 24%, var(--line));
+  }
+
+  .admin-field:focus-visible {
+    outline: none;
+    border-color: var(--brand);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand) 20%, transparent);
+  }
+
+  textarea.admin-field {
+    min-height: 120px;
+    line-height: 1.9;
+    resize: vertical;
+  }
+
+  select.admin-field {
+    appearance: none;
+    padding-inline-end: 2.75rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2353615e' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: left 1rem center;
+  }
+
+  /* A field sitting on the cinematic quick-add card. */
+  .admin-field--on-dark {
+    margin-top: 0;
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: none;
+    backdrop-filter: blur(14px) saturate(150%);
+    -webkit-backdrop-filter: blur(14px) saturate(150%);
+  }
+
+  .admin-field--on-dark::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  .admin-field--on-dark:hover {
+    border-color: rgba(255, 255, 255, 0.5);
+  }
+
+  .admin-field--on-dark:focus-visible {
+    border-color: var(--on-brand-accent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--on-brand-accent) 28%, transparent);
+  }
+
+  /* ------------------------------------------------------------------------
+     Feedback
+     ------------------------------------------------------------------------ */
+  .admin-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem 1.15rem;
+    border: 1px solid;
+    border-radius: 18px;
+    font-size: 0.88rem;
+    line-height: 1.85;
+  }
+
+  .admin-notice > svg {
+    flex: none;
+    margin-top: 0.25rem;
+  }
+
+  .admin-notice--warning {
+    color: var(--ink-soft);
+    background: color-mix(in srgb, var(--accent) 16%, rgba(255, 255, 255, 0.5));
+    border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  }
+
+  .admin-notice--warning > svg {
+    color: var(--accent-strong);
+  }
+
+  .admin-notice--danger {
+    color: #8c2b20;
+    background: color-mix(in srgb, #c0392b 8%, rgba(255, 255, 255, 0.6));
+    border-color: color-mix(in srgb, #c0392b 30%, transparent);
+  }
+
+  .admin-notice--success {
+    color: var(--brand-deep);
+    background: color-mix(in srgb, var(--brand) 9%, rgba(255, 255, 255, 0.6));
+    border-color: color-mix(in srgb, var(--brand) 26%, transparent);
+  }
+
+  .admin-mini-stat {
+    padding: 0.6rem 0.8rem;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid var(--line-soft);
+  }
+
+  .admin-mini-stat b {
+    display: block;
+    font-family: var(--font-display, "Cairo", Tahoma, sans-serif);
+    font-size: 1.25rem;
+    font-weight: 900;
+    line-height: 1.3;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .admin-mini-stat span {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--muted);
+  }
+
+  /* ------------------------------------------------------------------------
+     Quick-add card — the one "cinematic" moment on the overview, echoing the
+     landing hero and its feature banners (photo + scrim + glass controls).
+     ------------------------------------------------------------------------ */
+  .admin-quickadd {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    padding: clamp(1.4rem, 4vw, 2.25rem);
+    color: var(--on-brand);
+    background: var(--cinematic);
+    border-radius: var(--radius-banner);
+    box-shadow: var(--shadow-md);
+  }
+
+  .admin-quickadd__photo {
+    z-index: -2;
+    object-fit: cover;
+    object-position: center 35%;
+  }
+
+  .admin-quickadd__scrim {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(
+      270deg,
+      rgba(6, 10, 9, 0.94) 0%,
+      rgba(6, 10, 9, 0.8) 45%,
+      rgba(6, 10, 9, 0.45) 100%
+    );
+  }
+
+  @media (max-width: 639px) {
+    .admin-quickadd__scrim {
+      background: rgba(6, 10, 9, 0.82);
+    }
+  }
+}

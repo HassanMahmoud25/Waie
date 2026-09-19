@@ -3,6 +3,8 @@
    in this same stylesheet: as a separate file they'd load first and their
    `@layer components` would rank below Tailwind's `base` layer. */
 @import "../components/media/media.css";
+/* Admin dashboard styles — same reasoning as media.css above. */
+@import "../components/admin/admin.css";
 
 /* ==========================================================================
    Design tokens — the single source of truth for color, radius and type.
@@ -1732,10 +1734,26 @@
     border-radius: var(--radius-image);
   }
 
+  /* A placeholder sitting on another placeholder (text bars over a hero- or
+     banner-sized block): one step darker so it still reads against it. */
+  .skeleton--strong {
+    background: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--ink) 9%, var(--surface)) 25%,
+      color-mix(in srgb, var(--ink) 5%, var(--surface)) 50%,
+      color-mix(in srgb, var(--ink) 9%, var(--surface)) 75%
+    );
+    background-size: 200% 100%;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .skeleton {
       animation: none;
       background: var(--surface);
+    }
+
+    .skeleton--strong {
+      background: color-mix(in srgb, var(--ink) 9%, var(--surface));
     }
   }
 

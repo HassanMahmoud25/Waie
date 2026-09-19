@@ -1,5 +1,4 @@
 import type { ContentStatus } from "@/types/content-status";
-import { Tag } from "@/components/ui/tag";
 import { cn } from "@/lib/utils/cn";
 
 const statusLabel: Record<ContentStatus, string> = {
@@ -9,11 +8,11 @@ const statusLabel: Record<ContentStatus, string> = {
 };
 
 const statusClass: Record<ContentStatus, string> = {
-  PUBLISHED: "border-[var(--brand)] text-[var(--brand)]",
-  DRAFT: "border-[var(--accent-strong)] text-[var(--accent-strong)]",
-  ARCHIVED: "border-[var(--muted)] text-[var(--muted)]",
+  PUBLISHED: "admin-status--published",
+  DRAFT: "admin-status--draft",
+  ARCHIVED: "",
 };
 
 export function StatusBadge({ status }: { status: ContentStatus }) {
-  return <Tag className={cn("py-1 text-xs", statusClass[status])}>{statusLabel[status]}</Tag>;
+  return <span className={cn("admin-status", statusClass[status])}>{statusLabel[status]}</span>;
 }

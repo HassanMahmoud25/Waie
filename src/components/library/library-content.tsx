@@ -7,7 +7,7 @@ import type { SeriesWithStats } from "@/types/series";
 import { useLibrary } from "@/hooks/use-library";
 import { EpisodeCard } from "@/components/episode/episode-card";
 import { EmptyState } from "@/components/content/empty-state";
-import { EpisodeCardGridSkeleton } from "@/components/content/loading-skeletons";
+import { LibraryContentSkeleton } from "@/components/content/loading-skeletons";
 import { SectionHeading } from "@/components/content/section-heading";
 
 /** Reads saved/completed episode ids from the local library (see hooks/use-library.ts) and resolves them against server-fetched content. */
@@ -26,13 +26,7 @@ export function LibraryContent({ episodes, series }: { episodes: Episode[]; seri
     .map(([id]) => episodesById.get(id))
     .filter((episode): episode is Episode => Boolean(episode));
 
-  if (!isHydrated) {
-    return (
-      <section className="mt-10">
-        <EpisodeCardGridSkeleton />
-      </section>
-    );
-  }
+  if (!isHydrated) return <LibraryContentSkeleton />;
 
   return (
     <>

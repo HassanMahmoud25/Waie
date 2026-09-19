@@ -10,6 +10,7 @@ import type { SearchResults } from "@/types/search";
 import type { Topic } from "@/types/topic";
 import { RESULT_FORMS, formatCount, formatDuration } from "@/lib/utils/format";
 import { listQuickTopicsAction, searchContentAction } from "@/app/(site)/search/actions";
+import { TopicChipsSkeleton } from "@/components/content/loading-skeletons";
 import { SearchResultRow } from "./search-result-row";
 
 const DEBOUNCE_MS = 250;
@@ -160,7 +161,7 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
                     {topic.title}
                   </Link>
                 ))}
-                {!topics && <span className="skeleton h-9 w-full" />}
+                {!topics && <TopicChipsSkeleton count={10} gap="gap-2" className="w-full" />}
               </div>
             </div>
           )}

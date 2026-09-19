@@ -1,15 +1,16 @@
-import { Skeleton } from "@/components/ui/skeleton";
-import { EpisodeCardGridSkeleton } from "@/components/content/loading-skeletons";
+import { INTRO_SHORT, LibraryContentSkeleton, PageHeaderSkeleton } from "@/components/content/loading-skeletons";
 
+/** Mirrors /library: page header, then the saved / finished sections (see LibraryContent). */
 export default function LibraryLoading() {
   return (
     <main className="container py-14">
-      <Skeleton className="h-4 w-24" />
-      <Skeleton className="mt-3 h-9 w-40" />
-      <Skeleton className="mt-4 h-4 w-full max-w-xl" />
-      <div className="mt-10">
-        <EpisodeCardGridSkeleton />
-      </div>
+      <PageHeaderSkeleton
+        eyebrowWidth="w-32"
+        titleClassName="mt-4 text-2xl leading-[1.8] md:text-3xl"
+        titleBar="w-28 md:w-36"
+        intro={INTRO_SHORT}
+      />
+      <LibraryContentSkeleton />
     </main>
   );
 }

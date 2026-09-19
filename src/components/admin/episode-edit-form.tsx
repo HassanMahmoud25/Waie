@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { CircleAlert, Loader2 } from "lucide-react";
 import type { Episode } from "@/types/episode";
 import type { ContentStatus } from "@/types/content-status";
 import { Button } from "@/components/ui/button";
@@ -18,22 +19,16 @@ export function EpisodeEditForm({ episode }: { episode: Episode }) {
   const [state, formAction, isPending] = useActionState(updateEpisodeAction.bind(null, episode.id), initialState);
 
   return (
-    <form action={formAction} className="grid gap-6 border border-[var(--line)] bg-[var(--paper)] p-6">
+    <form action={formAction} className="admin-panel grid gap-6 p-5 sm:p-8">
       <div>
-        <label htmlFor="title" className="block text-sm font-bold">
+        <label htmlFor="title" className="admin-label">
           العنوان
         </label>
-        <input
-          id="title"
-          name="title"
-          defaultValue={episode.title}
-          required
-          className="mt-2 w-full border border-[var(--line)] bg-white px-4 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)]"
-        />
+        <input id="title" name="title" defaultValue={episode.title} required className="admin-field" />
       </div>
 
       <div>
-        <label htmlFor="description" className="block text-sm font-bold">
+        <label htmlFor="description" className="admin-label">
           الوصف
         </label>
         <textarea
@@ -41,21 +36,16 @@ export function EpisodeEditForm({ episode }: { episode: Episode }) {
           name="description"
           defaultValue={episode.description}
           required
-          rows={4}
-          className="mt-2 w-full resize-y border border-[var(--line)] bg-white px-4 py-3 leading-7 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)]"
+          rows={5}
+          className="admin-field"
         />
       </div>
 
-      <div className="max-w-xs">
-        <label htmlFor="status" className="block text-sm font-bold">
+      <div className="sm:max-w-xs">
+        <label htmlFor="status" className="admin-label">
           الحالة
         </label>
-        <select
-          id="status"
-          name="status"
-          defaultValue={episode.status}
-          className="mt-2 w-full border border-[var(--line)] bg-white px-4 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)]"
-        >
+        <select id="status" name="status" defaultValue={episode.status} className="admin-field">
           {statusOptions.map((option) => (
             <option value={option.value} key={option.value}>
               {option.label}
@@ -65,7 +55,7 @@ export function EpisodeEditForm({ episode }: { episode: Episode }) {
       </div>
 
       <div>
-        <label htmlFor="audioUrl" className="block text-sm font-bold">
+        <label htmlFor="audioUrl" className="admin-label">
           رابط النسخة الصوتية
         </label>
         <input
@@ -77,21 +67,28 @@ export function EpisodeEditForm({ episode }: { episode: Episode }) {
           defaultValue={episode.audioUrl ?? ""}
           placeholder="https://media.example.com/episodes/waie-111.m4a"
           aria-describedby="audioUrl-hint"
-          className="mt-2 w-full border border-[var(--line)] bg-white px-4 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)]"
+          className="admin-field"
         />
-        <p id="audioUrl-hint" className="mt-2 text-sm text-[var(--ink-soft)]">
+        <p id="audioUrl-hint" className="mt-2 text-sm leading-7 text-[var(--ink-soft)]">
           اختياري. يُستخدم تلقائيًا صوت الحلقة من بودكاست وعي عند توفره؛ هذا الحقل لتجاوزه أو لحلقة غير موجودة في البودكاست (ملف صوتي تملكه وعي، مثل M4A). اتركه فارغًا للاعتماد على البودكاست. لا تُقبل روابط يوتيوب.
         </p>
       </div>
 
       {state.error && (
-        <p role="alert" className="border border-[var(--accent-strong)] bg-white px-4 py-3 text-sm font-bold text-[var(--accent-strong)]">
+        <p role="alert" className="admin-notice admin-notice--danger font-bold">
+          <CircleAlert size={17} aria-hidden="true" />
           {state.error}
         </p>
       )}
 
-      <div className="flex items-center gap-3">
-        <Button type="submit" disabled={isPending}>
+      <div className="flex flex-col-reverse gap-3 border-t border-[var(--line-soft)] pt-6 sm:flex-row sm:items-center">
+        <Button
+          type="submit"
+          disabled={isPending}
+          aria-busy={isPending}
+          icon={isPending ? <Loader2 className="animate-spin" size={16} aria-hidden="true" /> : undefined}
+          iconPosition="start"
+        >
           {isPending ? "جارٍ الحفظ…" : "حفظ التعديلات"}
         </Button>
         <Button href="/admin/episodes" variant="secondary">

@@ -1,13 +1,17 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
-import { Pencil, Video } from "lucide-react";
+import { ArrowLeft, Headphones } from "lucide-react";
 import { contentRepository } from "@/lib/repositories";
 import { AdminShell } from "@/components/admin/admin-shell";
-import { StatusBadge } from "@/components/admin/status-badge";
-import { Button } from "@/components/ui/button";
-import { formatArabicDate } from "@/lib/utils/format";
+import { adminNavItems } from "@/components/admin/admin-nav";
+import { EpisodeRow } from "@/components/admin/episode-row";
+import { EmptyState } from "@/components/content/empty-state";
+import { YoutubeGlyph } from "@/components/icons/platform-glyphs";
 
 export const metadata: Metadata = { title: "لوحة الإدارة" };
+
+const iconFor = (href: string) => adminNavItems.find((item) => item.href === href)!.icon;
 
 export default async function AdminPage() {
   const [episodes, series, topics, collections] = await Promise.all([
@@ -28,74 +32,94 @@ export default async function AdminPage() {
 
   return (
     <AdminShell title="لوحة وعي" description="إدارة الحلقات والسلاسل والمواضيع والمختارات.">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {sections.map((section) => (
-          <Link
-            href={section.href}
-            key={section.label}
-            className="border border-[var(--line)] p-5 transition-colors hover:border-[var(--brand)]"
-          >
-            <p className="text-sm text-[var(--ink-soft)]">{section.label}</p>
-            <b className="mt-3 block text-3xl">{section.count}</b>
-            <span className="mt-5 block text-sm font-bold text-[var(--brand)]">إدارة ←</span>
-          </Link>
-        ))}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        {sections.map((section) => {
+          const Icon = iconFor(section.href);
+          return (
+            <Link href={section.href} key={section.label} className="admin-panel admin-stat">
+              <span className="flex items-center justify-between">
+                <span className="admin-tile">
+                  <Icon size={20} aria-hidden="true" />
+                </span>
+                <span className="section-link">
+                  إدارة <ArrowLeft size={14} aria-hidden="true" />
+                </span>
+              </span>
+              <span>
+                <span className={`admin-stat__value ${section.count === 0 ? "admin-stat__value--zero" : ""}`}>
+                  {section.count}
+                </span>
+                <span className="mt-1.5 block text-sm font-bold text-[var(--ink-soft)]">{section.label}</span>
+              </span>
+            </Link>
+          );
+        })}
       </div>
 
-      <section className="mt-8 border border-[var(--line)] p-6">
-        <div className="flex items-start gap-4">
-          <Video className="mt-1 shrink-0 text-[var(--brand)]" size={22} aria-hidden="true" />
-          <div>
-            <p className="eyebrow">خطوة سريعة</p>
-            <h2 className="mt-1 text-xl font-black">أضف حلقة من يوتيوب</h2>
-            <p className="mt-2 max-w-xl text-sm leading-6 text-[var(--ink-soft)]">
-              الصق الرابط، اجلب بيانات الفيديو، ثم اختر السلسلة والمواضيع قبل النشر.
-            </p>
-          </div>
+      <section className="admin-quickadd mt-6 sm:mt-8" aria-labelledby="quick-add-title">
+        <Image
+          src="/brand/hero-stage.jpg"
+          alt=""
+          fill
+          sizes="(min-width: 1024px) 1080px, 100vw"
+          className="admin-quickadd__photo"
+        />
+        <div className="admin-quickadd__scrim" aria-hidden="true" />
+
+        <div className="max-w-xl">
+          <p className="eyebrow-pill eyebrow-pill--on-dark w-fit">
+            <YoutubeGlyph size={15} />
+            خطوة سريعة
+          </p>
+          <h2 id="quick-add-title" className="mt-4 text-xl font-black leading-[1.5] tracking-[-.02em] sm:text-2xl">
+            أضف حلقة من يوتيوب
+          </h2>
+          <p className="mt-2 text-sm leading-7 text-[var(--on-brand-soft)]">
+            الصق الرابط، اجلب بيانات الفيديو، ثم اختر السلسلة والمواضيع قبل النشر.
+          </p>
         </div>
-        <form className="mt-5 flex flex-col gap-3 sm:flex-row">
+
+        <form className="mt-6 flex flex-col gap-3 sm:flex-row">
           <label htmlFor="youtube-url" className="sr-only">
             رابط يوتيوب
           </label>
           <input
             id="youtube-url"
-            className="flex-1 border border-[var(--line)] bg-white px-4 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)]"
+            dir="ltr"
+            inputMode="url"
+            className="admin-field admin-field--on-dark flex-1"
             placeholder="https://youtube.com/watch?v=..."
           />
-          <Button href="/admin/sync/youtube" variant="primary">
+          <Link href="/admin/sync/youtube" className="btn btn-on-media">
             جلب بيانات الفيديو
-          </Button>
+          </Link>
         </form>
       </section>
 
-      <section className="mt-6 border border-[var(--line)]">
-        <div className="flex items-center justify-between p-5">
-          <h2 className="font-black">آخر الحلقات</h2>
-          <Link className="text-sm font-bold text-[var(--brand)]" href="/admin/episodes">
-            إدارة الحلقات ←
+      <section className="admin-panel mt-6 sm:mt-8" aria-labelledby="recent-episodes-title">
+        <div className="admin-panel__head">
+          <h2 id="recent-episodes-title" className="admin-panel__title">
+            آخر الحلقات
+          </h2>
+          <Link className="section-link" href="/admin/episodes">
+            إدارة الحلقات <ArrowLeft size={15} aria-hidden="true" />
           </Link>
         </div>
-        <div className="border-t border-[var(--line)]">
-          {recentEpisodes.map((episode) => (
-            <div
-              key={episode.id}
-              className="flex items-center justify-between gap-4 border-b border-[var(--line)] px-5 py-4 last:border-0"
-            >
-              <div className="min-w-0">
-                <b className="block truncate">{episode.title}</b>
-                <p className="meta mt-1">
-                  {episode.episodeNumber !== null && <span>وعي {episode.episodeNumber}</span>}
-                  <StatusBadge status={episode.status} />
-                  <span>{formatArabicDate(episode.publishedAt)}</span>
-                </p>
-              </div>
-              <Link href={`/admin/episodes/${episode.id}`} className="btn btn-secondary shrink-0">
-                <Pencil size={15} aria-hidden="true" />
-                تعديل
-              </Link>
-            </div>
-          ))}
-        </div>
+        {recentEpisodes.length > 0 ? (
+          <div>
+            {recentEpisodes.map((episode) => (
+              <EpisodeRow episode={episode} key={episode.id} />
+            ))}
+          </div>
+        ) : (
+          <div className="p-4">
+            <EmptyState
+              icon={Headphones}
+              title="لا توجد حلقات بعد."
+              description="استورد قناة وعي من صفحة مزامنة يوتيوب لتظهر الحلقات هنا."
+            />
+          </div>
+        )}
       </section>
     </AdminShell>
   );

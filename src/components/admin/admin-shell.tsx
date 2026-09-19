@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils/cn";
 
 type AdminShellProps = {
   eyebrow?: string;
@@ -14,40 +14,44 @@ type AdminShellProps = {
 };
 
 /**
- * Consistent chrome for every /admin page: eyebrow + title + optional back
- * link, a "عرض الموقع" escape hatch, and an optional page-level action slot.
- * Keeps every admin screen on the same design tokens as the public site —
- * no separate admin theme.
+ * The page header every /admin screen shares: optional back chip, eyebrow pill,
+ * title, description and an optional action slot. The surrounding frame
+ * (sidebar / tab bar) lives in app/admin/layout.tsx; this is just the page's
+ * own heading, laid out like the library and series pages on the public site.
  */
 export function AdminShell({ eyebrow = "إدارة المحتوى", title, description, back, action, children }: AdminShellProps) {
   return (
-    <main className="min-h-screen bg-[var(--canvas)]">
-      <div className="container py-10 md:py-14">
-        <div className="flex flex-wrap items-start justify-between gap-6">
-          <div>
-            {back && (
-              <Link
-                href={back.href}
-                className="mb-3 inline-flex items-center gap-2 text-sm font-bold text-[var(--brand)]"
-              >
-                <ChevronRight size={15} aria-hidden="true" />
-                {back.label}
-              </Link>
+    <>
+      <header>
+        <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+              {back && (
+                <Link href={back.href} className="admin-back">
+                  <ChevronRight size={16} aria-hidden="true" />
+                  {back.label}
+                </Link>
+              )}
+              <p className="eyebrow-pill w-fit">{eyebrow}</p>
+            </div>
+            {/* Section names get the site's page-title size; a long episode title as the heading gets a step down. */}
+            <h1
+              className={cn(
+                "mt-4 max-w-3xl text-balance font-black leading-[1.6] tracking-[-.03em]",
+                title.length > 36 ? "text-xl md:text-2xl" : "text-2xl md:text-3xl",
+              )}
+            >
+              {title}
+            </h1>
+            {description && (
+              <p className="mt-3 max-w-xl leading-8 text-[var(--ink-soft)]">{description}</p>
             )}
-            <p className="eyebrow">{eyebrow}</p>
-            <h1 className="mt-2 text-3xl font-black tracking-[-.03em] md:text-4xl">{title}</h1>
-            {description && <p className="mt-3 max-w-xl leading-7 text-[var(--ink-soft)]">{description}</p>}
           </div>
-          <div className="flex items-center gap-3">
-            {action}
-            <Button href="/" variant="secondary">
-              عرض الموقع
-            </Button>
-          </div>
+          {action}
         </div>
+      </header>
 
-        <div className="mt-10">{children}</div>
-      </div>
-    </main>
+      <div className="mt-8 md:mt-10">{children}</div>
+    </>
   );
 }

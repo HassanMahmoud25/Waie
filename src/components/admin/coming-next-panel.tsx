@@ -8,11 +8,13 @@ import { Wrench } from "lucide-react";
  */
 export function ComingNextPanel({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="flex items-start gap-4 border border-dashed border-[var(--line)] bg-[var(--paper)] p-6">
-      <Wrench className="mt-1 shrink-0 text-[var(--muted)]" size={20} aria-hidden="true" />
-      <div>
-        <h2 className="text-lg font-black">{title}</h2>
-        <div className="mt-2 max-w-xl leading-7 text-[var(--ink-soft)]">{children}</div>
+    <div className="admin-panel admin-panel--dashed flex items-start gap-4 p-5 sm:p-6">
+      <span className="admin-tile admin-tile--gold">
+        <Wrench size={19} aria-hidden="true" />
+      </span>
+      <div className="min-w-0">
+        <h2 className="text-base font-black leading-[1.9]">{title}</h2>
+        <div className="mt-1 max-w-xl text-sm leading-7 text-[var(--ink-soft)]">{children}</div>
       </div>
     </div>
   );

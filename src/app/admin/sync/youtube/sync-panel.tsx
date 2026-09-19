@@ -70,17 +70,20 @@ export function SyncPanel() {
         const Icon = operation.icon;
 
         return (
-          <div key={operation.key} className="flex flex-col gap-4 bg-[var(--surface)] p-6">
-            <div className="flex items-start gap-3">
-              <Icon className="mt-0.5 shrink-0 text-[var(--brand)]" size={20} aria-hidden />
-              <div>
-                <h3 className="font-black">{operation.title}</h3>
-                <p className="mt-1 text-sm leading-6 text-[var(--ink-soft)]">{operation.description}</p>
+          <div key={operation.key} className="admin-panel flex flex-col gap-5 p-5 sm:p-6">
+            <div className="flex items-start gap-4">
+              <span className="admin-tile">
+                <Icon size={20} aria-hidden />
+              </span>
+              <div className="min-w-0">
+                <h3 className="text-base font-black leading-[1.8]">{operation.title}</h3>
+                <p className="mt-1 text-sm leading-7 text-[var(--ink-soft)]">{operation.description}</p>
               </div>
             </div>
 
             <Button
               variant="secondary"
+              className="mt-auto w-full sm:w-fit"
               onClick={() => run(operation)}
               disabled={isPending}
               icon={isRunning ? <Loader2 className="animate-spin" size={16} aria-hidden /> : undefined}
@@ -91,26 +94,42 @@ export function SyncPanel() {
             </Button>
 
             {state?.error && (
-              <p className="flex items-start gap-2 text-sm font-bold text-red-600" role="alert">
-                <CircleAlert className="mt-0.5 shrink-0" size={16} aria-hidden />
+              <p className="admin-notice admin-notice--danger font-bold" role="alert">
+                <CircleAlert size={17} aria-hidden />
                 {state.error}
               </p>
             )}
 
             {state?.result && (
-              <div className="border-t border-[var(--line)] pt-3 text-sm leading-7 text-[var(--ink-soft)]">
-                <p className="mb-1 flex items-center gap-2 font-bold text-[var(--brand)]">
-                  <CircleCheck size={16} aria-hidden />
+              <div className="flex flex-col gap-3 border-t border-[var(--line-soft)] pt-4 text-sm leading-7 text-[var(--ink-soft)]">
+                <p className="flex items-center gap-2 font-bold text-[var(--brand)]">
+                  <CircleCheck size={17} aria-hidden />
                   اكتمل خلال {(state.result.durationMs / 1000).toFixed(1)} ث
                 </p>
-                <p>فيديوهات مكتشفة: {state.result.videosDiscovered}</p>
-                <p>حلقات جديدة: {state.result.videosCreated}</p>
-                <p>حلقات محدَّثة: {state.result.videosUpdated}</p>
-                <p>تم تجاوزها: {state.result.videosSkipped}</p>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="admin-mini-stat">
+                    <b>{state.result.videosDiscovered}</b>
+                    <span>فيديوهات مكتشفة</span>
+                  </div>
+                  <div className="admin-mini-stat">
+                    <b>{state.result.videosCreated}</b>
+                    <span>حلقات جديدة</span>
+                  </div>
+                  <div className="admin-mini-stat">
+                    <b>{state.result.videosUpdated}</b>
+                    <span>حلقات محدَّثة</span>
+                  </div>
+                  <div className="admin-mini-stat">
+                    <b>{state.result.videosSkipped}</b>
+                    <span>تم تجاوزها</span>
+                  </div>
+                </div>
+
                 {state.result.playlistsDiscovered > 0 && <p>قوائم تشغيل مكتشفة: {state.result.playlistsDiscovered}</p>}
                 {state.result.seriesCreated > 0 && <p>سلاسل جديدة: {state.result.seriesCreated}</p>}
                 {state.result.errors.length > 0 && (
-                  <details className="mt-2">
+                  <details className="admin-notice admin-notice--warning block">
                     <summary className="cursor-pointer font-bold text-[var(--accent-strong)]">
                       {state.result.errors.length} خطأ أثناء التشغيل
                     </summary>
