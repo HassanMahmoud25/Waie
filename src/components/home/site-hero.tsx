@@ -95,16 +95,19 @@ export function SiteHero({
         </p>
 
         <div
-          className="hero-in mt-6 flex flex-wrap items-center gap-2.5 sm:gap-3"
+          className="hero-in mt-6 flex flex-col gap-2.5 sm:flex-row sm:items-center sm:gap-3"
           style={{ "--hero-delay": "0.32s" } as CSSProperties}
         >
           {latestEpisode && (
-            <Link href={`/episodes/${latestEpisode.slug}`} className="btn btn-glass--solid">
+            <Link
+              href={`/episodes/${latestEpisode.slug}`}
+              className="btn btn-glass--solid w-full sm:w-auto"
+            >
               <Play size={16} fill="currentColor" />
               استمع لأحدث حلقة
             </Link>
           )}
-          <Link href="/series" className="btn btn-glass">
+          <Link href="/series" className="btn btn-glass w-full sm:w-auto">
             تصفّح كل السلاسل
             <ArrowLeft size={16} />
           </Link>
