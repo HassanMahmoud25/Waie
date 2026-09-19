@@ -63,12 +63,22 @@
 
   /* Below `lg` the index is a swipeable strip of pills that bleeds to the
      screen edge (the scroll affordance); from `lg` it is a panel of rows. */
+  /* `min-width: 0` on the wrapper (and `minmax(0, 1fr)` on the hero grid it sits
+     in) is load-bearing: a non-wrapping strip's min-content is its full length
+     (~1100px), and without them it stretches its grid track to that width, so the
+     whole page lays out wider than the phone and Android Chrome zooms out to fit. */
+  .topics-toc {
+    min-width: 0;
+    max-width: 100%;
+  }
+
   .topics-toc__list {
     display: flex;
     gap: 0.5rem;
     margin-inline: -14px;
     padding: 0.35rem 14px;
     overflow-x: auto;
+    overscroll-behavior-inline: contain;
     scroll-snap-type: x proximity;
     scroll-padding-inline: 14px;
     scrollbar-width: none;
