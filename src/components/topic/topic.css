@@ -88,7 +88,13 @@
     display: none;
   }
 
+  /* `position: relative` is load-bearing: each link holds an `sr-only` (absolutely
+     positioned) label. Without a positioned ancestor its containing block is the
+     page, so the strip can't clip it and it sits at its pill's off-screen spot
+     (down to x = -800). Android Chrome counts that as page overflow and, after a
+     client-side navigation, widens the layout to ~1000px and zooms out. */
   .topics-toc__link {
+    position: relative;
     display: flex;
     flex-shrink: 0;
     align-items: center;
