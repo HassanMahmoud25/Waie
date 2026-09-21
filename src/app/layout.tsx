@@ -58,20 +58,14 @@ export const metadata: Metadata = {
     siteName: siteConfig.name,
     title: siteConfig.defaultTitle,
     description: siteConfig.description,
-    images: [
-      {
-        url: "/opengraph-image.png",
-        width: 1200,
-        height: 630,
-        alt: siteConfig.name,
-      },
-    ],
+    // og:image comes from app/opengraph-image.png (and twitter:image from
+    // app/twitter-image.png): Next emits absolute, content-hashed URLs from
+    // metadataBase, so scrapers re-fetch when the artwork changes.
   },
   twitter: {
     card: "summary_large_image",
     title: siteConfig.defaultTitle,
     description: siteConfig.description,
-    images: ["/opengraph-image.png"],
   },
 };
 

@@ -5,20 +5,35 @@
 
 export type NavLink = { label: string; href: string };
 
+/**
+ * Canonical origin, used for metadataBase (og:image / twitter:image must be
+ * absolute), the sitemap and robots. An explicit NEXT_PUBLIC_SITE_URL wins;
+ * otherwise Vercel's production domain, so a forgotten env var can never ship
+ * `localhost` into link previews.
+ */
+function resolveSiteUrl(): string {
+  const explicit = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (explicit) return explicit.replace(/\/+$/, "");
+  const vercelHost = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
+  if (vercelHost) return `https://${vercelHost}`;
+  return "https://site-waie.vercel.app/";
+}
+
 export const siteConfig = {
   name: "وعي",
-  tagline: "حوارات عن الدين وما يشغلنا في حياتنا",
-  defaultTitle: "وعي | حوارات عن الدين وما يشغلنا في حياتنا",
+  tagline: "مساحات نتأمل فيها الدين والحياة",
+  defaultTitle: "وعي | حوارات مساحات نتأمل فيها الدين والحياة",
   description:
     "أحمد عامر وحازم الصديق وشريف علي يتحدثون عن الصلاة والتوبة والأخلاق، وعن سِيَر الصحابة وقصص الأنبياء ورمضان.",
-  url: process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
+  url: resolveSiteUrl(),
   /**
    * Waie's own podcast RSS feed (the source of every episode's audio -- see
    * lib/audio/podcast-feed.ts). Set PODCAST_FEED_URL to point elsewhere, or to an
    * empty string to turn Listen mode off.
    */
   podcastFeedUrl:
-    process.env.PODCAST_FEED_URL ?? "https://feeds.soundcloud.com/users/soundcloud:users:1073536591/sounds.rss",
+    process.env.PODCAST_FEED_URL ??
+    "https://feeds.soundcloud.com/users/soundcloud:users:1073536591/sounds.rss",
 } as const;
 
 export const primaryNav: NavLink[] = [
