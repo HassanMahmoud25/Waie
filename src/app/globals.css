@@ -554,7 +554,6 @@
   .btn-secondary:hover {
     border-color: rgba(255, 255, 255, 0.85);
     background: var(--glass-light-strong);
-    box-shadow: var(--shadow-sm);
   }
 
   /* "Marked as watched" state — a soft green tint instead of the neutral
