@@ -277,6 +277,45 @@
   }
 
   /* ------------------------------------------------------------------------
+     Status tabs (episode list) — same "matte black pill" active language as
+     .admin-nav__link[aria-current="page"], laid out horizontally instead of
+     in a sidebar.
+     ------------------------------------------------------------------------ */
+  .admin-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .admin-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 40px;
+    padding: 0 1rem;
+    border-radius: var(--radius-pill);
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--ink-soft);
+    background: var(--glass-light);
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    transition:
+      background 0.2s ease,
+      color 0.2s ease;
+  }
+
+  .admin-tab:hover {
+    background: var(--glass-light-strong);
+    color: var(--ink);
+  }
+
+  .admin-tab[aria-current="page"] {
+    color: #fff;
+    background: linear-gradient(160deg, #2a2a2a 0%, #000 65%);
+    border-color: transparent;
+  }
+
+  /* ------------------------------------------------------------------------
      Stat cards (overview)
      ------------------------------------------------------------------------ */
   .admin-stat {

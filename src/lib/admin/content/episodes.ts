@@ -15,8 +15,9 @@ import type { UpdateEpisodeContentInput } from "@/lib/validation/admin-episode";
  * Returns Prisma's own row shapes rather than the narrow public `Episode`
  * type (src/types/episode.ts) -- admin editing needs fields the public type
  * doesn't carry (youtubeTitle/youtubeDescription, seoTitle/seoDescription,
- * seriesOrder, ...), and nothing here is sent to a Client Component yet
- * (the CMS UI itself is a later phase).
+ * seriesOrder, ...). `getEpisodeForAdmin`'s row is passed to the Client
+ * Component editor (src/components/admin/episode-editor.tsx) as a plain
+ * serializable prop -- still never imported directly by a Client Component.
  */
 
 const episodeWithTopics = { include: { topics: true, series: { select: { slug: true } } } } as const;

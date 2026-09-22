@@ -2,12 +2,11 @@ import { z } from "zod";
 import { audioUrlField } from "./episode";
 
 /**
- * CMS foundation (Phase 3A) validation for the new admin episode actions in
- * lib/admin/content/actions.ts. Deliberately separate from
- * lib/validation/episode.ts's `episodeEditSchema`, which stays exactly as-is
- * for the existing narrow edit form (title/description/status/audioUrl) --
- * this schema covers the richer field set the new create/update actions
- * support, reusing `audioUrlField` rather than duplicating it.
+ * Validation for the admin episode CMS actions in lib/admin/content/actions.ts
+ * (create/update/publish/unpublish -- the only mutation path for episodes;
+ * the old narrow title/description/status/audioUrl edit form and its schema
+ * were retired in Phase 3B). Reuses `audioUrlField` from lib/validation/episode.ts
+ * rather than duplicating it.
  */
 
 /** Accepts a full YouTube URL or a bare video id -- lib/youtube/service.ts's parseYouTubeId() extracts the id either way. */

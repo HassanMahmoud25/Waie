@@ -2,9 +2,8 @@ import { z } from "zod";
 
 /**
  * Validates the public signup form at the server-action boundary (never trust
- * the client's own validation). Mirrors episodeEditSchema's pattern: one
- * narrow schema per form, in Arabic error copy consistent with the rest of
- * the app.
+ * the client's own validation). Mirrors the rest of the app's validation
+ * pattern: one narrow schema per form, in Arabic error copy.
  */
 export const signupSchema = z.object({
   name: z.string().trim().min(2, "أدخل اسمك الكامل.").max(80, "الاسم طويل جدًا."),

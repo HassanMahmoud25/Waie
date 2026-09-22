@@ -12,11 +12,10 @@ import {
 } from "@/lib/admin/content/episodes";
 
 /**
- * CMS foundation (Phase 3A) Server Actions. Distinct from the existing
- * src/app/admin/episodes/[id]/actions.ts (the narrow title/description/
- * status/audioUrl edit form already wired to a page) -- that file is
- * untouched. These are the richer create/update/publish/unpublish
- * operations the next phase's admin UI will call; nothing calls them yet.
+ * The episode CMS's Server Actions -- create/update/publish/unpublish -- the
+ * only way any admin UI mutates an episode. The old narrow title/description/
+ * status/audioUrl edit form (src/app/admin/episodes/[id]/actions.ts) was
+ * retired in Phase 3B once the richer editor below replaced its only caller.
  *
  * Every one of them: requires ADMIN (never trusts a client-supplied role or
  * userId -- requireAdmin() re-reads the role from the database off the
