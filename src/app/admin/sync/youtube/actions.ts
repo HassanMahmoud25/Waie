@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { requireAdmin } from "@/lib/auth/server";
 import {
   runImportFullChannel,
   runSyncNewVideos,
@@ -16,6 +17,9 @@ function isConfigured(): boolean {
 }
 
 async function run(operation: () => Promise<SyncResult>): Promise<SyncActionState> {
+  // Server actions are public POST endpoints -- every one must authorize itself.
+  await requireAdmin();
+
   if (!isConfigured()) {
     return {
       error: "أضف YOUTUBE_API_KEY و DATABASE_URL في .env.local قبل تشغيل المزامنة.",

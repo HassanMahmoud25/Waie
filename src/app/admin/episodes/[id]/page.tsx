@@ -3,10 +3,12 @@ import { notFound } from "next/navigation";
 import { contentRepository } from "@/lib/repositories";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { EpisodeEditForm } from "@/components/admin/episode-edit-form";
+import { requireAdmin } from "@/lib/auth/server";
 
 export const metadata: Metadata = { title: "تعديل حلقة" };
 
 export default async function EditEpisodePage({ params }: { params: Promise<{ id: string }> }) {
+  await requireAdmin();
   const { id } = await params;
   const episode = await contentRepository.getEpisodeById(id);
   if (!episode) notFound();

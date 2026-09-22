@@ -5,10 +5,12 @@ import { EPISODE_FORMS, formatCount } from "@/lib/utils/format";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { ComingNextPanel } from "@/components/admin/coming-next-panel";
 import { EmptyState } from "@/components/content/empty-state";
+import { requireAdmin } from "@/lib/auth/server";
 
 export const metadata: Metadata = { title: "المختارات" };
 
 export default async function AdminCollectionsPage() {
+  await requireAdmin();
   const collections = await contentRepository.listCollections();
 
   return (

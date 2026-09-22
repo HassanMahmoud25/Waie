@@ -34,6 +34,20 @@ npm run db:seed
 
 بعد ذلك، انقل repository الخاص بالمحتوى تدريجيًا من `src/lib/content.ts` إلى Prisma. هذا الملف هو seed/demo فقط، وليس موضع المحتوى داخل مكونات React.
 
+## حماية لوحة الإدارة
+
+`/admin` متاح للمسؤولين فقط. الحماية على الخادم عبر `src/middleware.ts` (فحص توقيع الجلسة) و`requireAdmin()` في `src/lib/auth/server.ts` (يتحقق من دور `ADMIN` في قاعدة البيانات) داخل الـlayout وكل صفحة وكل Server Action إداري. تسجيل الدخول من `/login` نفسها؛ بيانات الاعتماد الحقيقية تُفحص أولًا على الخادم، وإلا يعمل الدخول التجريبي المحلي للزوار كما كان.
+
+```bash
+# 1) في .env: AUTH_SECRET بطول 32 حرفًا على الأقل (openssl rand -base64 48) وDATABASE_URL
+# 2) طبّق تغيير المخطط (إضافة role وpasswordHash إلى User)
+npm run db:migrate -- --name user-roles     # أو: npx prisma db push
+# 3) أنشئ حساب المسؤول (كلمة المرور 12 حرفًا فأكثر، تُطلب بشكل مخفي)
+npm run admin:create -- you@example.com "الاسم"
+```
+
+بدون `DATABASE_URL` أو `AUTH_SECRET` تُغلق لوحة الإدارة تمامًا (fail closed).
+
 ## إدارة المحتوى
 
 المسار `/admin` هو نقطة البداية لغير المطور:

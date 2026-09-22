@@ -8,12 +8,14 @@ import { adminNavItems } from "@/components/admin/admin-nav";
 import { EpisodeRow } from "@/components/admin/episode-row";
 import { EmptyState } from "@/components/content/empty-state";
 import { YoutubeGlyph } from "@/components/icons/platform-glyphs";
+import { requireAdmin } from "@/lib/auth/server";
 
 export const metadata: Metadata = { title: "لوحة الإدارة" };
 
 const iconFor = (href: string) => adminNavItems.find((item) => item.href === href)!.icon;
 
 export default async function AdminPage() {
+  await requireAdmin();
   const [episodes, series, topics, collections] = await Promise.all([
     contentRepository.listAllEpisodes(),
     contentRepository.listSeries(),

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { requireAdmin } from "@/lib/auth/server";
 import { contentRepository } from "@/lib/repositories";
 import { episodeEditSchema } from "@/lib/validation/episode";
 
@@ -19,6 +20,8 @@ export async function updateEpisodeAction(
   _prevState: EpisodeEditState,
   formData: FormData,
 ): Promise<EpisodeEditState> {
+  await requireAdmin();
+
   const parsed = episodeEditSchema.safeParse({
     title: formData.get("title"),
     description: formData.get("description"),

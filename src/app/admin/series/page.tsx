@@ -6,10 +6,12 @@ import { AdminShell } from "@/components/admin/admin-shell";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { ComingNextPanel } from "@/components/admin/coming-next-panel";
 import { EmptyState } from "@/components/content/empty-state";
+import { requireAdmin } from "@/lib/auth/server";
 
 export const metadata: Metadata = { title: "السلاسل" };
 
 export default async function AdminSeriesPage() {
+  await requireAdmin();
   const series = await contentRepository.listSeries();
 
   return (

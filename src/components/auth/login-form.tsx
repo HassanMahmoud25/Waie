@@ -5,12 +5,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertCircle, Loader2, Lock, LogIn, Mail } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { serverLoginAction } from "@/lib/auth/actions";
 import { AuthField } from "@/components/auth/auth-field";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const SUBMIT_DELAY_MS = 550;
 
-export function LoginForm() {
+/** `next` is where the visitor was headed when they got bounced here (e.g. /admin/episodes); the server re-validates it. */
+export function LoginForm({ next = null }: { next?: string | null }) {
   const router = useRouter();
   const { login } = useAuth();
 
@@ -22,20 +24,31 @@ export function LoginForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   function validate() {
-    const next: typeof errors = {};
-    if (!email.trim()) next.email = "أدخل بريدك الإلكتروني.";
-    else if (!EMAIL_PATTERN.test(email)) next.email = "صيغة البريد الإلكتروني غير صحيحة.";
-    if (!password) next.password = "أدخل كلمة المرور.";
-    setErrors(next);
-    return Object.keys(next).length === 0;
+    const fieldErrors: typeof errors = {};
+    if (!email.trim()) fieldErrors.email = "أدخل بريدك الإلكتروني.";
+    else if (!EMAIL_PATTERN.test(email)) fieldErrors.email = "صيغة البريد الإلكتروني غير صحيحة.";
+    if (!password) fieldErrors.password = "أدخل كلمة المرور.";
+    setErrors(fieldErrors);
+    return Object.keys(fieldErrors).length === 0;
   }
 
-  function handleSubmit(event: FormEvent) {
+  async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setFormError(null);
     if (!validate()) return;
 
     setIsSubmitting(true);
+
+    // Real, server-verified accounts (admins) come first: on a match the server
+    // sets the session cookie and we go where it says.
+    const serverResult = await serverLoginAction(email, password, remember, next).catch(() => null);
+    if (serverResult?.ok) {
+      router.push(serverResult.redirectTo);
+      router.refresh();
+      return;
+    }
+
+    // Otherwise it's the unchanged local demo login for regular visitors.
     window.setTimeout(() => {
       const result = login(email, password);
       if (!result.ok) {

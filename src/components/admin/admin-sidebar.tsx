@@ -3,7 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowUpLeft, Globe } from "lucide-react";
+import { ArrowUpLeft, Globe, LogOut } from "lucide-react";
+import { logoutAction } from "@/lib/auth/actions";
 import { adminNav, isAdminNavActive } from "@/components/admin/admin-nav";
 
 /**
@@ -58,6 +59,12 @@ export function AdminSidebar() {
           عرض الموقع
           <ArrowUpLeft size={15} className="admin-nav__trailing" aria-hidden="true" />
         </Link>
+        <form action={logoutAction}>
+          <button type="submit" className="admin-nav__link w-full">
+            <LogOut size={19} strokeWidth={1.9} aria-hidden="true" />
+            تسجيل الخروج
+          </button>
+        </form>
       </div>
     </aside>
   );

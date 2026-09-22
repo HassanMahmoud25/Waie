@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum ContentStatus {
@@ -13,15 +14,26 @@ enum ContentStatus {
   ARCHIVED
 }
 
+enum UserRole {
+  USER
+  ADMIN
+}
+
 model User {
-  id         String           @id @default(cuid())
-  email      String           @unique
-  name       String?
-  progresses WatchProgress[]
-  saves      SavedEpisode[]
-  notes      Note[]
-  follows    FollowedSeries[]
-  createdAt  DateTime         @default(now())
+  id           String           @id @default(cuid())
+  email        String           @unique
+  name         String?
+  /// scrypt hash (see src/lib/auth/password.ts). Null for accounts that never
+  /// got a server-side password -- those cannot sign in to the server session.
+  passwordHash String?
+  /// Gates /admin. Checked against the database on every guarded request
+  /// (src/lib/auth/server.ts), never trusted from the session cookie.
+  role         UserRole         @default(USER)
+  progresses   WatchProgress[]
+  saves        SavedEpisode[]
+  notes        Note[]
+  follows      FollowedSeries[]
+  createdAt    DateTime         @default(now())
 }
 
 model Topic {
@@ -40,21 +52,24 @@ model Topic {
 }
 
 model Series {
-  id             String    @id @default(cuid())
-  title          String
-  slug           String    @unique
-  description    String?
-  coverImage     String?
-  heroImage      String?
-  position       Int       @default(0)
-  status         ContentStatus @default(DRAFT)
-  featured       Boolean   @default(false)
-  seoTitle       String?
-  seoDescription String?
-  topicId        String?
-  topic          Topic?    @relation(fields: [topicId], references: [id])
-  episodes       Episode[]
-  followers      FollowedSeries[]
+  id               String           @id @default(cuid())
+  title            String
+  slug             String           @unique
+  description      String?
+  coverImage       String?
+  /// Portrait crop of coverImage for narrow viewports; falls back to coverImage when unset
+  /// (mirrors src/types/series.ts). Nullable/optional -- purely additive, no existing rows affected.
+  coverImageMobile String?
+  heroImage        String?
+  position         Int              @default(0)
+  status           ContentStatus    @default(DRAFT)
+  featured         Boolean          @default(false)
+  seoTitle         String?
+  seoDescription   String?
+  topicId          String?
+  topic            Topic?           @relation(fields: [topicId], references: [id])
+  episodes         Episode[]
+  followers        FollowedSeries[]
 
   /// The YouTube playlist this series was originally discovered/created
   /// from, kept only for traceability. Once set, sync never uses this to
@@ -62,8 +77,8 @@ model Series {
   /// from this point on (see docs/data-ownership.md).
   sourcePlaylistId String? @unique
 
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Episode {

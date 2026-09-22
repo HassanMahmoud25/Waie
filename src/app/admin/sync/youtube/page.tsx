@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db/prisma";
 import { cn } from "@/lib/utils/cn";
 import { formatArabicDate } from "@/lib/utils/format";
 import { SyncPanel } from "./sync-panel";
+import { requireAdmin } from "@/lib/auth/server";
 
 export const metadata: Metadata = { title: "مزامنة يوتيوب" };
 
@@ -38,6 +39,7 @@ function Code({ children }: { children: string }) {
 }
 
 export default async function AdminYouTubeSyncPage() {
+  await requireAdmin();
   const hasDatabase = Boolean(process.env.DATABASE_URL);
   const hasApiKey = Boolean(process.env.YOUTUBE_API_KEY);
   const isConfigured = hasDatabase && hasApiKey;

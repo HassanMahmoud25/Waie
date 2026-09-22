@@ -5,10 +5,12 @@ import { EPISODE_FORMS, SERIES_FORMS, TOPIC_FORMS, formatCount } from "@/lib/uti
 import { AdminShell } from "@/components/admin/admin-shell";
 import { ComingNextPanel } from "@/components/admin/coming-next-panel";
 import { EmptyState } from "@/components/content/empty-state";
+import { requireAdmin } from "@/lib/auth/server";
 
 export const metadata: Metadata = { title: "المواضيع" };
 
 export default async function AdminTopicsPage() {
+  await requireAdmin();
   const topics = await contentRepository.listTopics();
 
   return (

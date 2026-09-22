@@ -5,10 +5,12 @@ import { EPISODE_FORMS, formatCount } from "@/lib/utils/format";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { EpisodeRow } from "@/components/admin/episode-row";
 import { EmptyState } from "@/components/content/empty-state";
+import { requireAdmin } from "@/lib/auth/server";
 
 export const metadata: Metadata = { title: "الحلقات" };
 
 export default async function AdminEpisodesPage() {
+  await requireAdmin();
   const [episodes, series] = await Promise.all([
     contentRepository.listAllEpisodes(),
     contentRepository.listSeries(),
