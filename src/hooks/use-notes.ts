@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "./use-auth";
+import { useNotesContext } from "@/components/library/notes-provider";
 import type { EpisodeNote } from "@/types/note";
 
 const STORAGE_KEY = "waie:notes:v1";
@@ -25,12 +26,18 @@ function writeAll(notes: EpisodeNote[]) {
 }
 
 /**
- * Local, per-device stand-in for a real account: personal timestamped notes
- * persisted to localStorage, keyed to the signed-in user (see hooks/use-auth.ts)
- * so one browser shared by two accounts never leaks one user's notes into the
- * other's list. Shaped like the Note Prisma model already in the schema, so
- * wiring a real backend later means swapping this hook's internals, not the
- * components that call it.
+ * Notes are now database-backed per real signed-in account (see
+ * lib/library/notes.ts + lib/library/actions.ts + NotesProvider), mirroring
+ * how saved episodes and watch progress already work. Anonymous visitors --
+ * and, importantly, anyone only "signed in" to the old localStorage-only
+ * demo system (see hooks/use-auth.ts), which is a different, unrelated
+ * concept from the real server session -- keep the exact original
+ * localStorage behavior below, completely unchanged.
+ *
+ * Every hook below is called unconditionally on every render (both the
+ * local-storage machinery and useNotesContext()); only the *return value*
+ * branches on whether there's a real session, so this never violates the
+ * Rules of Hooks.
  */
 export function useEpisodeNotes(episodeId: string) {
   const { isHydrated: isAuthHydrated, user } = useAuth();
@@ -50,26 +57,26 @@ export function useEpisodeNotes(episodeId: string) {
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-  const userId = user?.id;
+  const localUserId = user?.id;
 
   // Chronological by timestamp (not creation order) -- a note added at 20:00
   // after one already at 51:30 still lands before it in the list.
-  const notes = userId
+  const localNotes = localUserId
     ? allNotes
-        .filter((note) => note.userId === userId && note.episodeId === episodeId)
+        .filter((note) => note.userId === localUserId && note.episodeId === episodeId)
         .sort((a, b) => a.seconds - b.seconds)
     : [];
 
-  const addNote = useCallback(
+  const addLocalNote = useCallback(
     (seconds: number, text: string) => {
-      if (!userId) return;
+      if (!localUserId) return;
       const trimmed = text.trim();
       if (!trimmed) return;
 
       const now = new Date().toISOString();
       const note: EpisodeNote = {
         id: crypto.randomUUID(),
-        userId,
+        userId: localUserId,
         episodeId,
         seconds: Math.max(0, Math.round(seconds)),
         text: trimmed,
@@ -82,15 +89,15 @@ export function useEpisodeNotes(episodeId: string) {
         return next;
       });
     },
-    [userId, episodeId],
+    [localUserId, episodeId],
   );
 
-  const updateNote = useCallback(
+  const updateLocalNote = useCallback(
     (id: string, changes: { seconds?: number; text?: string }) => {
       setAllNotes((prev) => {
         let changed = false;
         const next = prev.map((note) => {
-          if (note.id !== id || note.userId !== userId) return note;
+          if (note.id !== id || note.userId !== localUserId) return note;
           const text = changes.text !== undefined ? changes.text.trim() : note.text;
           if (!text) return note;
           changed = true;
@@ -106,27 +113,44 @@ export function useEpisodeNotes(episodeId: string) {
         return next;
       });
     },
-    [userId],
+    [localUserId],
   );
 
-  const deleteNote = useCallback(
+  const deleteLocalNote = useCallback(
     (id: string) => {
       setAllNotes((prev) => {
-        const next = prev.filter((note) => !(note.id === id && note.userId === userId));
+        const next = prev.filter((note) => !(note.id === id && note.userId === localUserId));
         if (next.length === prev.length) return prev;
         writeAll(next);
         return next;
       });
     },
-    [userId],
+    [localUserId],
   );
+
+  const db = useNotesContext();
+  const dbNotesForEpisode = db.notes.filter((note) => note.episodeId === episodeId).sort((a, b) => a.seconds - b.seconds);
+  const addDbNote = useCallback((seconds: number, text: string) => db.addNote(episodeId, seconds, text), [db, episodeId]);
+
+  if (db.isAuthenticated) {
+    return {
+      // The DB store is hydrated server-side before first paint (see NotesProvider) --
+      // no localStorage-style wait, and no flash of an empty list.
+      isHydrated: true,
+      isAuthenticated: true,
+      notes: dbNotesForEpisode,
+      addNote: addDbNote,
+      updateNote: db.updateNote,
+      deleteNote: db.deleteNote,
+    };
+  }
 
   return {
     isHydrated: isAuthHydrated && isStorageHydrated,
-    isAuthenticated: Boolean(userId),
-    notes,
-    addNote,
-    updateNote,
-    deleteNote,
+    isAuthenticated: Boolean(localUserId),
+    notes: localNotes,
+    addNote: addLocalNote,
+    updateNote: updateLocalNote,
+    deleteNote: deleteLocalNote,
   };
 }

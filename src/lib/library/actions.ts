@@ -4,6 +4,8 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { getSessionUser } from "@/lib/auth/server";
 import { COMPLETE_THRESHOLD } from "@/lib/library/constants";
+import { toEpisodeNote } from "@/lib/library/notes";
+import type { EpisodeNote } from "@/types/note";
 
 export type ToggleSavedEpisodeResult = { ok: true; saved: boolean } | { ok: false; error: string };
 
@@ -144,6 +146,107 @@ export async function toggleEpisodeCompletedAction(episodeId: string): Promise<T
     return { ok: true, completed: nextCompleted };
   } catch (error) {
     console.error("toggleEpisodeCompletedAction failed:", error);
+    return { ok: false, error: "حدث خطأ غير متوقع." };
+  }
+}
+
+/** No existing length cap for notes elsewhere in the codebase to reuse; chosen generously (well beyond any real note) purely to reject abuse/pathological input. */
+const MAX_NOTE_LENGTH = 4000;
+
+export type CreateNoteResult = { ok: true; note: EpisodeNote } | { ok: false; error: string };
+
+/**
+ * Creates a note for the signed-in user, anchored to a playback position in
+ * one episode. The user id always comes from the server session -- never a
+ * client-supplied id. Called once per explicit "حفظ الملاحظة" click (see
+ * components/episode/note-composer.tsx), never per keystroke -- the
+ * composer keeps its own draft in local component state and only calls this
+ * on save, so there is nothing to additionally debounce here.
+ */
+export async function createNoteAction(episodeId: string, seconds: number, text: string): Promise<CreateNoteResult> {
+  const user = await getSessionUser();
+  if (!user) return { ok: false, error: "سجّل الدخول لتدوين ملاحظاتك." };
+
+  if (typeof episodeId !== "string" || episodeId.trim() === "") {
+    return { ok: false, error: "حلقة غير صحيحة." };
+  }
+  const trimmed = typeof text === "string" ? text.trim() : "";
+  if (!trimmed) return { ok: false, error: "اكتب نص الملاحظة." };
+  if (trimmed.length > MAX_NOTE_LENGTH) return { ok: false, error: "الملاحظة طويلة جدًا." };
+  const safeSeconds = Math.max(0, Math.round(Number.isFinite(seconds) ? seconds : 0));
+
+  try {
+    const episode = await prisma.episode.findUnique({ where: { id: episodeId }, select: { id: true } });
+    if (!episode) return { ok: false, error: "لم يتم العثور على هذه الحلقة." };
+
+    const row = await prisma.note.create({
+      data: { userId: user.id, episodeId, seconds: safeSeconds, body: trimmed },
+    });
+    return { ok: true, note: toEpisodeNote(row) };
+  } catch (error) {
+    console.error("createNoteAction failed:", error);
+    return { ok: false, error: "حدث خطأ غير متوقع." };
+  }
+}
+
+export type UpdateNoteResult = { ok: true; note: EpisodeNote } | { ok: false; error: string };
+
+/**
+ * Updates a note's text and/or timestamp. Ownership is checked explicitly
+ * (existing.userId !== user.id) before the write -- a user can never update
+ * another user's note by guessing/passing its id, and the error message is
+ * the same generic "not found" whether the note doesn't exist or simply
+ * isn't theirs, so it can't be used to probe which note ids are real.
+ */
+export async function updateNoteAction(
+  noteId: string,
+  changes: { seconds?: number; text?: string },
+): Promise<UpdateNoteResult> {
+  const user = await getSessionUser();
+  if (!user) return { ok: false, error: "سجّل الدخول لتعديل ملاحظاتك." };
+  if (typeof noteId !== "string" || noteId.trim() === "") return { ok: false, error: "ملاحظة غير صحيحة." };
+
+  const data: { seconds?: number; body?: string } = {};
+  if (changes.seconds !== undefined) {
+    if (!Number.isFinite(changes.seconds)) return { ok: false, error: "توقيت غير صحيح." };
+    data.seconds = Math.max(0, Math.round(changes.seconds));
+  }
+  if (changes.text !== undefined) {
+    const trimmed = changes.text.trim();
+    if (!trimmed) return { ok: false, error: "اكتب نص الملاحظة." };
+    if (trimmed.length > MAX_NOTE_LENGTH) return { ok: false, error: "الملاحظة طويلة جدًا." };
+    data.body = trimmed;
+  }
+  if (Object.keys(data).length === 0) return { ok: false, error: "لا يوجد تعديل لحفظه." };
+
+  try {
+    const existing = await prisma.note.findUnique({ where: { id: noteId }, select: { userId: true } });
+    if (!existing || existing.userId !== user.id) return { ok: false, error: "لم يتم العثور على هذه الملاحظة." };
+
+    const row = await prisma.note.update({ where: { id: noteId }, data });
+    return { ok: true, note: toEpisodeNote(row) };
+  } catch (error) {
+    console.error("updateNoteAction failed:", error);
+    return { ok: false, error: "حدث خطأ غير متوقع." };
+  }
+}
+
+export type DeleteNoteResult = { ok: true } | { ok: false; error: string };
+
+/** Same ownership check as updateNoteAction -- a user can never delete another user's note by id. */
+export async function deleteNoteAction(noteId: string): Promise<DeleteNoteResult> {
+  const user = await getSessionUser();
+  if (!user) return { ok: false, error: "سجّل الدخول لحذف ملاحظاتك." };
+  if (typeof noteId !== "string" || noteId.trim() === "") return { ok: false, error: "ملاحظة غير صحيحة." };
+
+  try {
+    const existing = await prisma.note.findUnique({ where: { id: noteId }, select: { userId: true } });
+    if (!existing || existing.userId !== user.id) return { ok: false, error: "لم يتم العثور على هذه الملاحظة." };
+
+    await prisma.note.delete({ where: { id: noteId } });
+    return { ok: true };
+  } catch (error) {
+    console.error("deleteNoteAction failed:", error);
     return { ok: false, error: "حدث خطأ غير متوقع." };
   }
 }
