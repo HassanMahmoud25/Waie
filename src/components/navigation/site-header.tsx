@@ -7,7 +7,8 @@ import { useEffect, useRef, useState } from "react";
 import { Library, LogOut, Search, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { primaryNav } from "@/config/site";
-import { useAuth } from "@/hooks/use-auth";
+import { logoutAction } from "@/lib/auth/actions";
+import type { SessionUser } from "@/lib/auth/server";
 import { IconButton } from "@/components/ui/icon-button";
 import { SearchModal } from "@/components/search/search-modal";
 import { MobileTabBar } from "@/components/navigation/mobile-tab-bar";
@@ -15,11 +16,10 @@ import { MobileTabBar } from "@/components/navigation/mobile-tab-bar";
 const SCROLL_THRESHOLD = 12;
 const MENU_TRANSITION_MS = 180;
 
-export function SiteHeader() {
+export function SiteHeader({ sessionUser }: { sessionUser: SessionUser | null }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const pathname = usePathname();
-  const { isHydrated, user, logout } = useAuth();
 
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > SCROLL_THRESHOLD);
@@ -89,7 +89,7 @@ export function SiteHeader() {
           <IconButton aria-label="البحث" onClick={() => setIsSearchOpen(true)}>
             <Search size={18} />
           </IconButton>
-          <HeaderAuth isHydrated={isHydrated} user={user} logout={logout} />
+          <HeaderAuth user={sessionUser} />
         </div>
       </div>
 
@@ -100,15 +100,7 @@ export function SiteHeader() {
   );
 }
 
-function HeaderAuth({
-  isHydrated,
-  user,
-  logout,
-}: {
-  isHydrated: boolean;
-  user: { id: string; name: string; email: string } | null;
-  logout: () => void;
-}) {
+function HeaderAuth({ user }: { user: SessionUser | null }) {
   const [isOpen, setIsOpen] = useState(false);
   // Keeps the menu in the DOM for the closing animation; the CSS drives the
   // open/close animation itself off the `data-state` attribute (see the
@@ -145,10 +137,8 @@ function HeaderAuth({
     };
   }, [isOpen]);
 
-  // Avoid a signed-out flash before the localStorage-backed session hydrates.
-  if (!isHydrated)
-    return <span className="icon-btn opacity-0" aria-hidden="true" />;
-
+  // Server-rendered from the real session (see (site)/layout.tsx) -- no
+  // client-only hydration delay/flash the way a localStorage-derived value would have.
   if (!user) {
     return (
       <Link href="/login" className="btn-login">
@@ -157,7 +147,8 @@ function HeaderAuth({
     );
   }
 
-  const initial = user.name.trim().charAt(0).toUpperCase() || "و";
+  const displayName = user.name?.trim() || user.email;
+  const initial = displayName.charAt(0).toUpperCase() || "و";
 
   return (
     <div className="relative" ref={rootRef}>
@@ -166,7 +157,7 @@ function HeaderAuth({
         className="avatar-btn"
         aria-haspopup="menu"
         aria-expanded={isOpen}
-        aria-label={`حساب ${user.name}`}
+        aria-label={`حساب ${displayName}`}
         onClick={() => setIsOpen((open) => !open)}
       >
         {initial}
@@ -179,7 +170,7 @@ function HeaderAuth({
           className="user-menu glass-strong"
         >
           <div className="border-b border-[var(--line-soft)] px-3 py-2.5">
-            <p className="truncate text-sm font-black">{user.name}</p>
+            <p className="truncate text-sm font-black">{displayName}</p>
             <p className="truncate text-xs font-semibold text-[var(--muted)]">
               {user.email}
             </p>
@@ -192,17 +183,12 @@ function HeaderAuth({
           >
             <Library size={16} /> مكتبتي
           </Link>
-          <button
-            type="button"
-            role="menuitem"
-            className="user-menu__item user-menu__item--danger"
-            onClick={() => {
-              logout();
-              setIsOpen(false);
-            }}
-          >
-            <LogOut size={16} /> تسجيل الخروج
-          </button>
+          {/* Real server logout (see lib/auth/actions.ts) -- the same action /admin's logout uses. */}
+          <form action={logoutAction}>
+            <button type="submit" role="menuitem" className="user-menu__item user-menu__item--danger w-full">
+              <LogOut size={16} /> تسجيل الخروج
+            </button>
+          </form>
         </div>
       )}
     </div>

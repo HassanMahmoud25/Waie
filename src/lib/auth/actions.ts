@@ -2,8 +2,9 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
-import { verifyAgainstDummy, verifyPassword } from "@/lib/auth/password";
+import { hashPassword, verifyAgainstDummy, verifyPassword } from "@/lib/auth/password";
 import {
   SESSION_COOKIE,
   SESSION_TTL_DEFAULT_S,
@@ -11,6 +12,7 @@ import {
   createSessionToken,
 } from "@/lib/auth/session";
 import { LOGIN_PATH, safeNextPath } from "@/lib/auth/server";
+import { signupSchema } from "@/lib/validation/auth";
 
 export type ServerLoginResult =
   | { ok: true; redirectTo: string }
@@ -65,4 +67,62 @@ export async function serverLoginAction(
 export async function logoutAction(): Promise<void> {
   (await cookies()).delete(SESSION_COOKIE);
   redirect(LOGIN_PATH);
+}
+
+export type ServerSignupResult =
+  | { ok: true; redirectTo: string }
+  | { ok: false; error: string; field?: "name" | "email" | "password" };
+
+/**
+ * Creates a real, database-backed account and signs the person in with the
+ * same kind of session cookie serverLoginAction issues -- there is no second
+ * session mechanism here. Role is never accepted from the caller: every
+ * account created here is hardcoded to USER, the same way scripts/create-admin.ts
+ * hardcodes ADMIN for its own path. Never returns or logs the raw password.
+ */
+export async function serverSignupAction(name: string, email: string, password: string): Promise<ServerSignupResult> {
+  const parsed = signupSchema.safeParse({ name, email, password });
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    const field = issue?.path[0] as "name" | "email" | "password" | undefined;
+    return { ok: false, error: issue?.message ?? "تحقّق من البيانات المدخلة.", field };
+  }
+
+  if (!process.env.DATABASE_URL) {
+    return { ok: false, error: "إنشاء الحساب غير متاح حاليًا." };
+  }
+
+  const { name: cleanName, email: normalizedEmail, password: cleanPassword } = parsed.data;
+
+  try {
+    const existing = await prisma.user.findUnique({ where: { email: normalizedEmail }, select: { id: true } });
+    if (existing) {
+      return { ok: false, error: "هذا البريد الإلكتروني مسجّل بالفعل، جرّب تسجيل الدخول.", field: "email" };
+    }
+
+    const passwordHash = await hashPassword(cleanPassword);
+    const user = await prisma.user.create({
+      data: { email: normalizedEmail, name: cleanName, passwordHash, role: "USER" },
+      select: { id: true },
+    });
+
+    (await cookies()).set(SESSION_COOKIE, await createSessionToken(user.id, SESSION_TTL_REMEMBER_S), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: SESSION_TTL_REMEMBER_S,
+    });
+
+    return { ok: true, redirectTo: "/library" };
+  } catch (error) {
+    // A concurrent signup for the same email can race past the findUnique check above --
+    // the database's own unique constraint is the real guard; translate its violation
+    // into the same clean message rather than leaking a raw Prisma error.
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      return { ok: false, error: "هذا البريد الإلكتروني مسجّل بالفعل، جرّب تسجيل الدخول.", field: "email" };
+    }
+    console.error("serverSignupAction failed:", error);
+    return { ok: false, error: "حدث خطأ غير متوقع، حاول مرة أخرى." };
+  }
 }

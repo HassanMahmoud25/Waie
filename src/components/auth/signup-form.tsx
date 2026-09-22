@@ -4,18 +4,16 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertCircle, Loader2, Lock, Mail, User, UserPlus } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
+import { serverSignupAction } from "@/lib/auth/actions";
 import { AuthField } from "@/components/auth/auth-field";
 import { PasswordStrength } from "@/components/auth/password-strength";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const SUBMIT_DELAY_MS = 650;
 
 type Errors = { name?: string; email?: string; password?: string; confirm?: string; terms?: string };
 
 export function SignupForm() {
   const router = useRouter();
-  const { signup } = useAuth();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -39,23 +37,29 @@ export function SignupForm() {
     return Object.keys(next).length === 0;
   }
 
-  function handleSubmit(event: FormEvent) {
+  async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setFormError(null);
     if (!validate()) return;
 
     setIsSubmitting(true);
-    window.setTimeout(() => {
-      const result = signup(name, email, password);
-      if (!result.ok) {
-        setFormError(result.error);
-        setIsSubmitting(false);
-        return;
-      }
+    const result = await serverSignupAction(name, email, password).catch(
+      (): Awaited<ReturnType<typeof serverSignupAction>> => ({ ok: false, error: "حدث خطأ غير متوقع، حاول مرة أخرى." }),
+    );
+
+    if (!result.ok) {
+      if (result.field) setErrors((prev) => ({ ...prev, [result.field as keyof Errors]: result.error }));
+      else setFormError(result.error);
       setIsSubmitting(false);
-      setSuccess(true);
-      window.setTimeout(() => router.push("/library"), 1100);
-    }, SUBMIT_DELAY_MS);
+      return;
+    }
+
+    setIsSubmitting(false);
+    setSuccess(true);
+    window.setTimeout(() => {
+      router.push(result.redirectTo);
+      router.refresh();
+    }, 1100);
   }
 
   if (success) {
