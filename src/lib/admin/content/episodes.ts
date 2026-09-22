@@ -2,6 +2,9 @@ import { prisma } from "@/lib/db/prisma";
 import { parseYouTubeId, fetchVideoMetadata } from "@/lib/youtube/service";
 import { slugify, uniqueEpisodeSlug } from "@/lib/sync/slug";
 import type { UpdateEpisodeContentInput } from "@/lib/validation/admin-episode";
+import { AdminContentError } from "@/lib/admin/content/errors";
+
+export { AdminContentError } from "@/lib/admin/content/errors";
 
 /**
  * Admin-only, server-only data access for the episode CMS foundation
@@ -21,8 +24,6 @@ import type { UpdateEpisodeContentInput } from "@/lib/validation/admin-episode";
  */
 
 const episodeWithTopics = { include: { topics: true, series: { select: { slug: true } } } } as const;
-
-export class AdminContentError extends Error {}
 
 /** Every episode regardless of status, for a future admin list/edit view. */
 export async function getEpisodeForAdmin(id: string) {

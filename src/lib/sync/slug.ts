@@ -36,3 +36,24 @@ export async function uniqueSeriesSlug(preferredBase: string): Promise<string> {
   }
   return candidate;
 }
+
+export async function uniqueTopicSlug(preferredBase: string): Promise<string> {
+  let candidate = preferredBase;
+  let n = 1;
+  while (await prisma.topic.findUnique({ where: { slug: candidate }, select: { id: true } })) {
+    n += 1;
+    candidate = `${preferredBase}-${n}`;
+  }
+  return candidate;
+}
+
+/**
+ * Fallback slug base for entities with no natural ASCII identifier to fall
+ * back to. Episodes fall back to their YouTube video id (always unique,
+ * always ASCII) when slugify(title) collapses to "" for an Arabic title --
+ * Series and Topics, created by hand in the admin CMS, have no such id, so
+ * this generates a short random one instead.
+ */
+export function randomSlugBase(prefix: string): string {
+  return `${prefix}-${crypto.randomUUID().replace(/-/g, "").slice(0, 8)}`;
+}
