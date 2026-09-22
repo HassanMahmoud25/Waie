@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: "السلاسل" };
 
 export default async function AdminSeriesPage() {
   await requireAdmin();
-  const series = await contentRepository.listSeries();
+  const series = await contentRepository.listAllSeries();
 
   return (
     <AdminShell

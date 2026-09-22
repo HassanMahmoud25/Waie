@@ -28,12 +28,16 @@ export interface ContentRepository {
   listSeries(): Promise<SeriesWithStats[]>;
   getSeriesBySlug(slug: string): Promise<SeriesWithStats | null>;
   getSeriesById(id: string): Promise<Series | null>;
+  /** Admin-only: every series regardless of status (drafts/archived included). Mirrors listAllEpisodes. */
+  listAllSeries(): Promise<SeriesWithStats[]>;
 
   listTopics(): Promise<TopicWithStats[]>;
   getTopicBySlug(slug: string): Promise<TopicWithStats | null>;
 
   listCollections(): Promise<Collection[]>;
   getCollectionBySlug(slug: string): Promise<Collection | null>;
+  /** Admin-only: every collection regardless of status. Mirrors listAllEpisodes. */
+  listAllCollections(): Promise<Collection[]>;
   getEpisodesByIds(ids: string[]): Promise<Episode[]>;
 
   /** Admin-only: every episode regardless of status (drafts/archived included). */

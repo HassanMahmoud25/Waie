@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: "المختارات" };
 
 export default async function AdminCollectionsPage() {
   await requireAdmin();
-  const collections = await contentRepository.listCollections();
+  const collections = await contentRepository.listAllCollections();
 
   return (
     <AdminShell

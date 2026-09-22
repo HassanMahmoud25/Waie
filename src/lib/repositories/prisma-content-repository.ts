@@ -275,12 +275,15 @@ export const prismaContentRepository: ContentRepository = {
   },
 
   async listSeries() {
-    const [rows, counts] = await Promise.all([prisma.series.findMany(), publishedEpisodeCounts()]);
+    const [rows, counts] = await Promise.all([
+      prisma.series.findMany({ where: isPublishedWhere }),
+      publishedEpisodeCounts(),
+    ]);
     return rows.map((row) => ({ ...toSeries(row), episodeCount: counts.get(row.id) ?? 0 }));
   },
 
   async getSeriesBySlug(slug) {
-    const row = await prisma.series.findUnique({ where: { slug } });
+    const row = await prisma.series.findFirst({ where: { slug, ...isPublishedWhere } });
     if (!row) return null;
     const count = await prisma.episode.count({ where: { seriesId: row.id, ...isPublishedWhere } });
     return { ...toSeries(row), episodeCount: count } satisfies SeriesWithStats;
@@ -289,6 +292,12 @@ export const prismaContentRepository: ContentRepository = {
   async getSeriesById(id) {
     const row = await prisma.series.findUnique({ where: { id } });
     return row ? toSeries(row) : null;
+  },
+
+  /** Admin-only: every series regardless of status -- used by /admin pages so a draft series never silently disappears from their own list. */
+  async listAllSeries() {
+    const [rows, counts] = await Promise.all([prisma.series.findMany(), publishedEpisodeCounts()]);
+    return rows.map((row) => ({ ...toSeries(row), episodeCount: counts.get(row.id) ?? 0 }));
   },
 
   async listTopics() {
@@ -320,18 +329,26 @@ export const prismaContentRepository: ContentRepository = {
   },
 
   async listCollections() {
-    const rows = await prisma.collection.findMany({ include: { items: true } });
+    const rows = await prisma.collection.findMany({ where: isPublishedWhere, include: { items: true } });
     return rows.map(toCollection);
   },
 
   async getCollectionBySlug(slug) {
-    const row = await prisma.collection.findUnique({ where: { slug }, include: { items: true } });
+    const row = await prisma.collection.findFirst({ where: { slug, ...isPublishedWhere }, include: { items: true } });
     return row ? toCollection(row) : null;
+  },
+
+  /** Admin-only: every collection regardless of status. */
+  async listAllCollections() {
+    const rows = await prisma.collection.findMany({ include: { items: true } });
+    return rows.map(toCollection);
   },
 
   async getEpisodesByIds(ids) {
     if (ids.length === 0) return [];
-    const rows = await prisma.episode.findMany({ where: { id: { in: ids } }, include: episodeInclude });
+    // Public-facing (see (site)/collections/**): a collection referencing a
+    // since-unpublished episode must not leak it here.
+    const rows = await prisma.episode.findMany({ where: { id: { in: ids }, ...isPublishedWhere }, include: episodeInclude });
     const byId = new Map(rows.map((row) => [row.id, row]));
     return ids.map((id) => byId.get(id)).filter((row): row is EpisodeRow => Boolean(row)).map(toEpisode);
   },
@@ -387,7 +404,7 @@ export const prismaContentRepository: ContentRepository = {
         include: episodeInclude,
         orderBy: { youtubePublishedAt: "desc" },
       }),
-      prisma.series.findMany({ where: { OR: [{ title: contains }, { description: contains }] } }),
+      prisma.series.findMany({ where: { ...isPublishedWhere, OR: [{ title: contains }, { description: contains }] } }),
       prisma.topic.findMany({ where: { OR: [{ title: contains }, { description: contains }] } }),
     ]);
 

@@ -98,16 +98,21 @@ export const staticContentRepository: ContentRepository = {
   },
 
   async listSeries() {
-    return seriesRows.map(withSeriesStats);
+    return seriesRows.filter((s) => s.status === "PUBLISHED").map(withSeriesStats);
   },
 
   async getSeriesBySlug(slug) {
-    const found = seriesRows.find((s) => s.slug === slug);
+    const found = seriesRows.find((s) => s.slug === slug && s.status === "PUBLISHED");
     return found ? withSeriesStats(found) : null;
   },
 
   async getSeriesById(id) {
     return seriesRows.find((s) => s.id === id) ?? null;
+  },
+
+  /** Admin-only: every series regardless of status -- mirrors listAllEpisodes. */
+  async listAllSeries() {
+    return seriesRows.map(withSeriesStats);
   },
 
   async listTopics() {
@@ -125,6 +130,11 @@ export const staticContentRepository: ContentRepository = {
 
   async getCollectionBySlug(slug) {
     return collectionRows.find((collection) => collection.slug === slug) ?? null;
+  },
+
+  /** Admin-only: every collection regardless of status. The static Collection type carries no status field (see src/types/collection.ts) and the demo data is empty, so this is identical to listCollections() today -- kept for interface parity with the Prisma repository. */
+  async listAllCollections() {
+    return collectionRows;
   },
 
   async getRecommendationsByEpisode(episodeId) {
@@ -152,7 +162,7 @@ export const staticContentRepository: ContentRepository = {
       .filter((episode) => isPublished(episode) && matches(episode.title, episode.description))
       .sort(byPublishedAtDesc);
 
-    const matchedSeries = seriesRows.filter((s) => matches(s.title, s.description));
+    const matchedSeries = seriesRows.filter((s) => s.status === "PUBLISHED" && matches(s.title, s.description));
     const matchedTopics = topicRows.filter((topic) => matches(topic.title, topic.description));
 
     return { episodes: matchedEpisodes, series: matchedSeries, topics: matchedTopics } satisfies SearchResults;
@@ -160,7 +170,9 @@ export const staticContentRepository: ContentRepository = {
 
   async getEpisodesByIds(ids) {
     const byId = new Map(episodeRows.map((episode) => [episode.id, episode]));
-    return ids.map((id) => byId.get(id)).filter((episode): episode is Episode => Boolean(episode));
+    return ids
+      .map((id) => byId.get(id))
+      .filter((episode): episode is Episode => episode !== undefined && isPublished(episode));
   },
 
   async listAllEpisodes() {

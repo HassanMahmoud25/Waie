@@ -18,9 +18,9 @@ export default async function AdminPage() {
   await requireAdmin();
   const [episodes, series, topics, collections] = await Promise.all([
     contentRepository.listAllEpisodes(),
-    contentRepository.listSeries(),
+    contentRepository.listAllSeries(),
     contentRepository.listTopics(),
-    contentRepository.listCollections(),
+    contentRepository.listAllCollections(),
   ]);
 
   const sections = [

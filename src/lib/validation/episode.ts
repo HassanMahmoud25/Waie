@@ -3,8 +3,8 @@ import { z } from "zod";
 /** Hosts that only ever serve YouTube's own media: an audio file must be one Waie owns, never lifted from YouTube. */
 const YOUTUBE_HOSTS = /(^|\.)(youtube\.com|youtube-nocookie\.com|youtu\.be|googlevideo\.com|ytimg\.com)$/i;
 
-/** Empty clears the field; otherwise an https:// URL (Waie's CDN/podcast host) or a same-origin /path, and never a YouTube host. */
-const audioUrlField = z
+/** Empty clears the field; otherwise an https:// URL (Waie's CDN/podcast host) or a same-origin /path, and never a YouTube host. Exported for reuse by lib/validation/admin-episode.ts. */
+export const audioUrlField = z
   .string()
   .trim()
   .max(500, "رابط الصوت طويل جدًا.")
