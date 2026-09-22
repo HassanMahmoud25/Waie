@@ -47,6 +47,16 @@ export async function uniqueTopicSlug(preferredBase: string): Promise<string> {
   return candidate;
 }
 
+export async function uniqueCollectionSlug(preferredBase: string): Promise<string> {
+  let candidate = preferredBase;
+  let n = 1;
+  while (await prisma.collection.findUnique({ where: { slug: candidate }, select: { id: true } })) {
+    n += 1;
+    candidate = `${preferredBase}-${n}`;
+  }
+  return candidate;
+}
+
 /**
  * Fallback slug base for entities with no natural ASCII identifier to fall
  * back to. Episodes fall back to their YouTube video id (always unique,
