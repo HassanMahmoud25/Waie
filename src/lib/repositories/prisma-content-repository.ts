@@ -56,6 +56,7 @@ function toSeries(row: PrismaSeries): Series {
     title: row.title,
     description: row.description ?? "",
     coverImage: row.coverImage ?? undefined,
+    coverImageMobile: row.coverImageMobile ?? undefined,
     topicId: row.topicId,
     status: row.status,
   };

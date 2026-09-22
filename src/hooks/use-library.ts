@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useSavedEpisodesContext } from "@/components/library/saved-episodes-provider";
+import { getProgressStoreState, subscribeProgressStore, recordDbProgress, toggleDbCompleted } from "@/lib/library/progress-store";
 
 /**
  * Shaped after the Prisma `WatchProgress` model (see prisma/schema.prisma)
@@ -80,52 +82,75 @@ function withProgress(base: LibraryState, episodeId: string, seconds: number, du
   };
 }
 
-/** Hook-free read of one episode's stored progress, for the same non-component callers as recordProgress. */
+/**
+ * Hook-free read of one episode's stored progress -- called by the playback
+ * engine (lib/playback/engine.ts) to compute a resume position, and by
+ * getProgress() below. Authenticated visitors: the database-backed store
+ * (lib/library/progress-store.ts), hydrated server-side before this can ever
+ * be called -- see progress-provider.tsx. Anonymous visitors: localStorage,
+ * exactly as before.
+ */
 export function getStoredProgress(episodeId: string): ProgressEntry | undefined {
+  const dbState = getProgressStoreState();
+  if (dbState.isAuthenticated) return dbState.progress[episodeId];
   return readState().progress[episodeId];
 }
 
 /**
  * Hook-free progress write for callers that outlive any component -- the
  * background audio engine keeps saving after the episode page is gone. Same
- * rules as the hook's setProgress (it's the same code path).
+ * authenticated/anonymous split as getStoredProgress; the engine itself
+ * already decides *when* to call this (throttled to ~5s plus meaningful
+ * events -- see PROGRESS_SAVE_INTERVAL_MS in engine.ts), so neither branch
+ * here adds its own debouncing.
  */
 export function recordProgress(episodeId: string, seconds: number, durationSeconds: number): void {
+  if (getProgressStoreState().isAuthenticated) {
+    recordDbProgress(episodeId, seconds, durationSeconds);
+    return;
+  }
   commit((base) => withProgress(base, episodeId, seconds, durationSeconds));
 }
 
 /**
- * Local, per-device stand-in for a real account: saved episodes and watch
- * progress persisted to localStorage. Deliberately shaped like the
- * SavedEpisode/WatchProgress Prisma models already in the schema, so
- * wiring a real signed-in backend later means swapping this hook's
- * internals, not the components that call it.
+ * Watch progress and completion are now database-backed per signed-in
+ * account too (lib/library/progress-store.ts + lib/library/actions.ts),
+ * mirroring how saved episodes already work via SavedEpisodesProvider.
+ * Anonymous visitors keep the original localStorage behavior completely
+ * unchanged -- their progress was never, and still isn't, sent anywhere or
+ * associated with any account. `waie:library:v1`'s progress data is read/
+ * written exactly as before for that path; only which path an authenticated
+ * visitor takes has changed.
+ *
+ * The hook's return shape is unchanged so existing consumers (BookmarkButton,
+ * MarkWatchedButton, ContinueWatchingSection, LibraryContent, the playback
+ * engine, etc.) don't need to know any of this moved.
  */
 export function useLibrary() {
   const [state, setState] = useState<LibraryState>(emptyState);
-  const [isHydrated, setIsHydrated] = useState(false);
+  const [isLocalHydrated, setIsLocalHydrated] = useState(false);
+  const [dbProgressState, setDbProgressState] = useState(getProgressStoreState);
 
   useEffect(() => {
     setState(readState());
-    setIsHydrated(true);
+    setIsLocalHydrated(true);
     listeners.add(setState);
     return () => {
       listeners.delete(setState);
     };
   }, []);
 
-  const isSaved = useCallback((episodeId: string) => state.savedEpisodeIds.includes(episodeId), [state]);
+  useEffect(() => subscribeProgressStore(setDbProgressState), []);
 
-  const toggleSaved = useCallback((episodeId: string) => {
-    commit((base) => ({
-      ...base,
-      savedEpisodeIds: base.savedEpisodeIds.includes(episodeId)
-        ? base.savedEpisodeIds.filter((id) => id !== episodeId)
-        : [...base.savedEpisodeIds, episodeId],
-    }));
-  }, []);
+  const { savedEpisodeIds, isSaved, toggleSaved, isAuthenticated } = useSavedEpisodesContext();
 
-  const getProgress = useCallback((episodeId: string) => state.progress[episodeId], [state]);
+  // Authenticated: the DB store is already hydrated before first paint (see
+  // ProgressProvider), so there's no wait -- unlike the anonymous path, which
+  // genuinely can't read localStorage until after mount.
+  const isHydrated = dbProgressState.isAuthenticated || isLocalHydrated;
+  const progress = dbProgressState.isAuthenticated ? dbProgressState.progress : state.progress;
+
+  const getProgress = useCallback((episodeId: string) => progress[episodeId], [progress]);
 
   /** Called from the player as an episode plays. Once real playback crosses COMPLETE_THRESHOLD it's marked completed automatically, same as the manual "mark as watched" toggle would -- but never un-marks a completion the user (or a prior watch) already set. Bails out without touching state/storage when nothing actually changed, so a player tick that reports the same second twice (e.g. right at a pause) doesn't cause a redundant re-render + localStorage write. */
   const setProgress = useCallback((episodeId: string, seconds: number, durationSeconds: number) => {
@@ -133,6 +158,10 @@ export function useLibrary() {
   }, []);
 
   const toggleCompleted = useCallback((episodeId: string) => {
+    if (getProgressStoreState().isAuthenticated) {
+      toggleDbCompleted(episodeId);
+      return;
+    }
     commit((base) => {
       const existing = base.progress[episodeId];
       return {
@@ -152,10 +181,11 @@ export function useLibrary() {
 
   return {
     isHydrated,
-    savedEpisodeIds: state.savedEpisodeIds,
-    progress: state.progress,
+    savedEpisodeIds,
+    progress,
     isSaved,
     toggleSaved,
+    isAuthenticated,
     getProgress,
     setProgress,
     toggleCompleted,

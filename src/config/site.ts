@@ -22,7 +22,7 @@ function resolveSiteUrl(): string {
 export const siteConfig = {
   name: "وعي",
   tagline: "مساحات نتأمل فيها الدين والحياة",
-  defaultTitle: "وعي | حوارات مساحات نتأمل فيها الدين والحياة",
+  defaultTitle: "وعي | مساحات نتأمل فيها الدين والحياة",
   description:
     "أحمد عامر وحازم الصديق وشريف علي يتحدثون عن الصلاة والتوبة والأخلاق، وعن سِيَر الصحابة وقصص الأنبياء ورمضان.",
   url: resolveSiteUrl(),
