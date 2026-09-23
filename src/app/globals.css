@@ -866,6 +866,19 @@
     font-weight: 800;
   }
 
+  /* Below `md`, site-footer.tsx hides the whole footer (Phase 5F, mobile
+     app-like shell) -- which used to be what absorbed this fixed bar's
+     height at the very end of every page for free (the footer is always
+     taller than the bar, so the bar only ever overlapped the footer's own
+     bottom padding, never real content above it). Give the actual routed
+     content that same clearance directly now that no footer is there to
+     provide it, so the tab bar never ends up covering real content. */
+  @media (max-width: 767.98px) {
+    body:has(.mobile-tab-bar) .page-transition {
+      padding-bottom: var(--mobile-nav-clearance);
+    }
+  }
+
   /* ==========================================================================
      Media / imagery treatment — the core visual unit of the whole product.
      Every thumbnail is a .media wrapper (position context) around a next/image

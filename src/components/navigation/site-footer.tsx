@@ -20,7 +20,7 @@ export async function SiteFooter() {
   const featuredSeries = await getFeaturedSeries();
 
   return (
-    <footer className="site-footer relative overflow-hidden bg-[var(--cinematic)] text-[var(--on-brand-soft)]">
+    <footer className="site-footer relative hidden overflow-hidden bg-[var(--cinematic)] text-[var(--on-brand-soft)] md:block">
       <div
         className="pointer-events-none absolute inset-0"
         style={{
