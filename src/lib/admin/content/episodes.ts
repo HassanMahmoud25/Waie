@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db/prisma";
 import { parseYouTubeId, fetchVideoMetadata } from "@/lib/youtube/service";
-import { slugify, uniqueEpisodeSlug } from "@/lib/sync/slug";
+import { slugify, uniqueEpisodeSlug, uniqueShortSlug } from "@/lib/sync/slug";
+import { classifyVideo } from "@/lib/sync/classify-video";
 import type { UpdateEpisodeContentInput } from "@/lib/validation/admin-episode";
 import { AdminContentError } from "@/lib/admin/content/errors";
 
@@ -31,34 +32,58 @@ export async function getEpisodeForAdmin(id: string) {
 }
 
 /**
- * Creates a new episode as a DRAFT from a pasted YouTube URL or bare video
- * id, fetching real metadata via the existing lib/youtube/service.ts utility
- * (never a second implementation). This is intentionally the full extent of
- * YouTube integration for this phase -- no playlist scanning, no bulk
- * import; see the file-level comment in lib/youtube/service.ts for the
+ * Creates a new DRAFT episode or Short from a pasted YouTube URL or bare
+ * video id, fetching real metadata via the existing lib/youtube/service.ts
+ * utility (never a second implementation). This is intentionally the full
+ * extent of YouTube integration for this phase -- no playlist scanning, no
+ * bulk import; see the file-level comment in lib/youtube/service.ts for the
  * existing sync system that already does that separately.
  *
- * Always DRAFT, regardless of Episode.status's schema default (PUBLISHED,
+ * Classifies the video with the exact same lib/sync/classify-video.ts logic
+ * bulk sync uses (see process-videos.ts's routeClassifiedVideo) before
+ * deciding what to create -- a pasted Short must become a Short row, never
+ * an Episode, exactly like the bulk path. UNKNOWN is refused outright rather
+ * than guessed, same rule as sync.
+ *
+ * Always DRAFT, regardless of either model's schema default (PUBLISHED,
  * which exists only for the unrelated sync/import path in lib/sync/**) --
- * a CMS-created episode must always start unpublished for editorial review.
+ * CMS-created content must always start unpublished for editorial review.
  */
-export async function createDraftEpisodeFromYouTube(youtubeUrlOrId: string) {
+export async function createDraftContentFromYouTube(youtubeUrlOrId: string) {
   const videoId = parseYouTubeId(youtubeUrlOrId);
   if (!videoId) {
     throw new AdminContentError("تعذّر التعرّف على رابط يوتيوب أو معرّف الفيديو.");
   }
 
-  const existing = await prisma.episode.findUnique({ where: { youtubeVideoId: videoId }, select: { id: true, slug: true } });
-  if (existing) {
+  const [existingEpisode, existingShort] = await Promise.all([
+    prisma.episode.findUnique({ where: { youtubeVideoId: videoId }, select: { id: true } }),
+    prisma.short.findUnique({ where: { youtubeVideoId: videoId }, select: { id: true } }),
+  ]);
+  if (existingEpisode) {
     throw new AdminContentError("هذه الحلقة موجودة بالفعل. عدّلها بدلًا من إنشائها من جديد.");
+  }
+  if (existingShort) {
+    throw new AdminContentError("تمت إضافة هذا الفيديو من قبل بوصفه Short.");
   }
 
   const video = await fetchVideoMetadata(videoId);
+  const classification = await classifyVideo(video);
+
+  if (classification === "UNKNOWN") {
+    throw new AdminContentError(
+      "تعذّر تحديد ما إذا كان هذا الفيديو حلقة أم Short. حاول مرة أخرى لاحقًا.",
+    );
+  }
+
+  if (classification === "SHORT") {
+    const short = await createDraftShort(video);
+    return { kind: "short" as const, short };
+  }
 
   const base = slugify(video.title) || `waie-${video.videoId}`;
   const slug = await uniqueEpisodeSlug(base);
 
-  return prisma.episode.create({
+  const episode = await prisma.episode.create({
     data: {
       slug,
       youtubeVideoId: video.videoId,
@@ -72,6 +97,33 @@ export async function createDraftEpisodeFromYouTube(youtubeUrlOrId: string) {
       status: "DRAFT",
     },
     ...episodeWithTopics,
+  });
+  return { kind: "episode" as const, episode };
+}
+
+/**
+ * The Short half of createDraftContentFromYouTube -- mirrors
+ * lib/sync/upsert-short.ts's create branch exactly (same fields, same
+ * always-DRAFT rule), but has no update/idempotency branch of its own:
+ * createDraftContentFromYouTube already rejected an existing Short above,
+ * so this is always a fresh row. There is deliberately no admin editor for
+ * Short yet (see prisma/schema.prisma's Short doc comment) -- this exists
+ * purely to stop a Short from leaking into the Episode table via quick-add.
+ */
+async function createDraftShort(video: Awaited<ReturnType<typeof fetchVideoMetadata>>) {
+  const base = slugify(video.title) || `waie-${video.videoId}`;
+  const slug = await uniqueShortSlug(base);
+
+  return prisma.short.create({
+    data: {
+      slug,
+      youtubeVideoId: video.videoId,
+      youtubeTitle: video.title,
+      youtubeThumbnailUrl: video.thumbnailUrl,
+      youtubeDurationSeconds: video.durationSeconds,
+      youtubePublishedAt: video.publishedAt,
+      status: "DRAFT",
+    },
   });
 }
 

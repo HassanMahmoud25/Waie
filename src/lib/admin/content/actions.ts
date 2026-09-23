@@ -5,7 +5,7 @@ import { requireAdmin } from "@/lib/auth/server";
 import { createEpisodeSchema, updateEpisodeContentSchema } from "@/lib/validation/admin-episode";
 import {
   AdminContentError,
-  createDraftEpisodeFromYouTube,
+  createDraftContentFromYouTube,
   updateEpisodeContent,
   publishEpisode,
   unpublishEpisode,
@@ -39,7 +39,20 @@ function revalidatePublicEpisodePaths(slug: string, seriesSlug: string | null): 
   if (seriesSlug) revalidatePath(`/series/${seriesSlug}`);
 }
 
-export async function createEpisodeAction(youtubeUrlOrId: string): Promise<ActionResult<{ id: string; slug: string }>> {
+type CreateEpisodeActionResult =
+  | { ok: true; data: { kind: "episode"; id: string; slug: string } }
+  | { ok: true; data: { kind: "short"; title: string } }
+  | { ok: false; error: string };
+
+/**
+ * Creates a DRAFT episode -- or, when the pasted URL turns out to be a
+ * YouTube Short, a DRAFT Short instead (see createDraftContentFromYouTube's
+ * doc comment: quick-add must classify exactly like bulk sync, never assume
+ * "episode"). There is no admin editor for Short yet, so the "short" result
+ * carries just enough to show a confirmation -- CreateEpisodeForm stays on
+ * the page instead of navigating to a non-existent editor route.
+ */
+export async function createEpisodeAction(youtubeUrlOrId: string): Promise<CreateEpisodeActionResult> {
   await requireAdmin();
 
   const parsed = createEpisodeSchema.safeParse({ youtubeUrlOrId });
@@ -48,9 +61,12 @@ export async function createEpisodeAction(youtubeUrlOrId: string): Promise<Actio
   }
 
   try {
-    const episode = await createDraftEpisodeFromYouTube(parsed.data.youtubeUrlOrId);
+    const result = await createDraftContentFromYouTube(parsed.data.youtubeUrlOrId);
     revalidatePath("/admin/episodes");
-    return { ok: true, data: { id: episode.id, slug: episode.slug } };
+    if (result.kind === "short") {
+      return { ok: true, data: { kind: "short", title: result.short.youtubeTitle } };
+    }
+    return { ok: true, data: { kind: "episode", id: result.episode.id, slug: result.episode.slug } };
   } catch (error) {
     if (error instanceof AdminContentError) return { ok: false, error: error.message };
     console.error("createEpisodeAction failed:", error);

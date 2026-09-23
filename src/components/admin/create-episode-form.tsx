@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { CircleAlert, Loader2, Plus } from "lucide-react";
+import { CircleAlert, CircleCheck, Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createEpisodeAction } from "@/lib/admin/content/actions";
 
@@ -13,20 +13,32 @@ import { createEpisodeAction } from "@/lib/admin/content/actions";
  * async function) -- no form/useActionState wrapper, since the manual
  * pending/error state below is simpler for a single-field, navigate-on-success
  * flow than shoehorning it into useActionState's (prevState, formData) shape.
+ *
+ * A pasted URL that turns out to be a YouTube Short is classified server-side
+ * (same rule bulk sync uses -- see createDraftContentFromYouTube) and saved
+ * as a Short, not an Episode. There's no admin editor for Short yet, so that
+ * case shows a confirmation notice here instead of navigating anywhere.
  */
 export function CreateEpisodeForm() {
   const router = useRouter();
   const [value, setValue] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [shortNotice, setShortNotice] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    setShortNotice(null);
     startTransition(async () => {
       const result = await createEpisodeAction(value);
       if (!result.ok) {
         setError(result.error);
+        return;
+      }
+      if (result.data.kind === "short") {
+        setShortNotice(`تم التعرف على هذا الفيديو كـ Short («${result.data.title}») وحُفظ بصفته كذلك، لا كحلقة.`);
+        setValue("");
         return;
       }
       router.push(`/admin/episodes/${result.data.id}`);
@@ -53,6 +65,12 @@ export function CreateEpisodeForm() {
           <p role="alert" className="admin-notice admin-notice--danger mt-3 font-bold">
             <CircleAlert size={17} aria-hidden="true" />
             {error}
+          </p>
+        )}
+        {shortNotice && (
+          <p role="status" className="admin-notice admin-notice--success mt-3 font-bold">
+            <CircleCheck size={17} aria-hidden="true" />
+            {shortNotice}
           </p>
         )}
       </div>

@@ -77,8 +77,6 @@ export async function unpublishSeries(id: string) {
  * episode still assigned to it rather than error, which would silently
  * un-categorize real content -- so this refuses to delete while any
  * episode still references the series, instead of relying on that cascade.
- * (FollowedSeries rows cascade-delete along with the series itself, which is
- * expected: a user's "follow" on a series that no longer exists.)
  */
 export async function deleteSeries(id: string): Promise<void> {
   const existing = await prisma.series.findUnique({ where: { id }, ...withEpisodeCount });
