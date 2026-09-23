@@ -128,11 +128,10 @@ async function publishedEpisodeCounts(): Promise<Map<string, number>> {
 }
 
 /**
- * Prisma-backed ContentRepository. Selected automatically by
- * lib/repositories/index.ts whenever DATABASE_URL is configured -- every
- * page/component keeps talking to the same ContentRepository interface, so
- * nothing outside this file and index.ts needs to know a real database
- * exists.
+ * Prisma-backed ContentRepository -- the app's only content source, exported
+ * as `contentRepository` from lib/repositories/index.ts. Every page/component
+ * keeps talking to the same ContentRepository interface, so nothing outside
+ * this file and index.ts needs to know a real database exists.
  */
 export const prismaContentRepository: ContentRepository = {
   async listEpisodes() {

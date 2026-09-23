@@ -5,25 +5,25 @@ import { PrismaClient } from "@prisma/client";
  *
  * Constructing PrismaClient eagerly at module load would mean simply
  * *importing* this file crashes whenever `prisma generate` hasn't been run
- * yet (its generated output doesn't exist) -- and lib/repositories/index.ts
- * imports the Prisma-backed repository unconditionally (ES imports are
- * evaluated regardless of which branch a later runtime check picks), so
- * that crash would happen even when DATABASE_URL isn't configured and the
- * app only intends to use the static fallback repository.
+ * yet (its generated output doesn't exist), even on code paths that never
+ * end up querying the database (e.g. a build step that only imports types).
  *
  * Wrapping access in a Proxy defers the real `new PrismaClient()` call
  * until a property on `prisma` is actually touched (e.g. `prisma.episode`),
  * which only happens inside the Prisma repository's own method bodies --
- * never merely from importing this module. So: DATABASE_URL unset -> the
- * static repository is selected and this proxy is never invoked, no crash,
- * no `prisma generate` requirement. DATABASE_URL set but not yet
- * generated -> the error still surfaces, but only once a page actually
- * tries to read content, with the real "run prisma generate" message
- * intact rather than a build-time crash.
+ * never merely from importing this module. That also means a missing
+ * DATABASE_URL surfaces only once a page actually tries to read content,
+ * as a clear, deliberate error rather than a build-time crash.
  */
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
 function getPrismaClient(): PrismaClient {
+  if (!process.env.DATABASE_URL) {
+    throw new Error(
+      "DATABASE_URL is not configured. The database is the only source of content -- " +
+        "set DATABASE_URL (see .env.example) before running the app.",
+    );
+  }
   if (!globalForPrisma.prisma) {
     globalForPrisma.prisma = new PrismaClient();
   }

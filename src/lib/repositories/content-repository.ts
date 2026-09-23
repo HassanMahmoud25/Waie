@@ -8,11 +8,11 @@ import type { MindMap } from "@/types/mind-map";
 import type { SearchResults } from "@/types/search";
 
 /**
- * The one interface every page/component talks to for content. Everything
- * returns a Promise on purpose: the current implementation
- * (static-content-repository.ts) resolves synchronously over in-memory demo
- * data, but a Prisma-backed implementation can replace it later without
- * touching a single component.
+ * The one interface every page/component talks to for content. Implemented
+ * by prisma-content-repository.ts, the sole content source -- keeping
+ * components against this interface rather than Prisma types directly means
+ * the backing implementation could change without touching a single
+ * component.
  */
 export interface ContentRepository {
   listEpisodes(): Promise<Episode[]>;

@@ -4,17 +4,14 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertCircle, Loader2, Lock, LogIn, Mail } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
 import { serverLoginAction } from "@/lib/auth/actions";
 import { AuthField } from "@/components/auth/auth-field";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const SUBMIT_DELAY_MS = 550;
 
 /** `next` is where the visitor was headed when they got bounced here (e.g. /admin/episodes); the server re-validates it. */
 export function LoginForm({ next = null }: { next?: string | null }) {
   const router = useRouter();
-  const { login } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -39,25 +36,19 @@ export function LoginForm({ next = null }: { next?: string | null }) {
 
     setIsSubmitting(true);
 
-    // Real, server-verified accounts (admins) come first: on a match the server
-    // sets the session cookie and we go where it says.
+    // The only account system: on a match the server sets the session cookie
+    // and we go where it says. Never says *why* it failed (unknown email vs
+    // wrong password), so this can't be used to probe for accounts.
     const serverResult = await serverLoginAction(email, password, remember, next).catch(() => null);
+    setIsSubmitting(false);
+
     if (serverResult?.ok) {
       router.push(serverResult.redirectTo);
       router.refresh();
       return;
     }
 
-    // Otherwise it's the unchanged local demo login for regular visitors.
-    window.setTimeout(() => {
-      const result = login(email, password);
-      if (!result.ok) {
-        setFormError(result.error);
-        setIsSubmitting(false);
-        return;
-      }
-      router.push("/library");
-    }, SUBMIT_DELAY_MS);
+    setFormError("البريد الإلكتروني أو كلمة المرور غير صحيحة.");
   }
 
   return (

@@ -12,11 +12,14 @@ import {
   createSessionToken,
 } from "@/lib/auth/session";
 import { LOGIN_PATH, safeNextPath } from "@/lib/auth/server";
-import { signupSchema } from "@/lib/validation/auth";
+import { signupSchema, requestPasswordResetSchema, resetPasswordSchema } from "@/lib/validation/auth";
+import { createResetToken, getValidResetToken, RESET_TOKEN_TTL_MS } from "@/lib/auth/reset-token";
+import { sendPasswordResetEmail } from "@/lib/auth/email";
+import { siteConfig } from "@/config/site";
 
 export type ServerLoginResult =
   | { ok: true; redirectTo: string }
-  /** No server-side account matched (or the server can't check) -- the caller may fall back to the local demo login. */
+  /** No server-side account matched -- there is no other account system to fall back to. */
   | { ok: false };
 
 /**
@@ -123,6 +126,96 @@ export async function serverSignupAction(name: string, email: string, password: 
       return { ok: false, error: "هذا البريد الإلكتروني مسجّل بالفعل، جرّب تسجيل الدخول.", field: "email" };
     }
     console.error("serverSignupAction failed:", error);
+    return { ok: false, error: "حدث خطأ غير متوقع، حاول مرة أخرى." };
+  }
+}
+
+/**
+ * Always resolves the same way regardless of whether the email matches a
+ * real account -- callers must never branch on anything else the promise
+ * could reveal (including how long it took or whether it threw), so every
+ * exit path below funnels into the same `{ ok: true }`.
+ */
+export type RequestPasswordResetResult = { ok: true };
+
+/**
+ * Step 1 of the reset flow. On a real match: deletes any outstanding unused
+ * tokens for that user (so only the newest link is ever valid), issues a
+ * fresh single-use token, stores only its hash, and emails the raw token as
+ * a link. An account with no `passwordHash` (never had a real server
+ * password) is treated exactly like "no account" -- there is nothing to
+ * reset.
+ */
+export async function requestPasswordResetAction(email: unknown): Promise<RequestPasswordResetResult> {
+  const parsed = requestPasswordResetSchema.safeParse({ email });
+  if (!parsed.success || !process.env.DATABASE_URL) return { ok: true };
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { email: parsed.data.email },
+      select: { id: true, passwordHash: true },
+    });
+
+    if (user?.passwordHash) {
+      await prisma.passwordResetToken.deleteMany({ where: { userId: user.id, usedAt: null } });
+
+      const { token, tokenHash } = createResetToken();
+      await prisma.passwordResetToken.create({
+        data: { userId: user.id, tokenHash, expiresAt: new Date(Date.now() + RESET_TOKEN_TTL_MS) },
+      });
+
+      const resetUrl = `${siteConfig.url}/reset-password?token=${token}`;
+      await sendPasswordResetEmail(parsed.data.email, resetUrl).catch((error) => {
+        console.error("sendPasswordResetEmail failed:", error);
+      });
+    }
+  } catch (error) {
+    console.error("requestPasswordResetAction failed:", error);
+  }
+
+  return { ok: true };
+}
+
+export type ResetPasswordResult = { ok: true } | { ok: false; error: string };
+
+/**
+ * Step 4 of the reset flow. Re-validates the token from scratch (never
+ * trusts that an earlier page-load check is still true), then atomically
+ * updates the password, marks this token used, and clears every other
+ * outstanding token for the same user. Also clears this browser's own
+ * session cookie: the current architecture's sessions are stateless signed
+ * tokens with no server-side store (see lib/auth/session.ts), so other
+ * already-issued sessions elsewhere cannot be revoked -- they simply expire
+ * per their existing TTL (up to 12h, or 7 days with "remember me").
+ */
+export async function resetPasswordAction(token: unknown, password: unknown): Promise<ResetPasswordResult> {
+  const parsed = resetPasswordSchema.safeParse({ token, password });
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "تحقّق من البيانات المدخلة." };
+  }
+
+  if (!process.env.DATABASE_URL) {
+    return { ok: false, error: "إعادة تعيين كلمة المرور غير متاحة حاليًا." };
+  }
+
+  try {
+    const record = await getValidResetToken(parsed.data.token);
+    if (!record) {
+      return { ok: false, error: "رابط إعادة التعيين غير صالح أو منتهي الصلاحية." };
+    }
+
+    const passwordHash = await hashPassword(parsed.data.password);
+
+    await prisma.$transaction([
+      prisma.user.update({ where: { id: record.userId }, data: { passwordHash } }),
+      prisma.passwordResetToken.update({ where: { id: record.id }, data: { usedAt: new Date() } }),
+      prisma.passwordResetToken.deleteMany({ where: { userId: record.userId, id: { not: record.id } } }),
+    ]);
+
+    (await cookies()).delete(SESSION_COOKIE);
+    return { ok: true };
+  } catch (error) {
+    console.error("resetPasswordAction failed:", error);
     return { ok: false, error: "حدث خطأ غير متوقع، حاول مرة أخرى." };
   }
 }

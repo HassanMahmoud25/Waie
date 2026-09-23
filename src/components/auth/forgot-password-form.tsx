@@ -3,22 +3,27 @@
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { AlertCircle, ArrowRight, Loader2, Mail, MailCheck } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
+import { requestPasswordResetAction } from "@/lib/auth/actions";
 import { AuthField } from "@/components/auth/auth-field";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const SUBMIT_DELAY_MS = 550;
 
+/**
+ * Step 1 of the real reset flow. requestPasswordResetAction always resolves
+ * to `{ ok: true }` regardless of whether the email matches an account --
+ * this form shows the exact same success state either way, and the only
+ * distinct error path is a genuine network/transport failure (the request
+ * never reached the server at all), which reveals nothing about account
+ * existence.
+ */
 export function ForgotPasswordForm() {
-  const { requestPasswordReset } = useAuth();
-
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sent, setSent] = useState(false);
 
-  function handleSubmit(event: FormEvent) {
+  async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setFormError(null);
     setError(null);
@@ -33,15 +38,14 @@ export function ForgotPasswordForm() {
     }
 
     setIsSubmitting(true);
-    window.setTimeout(() => {
-      const result = requestPasswordReset(email);
-      setIsSubmitting(false);
-      if (!result.ok) {
-        setFormError(result.error);
-        return;
-      }
+    try {
+      await requestPasswordResetAction(email);
       setSent(true);
-    }, SUBMIT_DELAY_MS);
+    } catch {
+      setFormError("تعذّر إرسال الطلب، تحقّق من اتصالك وحاول مرة أخرى.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   if (sent) {
@@ -51,8 +55,8 @@ export function ForgotPasswordForm() {
           <MailCheck size={26} />
         </span>
         <p className="text-sm font-bold leading-7 text-[var(--ink-soft)]">
-          إن وُجد حساب مرتبط بالبريد <span className="text-[var(--ink)]">{email}</span>، فسنرسل إليه رابط إعادة تعيين
-          كلمة المرور خلال دقائق.
+          إذا كان هناك حساب مرتبط بالبريد <span className="text-[var(--ink)]">{email}</span>، فستصلك رسالة تحتوي
+          على رابط إعادة تعيين كلمة المرور خلال دقائق.
         </p>
         <button type="button" className="text-sm font-bold text-[var(--accent-strong)] hover:underline" onClick={() => setSent(false)}>
           لم يصلك شيء؟ أعد المحاولة
