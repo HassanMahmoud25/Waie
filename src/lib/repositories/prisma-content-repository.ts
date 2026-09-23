@@ -17,7 +17,7 @@ import type { Series, SeriesWithStats } from "@/types/series";
 import type { Topic, TopicWithStats } from "@/types/topic";
 import type { Collection } from "@/types/collection";
 import type { Recommendation } from "@/types/recommendation";
-import type { Transcript, TranscriptSegment } from "@/types/transcript";
+import type { Transcript } from "@/types/transcript";
 import type { MindMap, MindMapNode } from "@/types/mind-map";
 import type { SearchResults } from "@/types/search";
 
@@ -102,7 +102,7 @@ function toTranscript(row: PrismaTranscript): Transcript {
     id: row.id,
     episodeId: row.episodeId,
     language: row.language,
-    segments: Array.isArray(row.segments) ? (row.segments as unknown as TranscriptSegment[]) : [],
+    text: row.text,
   };
 }
 

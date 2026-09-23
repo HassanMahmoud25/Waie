@@ -226,9 +226,10 @@ model Transcript {
   id        String   @id @default(cuid())
   episodeId String
   language  String   @default("ar")
-  /// Serialized TranscriptSegment[]: { id, startSeconds, endSeconds?, speaker?, text }. The
-  /// structured source of truth -- there is no separate flat-text field to keep in sync.
-  segments  Json
+  /// The complete transcript as a single plain-text body (Phase 5H) -- not a
+  /// collection of timestamped segments. Chapter/section structure with
+  /// timestamps belongs to MindMap instead.
+  text      String
   source    String?
   episode   Episode  @relation(fields: [episodeId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())

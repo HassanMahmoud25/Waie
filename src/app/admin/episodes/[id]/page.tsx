@@ -4,8 +4,10 @@ import { contentRepository } from "@/lib/repositories";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { EpisodeEditor } from "@/components/admin/episode-editor";
 import { TranscriptEditor } from "@/components/admin/transcript-editor";
+import { MindMapEditor } from "@/components/admin/mind-map-editor";
 import { getEpisodeForAdmin } from "@/lib/admin/content/episodes";
-import { getTranscriptForAdmin, toTranscriptSegments } from "@/lib/admin/content/transcripts";
+import { getTranscriptForAdmin } from "@/lib/admin/content/transcripts";
+import { getMindMapForAdmin, toMindMapRoot } from "@/lib/admin/content/mind-maps";
 import { requireAdmin } from "@/lib/auth/server";
 
 export const metadata: Metadata = { title: "تعديل حلقة" };
@@ -14,11 +16,12 @@ export default async function EditEpisodePage({ params }: { params: Promise<{ id
   await requireAdmin();
   const { id } = await params;
 
-  const [episode, series, topics, transcript] = await Promise.all([
+  const [episode, series, topics, transcript, mindMap] = await Promise.all([
     getEpisodeForAdmin(id),
     contentRepository.listAllSeries(),
     contentRepository.listTopics(),
     getTranscriptForAdmin(id),
+    getMindMapForAdmin(id),
   ]);
   if (!episode) notFound();
 
@@ -34,8 +37,14 @@ export default async function EditEpisodePage({ params }: { params: Promise<{ id
         <EpisodeEditor episode={episode} series={series} topics={topics} />
         <TranscriptEditor
           episodeId={episode.id}
-          initialSegments={toTranscriptSegments(transcript?.segments)}
+          initialText={transcript?.text ?? ""}
           hasExistingTranscript={transcript !== null}
+        />
+        <MindMapEditor
+          episodeId={episode.id}
+          initialTitle={mindMap?.title ?? ""}
+          initialRoot={mindMap ? toMindMapRoot(mindMap.nodes) : null}
+          hasExistingMindMap={mindMap !== null}
         />
       </div>
     </AdminShell>

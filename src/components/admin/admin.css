@@ -241,6 +241,41 @@
     box-shadow: none;
   }
 
+  /* Compact icon controls for repeated per-row actions (reorder/remove one
+     item in a list -- e.g. Mind Map node rows). Neutral by default, never the
+     loud gradient+shadow .btn-danger treatment: removing one row from a list
+     that isn't even persisted until Save is a minor, reversible edit, not a
+     "genuinely destructive" action (Phase 5H) -- that red stays reserved for
+     whole-content deletes (حذف الخريطة/النص بالكامل). */
+  .admin-icon-btn {
+    display: inline-grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    color: var(--ink-soft);
+    background: transparent;
+    transition:
+      background 0.18s ease,
+      color 0.18s ease;
+  }
+
+  .admin-icon-btn:hover:not(:disabled) {
+    background: var(--glass-light-strong);
+    color: var(--ink);
+  }
+
+  .admin-icon-btn:disabled {
+    opacity: 0.35;
+  }
+
+  /* Only the hover/focus tint hints at "remove" -- the resting state stays as
+     neutral as move-up/move-down, so the row doesn't read as alarming. */
+  .admin-icon-btn--danger:hover:not(:disabled) {
+    background: color-mix(in srgb, #c0392b 12%, transparent);
+    color: #c0392b;
+  }
+
   .admin-panel__head {
     display: flex;
     align-items: center;
