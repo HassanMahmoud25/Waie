@@ -15,7 +15,13 @@ export async function runSync(type: SyncType, operation: () => Promise<SyncResul
   try {
     const result = await operation();
     const madeProgress =
-      result.videosCreated > 0 || result.videosUpdated > 0 || result.seriesCreated > 0 || result.videosSkipped > 0;
+      result.videosCreated > 0 ||
+      result.videosUpdated > 0 ||
+      result.seriesCreated > 0 ||
+      result.videosSkipped > 0 ||
+      result.shortsCreated > 0 ||
+      result.shortsUpdated > 0 ||
+      result.videosUnknown > 0;
     const status = !madeProgress && result.errors.length > 0 ? "FAILED" : "SUCCEEDED";
 
     await prisma.syncRun.update({
@@ -26,6 +32,9 @@ export async function runSync(type: SyncType, operation: () => Promise<SyncResul
         videosCreated: result.videosCreated,
         videosUpdated: result.videosUpdated,
         videosSkipped: result.videosSkipped,
+        shortsCreated: result.shortsCreated,
+        shortsUpdated: result.shortsUpdated,
+        videosUnknown: result.videosUnknown,
         playlistsDiscovered: result.playlistsDiscovered,
         seriesCreated: result.seriesCreated,
         errors: result.errors.length > 0 ? result.errors : undefined,

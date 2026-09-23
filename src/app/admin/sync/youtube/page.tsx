@@ -98,6 +98,10 @@ export default async function AdminYouTubeSyncPage() {
                   <span>جديدة {run.videosCreated}</span>
                   <span>محدَّثة {run.videosUpdated}</span>
                   <span>تجاوز {run.videosSkipped}</span>
+                  {(run.shortsCreated > 0 || run.shortsUpdated > 0) && (
+                    <span>Shorts {run.shortsCreated + run.shortsUpdated}</span>
+                  )}
+                  {run.videosUnknown > 0 && <span>غير مصنَّف {run.videosUnknown}</span>}
                 </p>
                 <div className="flex items-center gap-2">
                   {run.errors ? <span className="admin-status admin-status--draft">أخطاء</span> : null}

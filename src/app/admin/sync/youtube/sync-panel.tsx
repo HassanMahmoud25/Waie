@@ -126,8 +126,30 @@ export function SyncPanel() {
                   </div>
                 </div>
 
+                {(state.result.shortsCreated > 0 || state.result.shortsUpdated > 0) && (
+                  <p>
+                    Shorts: {state.result.shortsCreated} جديد، {state.result.shortsUpdated} محدَّث (منفصلة تمامًا عن
+                    الحلقات)
+                  </p>
+                )}
                 {state.result.playlistsDiscovered > 0 && <p>قوائم تشغيل مكتشفة: {state.result.playlistsDiscovered}</p>}
-                {state.result.seriesCreated > 0 && <p>سلاسل جديدة: {state.result.seriesCreated}</p>}
+                {state.result.seriesCreated > 0 && (
+                  <p>سلاسل جديدة (مسودة، بانتظار المراجعة): {state.result.seriesCreated}</p>
+                )}
+                {state.result.videosUnknown > 0 && (
+                  <details className="admin-notice admin-notice--warning block">
+                    <summary className="cursor-pointer font-bold text-[var(--accent-strong)]">
+                      {state.result.videosUnknown} فيديو يحتاج مراجعة يدوية (تعذّر تصنيفه كحلقة أو Short)
+                    </summary>
+                    <ul className="mt-2 space-y-1">
+                      {state.result.unknownVideoIds.map((videoId) => (
+                        <li key={videoId} className="text-xs" dir="ltr">
+                          {videoId}
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                )}
                 {state.result.errors.length > 0 && (
                   <details className="admin-notice admin-notice--warning block">
                     <summary className="cursor-pointer font-bold text-[var(--accent-strong)]">

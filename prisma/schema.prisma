@@ -279,6 +279,28 @@ model MindMap {
   updatedAt DateTime @updatedAt
 }
 
+/// A YouTube Short -- structurally separate from Episode by design (Phase
+/// 5A/5B). Shorts entered the Episode pipeline for months because the sync
+/// system had no content-type classification at all; a shared table made
+/// that leak possible everywhere an Episode could be read (search, related,
+/// collections, sitemap, ...). This model deliberately has NO relation to
+/// Series, Topic, Collection, Note, SavedEpisode or WatchProgress -- a Short
+/// is not an Episode variant, and no existing Episode-shaped query can ever
+/// see this table, by construction, without a new import written on purpose.
+/// `youtubeVideoId` is the idempotency key, exactly like Episode's.
+model Short {
+  id                     String        @id @default(cuid())
+  slug                   String        @unique
+  youtubeVideoId         String        @unique
+  youtubeTitle           String
+  youtubeThumbnailUrl    String
+  youtubeDurationSeconds Int
+  youtubePublishedAt     DateTime
+  status                 ContentStatus @default(DRAFT)
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+}
+
 // ===========================================================================
 // YouTube ingestion — see src/lib/youtube (API client) and src/lib/sync
 // (orchestration). These models never hold editorial content themselves;
@@ -338,6 +360,11 @@ model SyncRun {
   videosCreated       Int           @default(0)
   videosUpdated       Int           @default(0)
   videosSkipped       Int           @default(0)
+  /// Classified SHORT and written to the separate Short table -- never counted in videosCreated/videosUpdated.
+  shortsCreated       Int           @default(0)
+  shortsUpdated       Int           @default(0)
+  /// Classification was inconclusive (see lib/sync/classify-video.ts) -- never became an Episode or a Short.
+  videosUnknown       Int           @default(0)
   playlistsDiscovered Int           @default(0)
   seriesCreated       Int           @default(0)
   /// Array of { videoId?: string, playlistId?: string, message: string } —

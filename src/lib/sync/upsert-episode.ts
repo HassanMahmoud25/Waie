@@ -5,12 +5,13 @@ import { slugify, uniqueEpisodeSlug } from "./slug";
 export type UpsertOutcome = "created" | "updated" | "skipped";
 
 /**
- * The single write path for a YouTube video becoming/staying an Episode row.
- * `youtubeVideoId` is the idempotency key. Critically: the update branch
- * only ever assigns youtube*-prefixed columns -- title, description,
- * thumbnailUrl, seriesOrder, featured, seoTitle, seoDescription, status and
- * every other editorial column are never referenced here, so an admin's
- * edits can never be clobbered by a later sync run.
+ * The single write path for a YouTube video classified EPISODE (see
+ * classify-video.ts) becoming/staying an Episode row. `youtubeVideoId` is
+ * the idempotency key. Critically: the update branch only ever assigns
+ * youtube*-prefixed columns -- title, description, thumbnailUrl,
+ * seriesOrder, featured, seoTitle, seoDescription, status and every other
+ * editorial column are never referenced here, so an admin's edits can never
+ * be clobbered by a later sync run.
  */
 export async function upsertEpisodeFromYouTube(video: YouTubeVideoInfo): Promise<UpsertOutcome> {
   const existing = await prisma.episode.findUnique({ where: { youtubeVideoId: video.videoId } });
@@ -31,6 +32,15 @@ export async function upsertEpisodeFromYouTube(video: YouTubeVideoInfo): Promise
         youtubeThumbnailUrl: video.thumbnailUrl,
         youtubeDurationSeconds: video.durationSeconds,
         youtubePublishedAt: video.publishedAt,
+        // Explicit, not relied on as the schema's own default (PUBLISHED --
+        // kept as-is for the existing 113 already-published rows; changing a
+        // column default doesn't touch existing rows anyway). Phase 5A found
+        // that relying on that default let every newly-synced video,
+        // Shorts included, go live with zero editorial review. Mirrors
+        // createDraftEpisodeFromYouTube's already-correct behavior for the
+        // admin quick-add path -- newly-discovered content always starts
+        // unpublished for review, regardless of the column's own default.
+        status: "DRAFT",
       },
     });
     return "created";

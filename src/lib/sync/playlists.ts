@@ -19,6 +19,17 @@ export type PlaylistSyncOutcome = {
  * seriesId -- whether set here on first sync or hand-edited by an admin --
  * this never touches it again, so moving an episode between series in the
  * CMS, or re-ordering it, survives every future "Sync Playlists" run.
+ *
+ * A newly-discovered playlist's Series always starts DRAFT (Phase 5B fix):
+ * this function used to publish it immediately, which is exactly how the
+ * channel's "Clips" and master "بودكاست وعي" playlists became public Series
+ * with zero editorial review the first time sync ever ran. Any YouTube
+ * playlist the channel owner creates -- intentional topical series or not --
+ * is discoverable here, so nothing should go live without a human looking
+ * at it first, via the same admin Series CMS (Phase 3C) that already gates
+ * every other new Series. This never touches the two existing non-canonical
+ * Series (Clips, بودكاست وعي) -- the `if (!series)` guard below only ever
+ * fires for a playlist that doesn't have a Series row yet.
  */
 export async function discoverAndSyncPlaylists(channelId: string): Promise<PlaylistSyncOutcome> {
   const outcome: PlaylistSyncOutcome = { playlistsDiscovered: 0, seriesCreated: 0, errors: [] };
@@ -54,7 +65,7 @@ export async function discoverAndSyncPlaylists(channelId: string): Promise<Playl
             slug,
             description: playlist.description,
             sourcePlaylistId: playlist.playlistId,
-            status: "PUBLISHED",
+            status: "DRAFT",
           },
         });
         outcome.seriesCreated += 1;
