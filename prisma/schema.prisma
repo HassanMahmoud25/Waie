@@ -237,11 +237,22 @@ model Transcript {
   @@unique([episodeId, language])
 }
 
+/// YOUTUBE/SOUNDCLOUD/FACEBOOK/INSTAGRAM/EXTERNAL added in Phase 5I to match
+/// the type system the public UI (src/types/recommendation.ts, typeMeta in
+/// recommendations-panel.tsx) already designed for -- additive only, nothing
+/// renamed or removed. MOVIE/PERSON/PRODUCT/STUDY/REFERENCE are pre-redesign
+/// legacy values kept so any old row of that type would keep rendering; the
+/// Admin editor's "add new" list only offers the current 8, not these 5.
 enum RecommendationType {
-  BOOK
-  MOVIE
+  YOUTUBE
+  SOUNDCLOUD
   PODCAST
+  FACEBOOK
+  INSTAGRAM
+  BOOK
   WEBSITE
+  EXTERNAL
+  MOVIE
   PERSON
   PRODUCT
   STUDY

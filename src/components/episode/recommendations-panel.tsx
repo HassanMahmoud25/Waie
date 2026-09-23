@@ -9,7 +9,8 @@ import { cn } from "@/lib/utils/cn";
 
 type IconComponent = LucideIcon | typeof YoutubeGlyph;
 
-const typeMeta: Record<RecommendationType, { label: string; icon: IconComponent; cta: string }> = {
+/** Exported so the admin Recommendations editor (Phase 5I) reuses the exact same labels/icons instead of a second, drift-prone copy -- the editor never renders with this map, it only reads labels/icons from it. */
+export const typeMeta: Record<RecommendationType, { label: string; icon: IconComponent; cta: string }> = {
   YOUTUBE: { label: "فيديو", icon: YoutubeGlyph, cta: "مشاهدة الفيديو" },
   SOUNDCLOUD: { label: "مقطع صوتي", icon: SoundcloudGlyph, cta: "استماع الآن" },
   PODCAST: { label: "بودكاست", icon: Podcast, cta: "استماع للحلقة" },
