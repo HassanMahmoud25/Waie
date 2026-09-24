@@ -1,8 +1,8 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Pencil, Star } from "lucide-react";
 import type { Episode } from "@/types/episode";
 import { StatusBadge } from "@/components/admin/status-badge";
+import { EpisodeThumbnail } from "@/components/content/episode-thumbnail";
 import { formatArabicDate, formatDuration } from "@/lib/utils/format";
 
 /**
@@ -24,7 +24,7 @@ export function EpisodeRow({
     <div className="admin-row">
       <div className="admin-thumb">
         {episode.thumbnailUrl && (
-          <Image src={episode.thumbnailUrl} alt="" fill sizes="128px" className="object-cover" />
+          <EpisodeThumbnail src={episode.thumbnailUrl} alt="" fill sizes="128px" className="object-cover" />
         )}
       </div>
 

@@ -2,11 +2,11 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import { CircleAlert, CircleCheck, ExternalLink, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/admin/status-badge";
+import { EpisodeThumbnail } from "@/components/content/episode-thumbnail";
 import { formatArabicDate, formatDuration } from "@/lib/utils/format";
 import { updateEpisodeContentAction, publishEpisodeAction, unpublishEpisodeAction } from "@/lib/admin/content/actions";
 import type { getEpisodeForAdmin } from "@/lib/admin/content/episodes";
@@ -122,7 +122,7 @@ export function EpisodeEditor({
       {/* Read-only YouTube source info -- never editable from this form. */}
       <div className="admin-panel flex flex-wrap items-center gap-4 p-5">
         <div className="admin-thumb">
-          <Image src={episode.youtubeThumbnailUrl} alt="" fill sizes="128px" className="object-cover" />
+          <EpisodeThumbnail src={episode.youtubeThumbnailUrl} alt="" fill sizes="128px" className="object-cover" />
         </div>
         <div className="min-w-0 flex-1">
           <p className="admin-row__title">{episode.youtubeTitle}</p>

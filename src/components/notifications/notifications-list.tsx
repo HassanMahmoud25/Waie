@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
 import { Bell } from "lucide-react";
@@ -8,6 +7,7 @@ import { cn } from "@/lib/utils/cn";
 import { formatShortArabicDate } from "@/lib/utils/format";
 import { markNotificationAsReadAction, markAllNotificationsAsReadAction } from "@/lib/notifications/actions";
 import { EmptyState } from "@/components/content/empty-state";
+import { EpisodeThumbnail } from "@/components/content/episode-thumbnail";
 import type { AppNotification } from "@/types/notification";
 
 /**
@@ -83,7 +83,7 @@ export function NotificationsList({ initialNotifications }: { initialNotificatio
             >
               {notification.episode && (
                 <span className="notif-item__thumb">
-                  <Image src={notification.episode.thumbnailUrl} alt="" fill sizes="128px" />
+                  <EpisodeThumbnail src={notification.episode.thumbnailUrl} alt="" fill sizes="128px" />
                 </span>
               )}
               <span className="notif-item__body">

@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
@@ -14,6 +13,7 @@ import {
 } from "@/lib/notifications/actions";
 import { IconButton } from "@/components/ui/icon-button";
 import { EmptyState } from "@/components/content/empty-state";
+import { EpisodeThumbnail } from "@/components/content/episode-thumbnail";
 import type { AppNotification } from "@/types/notification";
 
 const MENU_TRANSITION_MS = 180;
@@ -214,7 +214,7 @@ export function NotificationsBell({
                   >
                     {notification.episode && (
                       <span className="notif-item__thumb">
-                        <Image src={notification.episode.thumbnailUrl} alt="" fill sizes="96px" />
+                        <EpisodeThumbnail src={notification.episode.thumbnailUrl} alt="" fill sizes="96px" />
                       </span>
                     )}
                     <span className="notif-item__body">
