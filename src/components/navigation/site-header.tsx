@@ -12,11 +12,21 @@ import type { SessionUser } from "@/lib/auth/server";
 import { IconButton } from "@/components/ui/icon-button";
 import { SearchModal } from "@/components/search/search-modal";
 import { MobileTabBar } from "@/components/navigation/mobile-tab-bar";
+import { NotificationsBell } from "@/components/navigation/notifications-bell";
+import type { AppNotification } from "@/types/notification";
 
 const SCROLL_THRESHOLD = 12;
 const MENU_TRANSITION_MS = 180;
 
-export function SiteHeader({ sessionUser }: { sessionUser: SessionUser | null }) {
+export function SiteHeader({
+  sessionUser,
+  initialNotifications,
+  initialUnreadNotificationCount,
+}: {
+  sessionUser: SessionUser | null;
+  initialNotifications: AppNotification[];
+  initialUnreadNotificationCount: number;
+}) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const pathname = usePathname();
@@ -89,6 +99,12 @@ export function SiteHeader({ sessionUser }: { sessionUser: SessionUser | null })
           <IconButton aria-label="البحث" onClick={() => setIsSearchOpen(true)}>
             <Search size={18} />
           </IconButton>
+          {sessionUser && (
+            <NotificationsBell
+              initialNotifications={initialNotifications}
+              initialUnreadCount={initialUnreadNotificationCount}
+            />
+          )}
           <HeaderAuth user={sessionUser} />
         </div>
       </div>

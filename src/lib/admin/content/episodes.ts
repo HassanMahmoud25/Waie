@@ -4,6 +4,7 @@ import { slugify, uniqueEpisodeSlug, uniqueShortSlug } from "@/lib/sync/slug";
 import { classifyVideo } from "@/lib/sync/classify-video";
 import type { UpdateEpisodeContentInput } from "@/lib/validation/admin-episode";
 import { AdminContentError } from "@/lib/admin/content/errors";
+import { notifyFollowersOfNewEpisode } from "@/lib/notifications/notify";
 
 export { AdminContentError } from "@/lib/admin/content/errors";
 
@@ -189,18 +190,42 @@ async function assertMinimumContentForPublish(episodeId: string): Promise<void> 
   }
 }
 
-/** Publishes an episode. Returns the updated row (with its series slug, for cache revalidation). */
+/**
+ * Publishes an episode. Returns the updated row (with its series slug, for
+ * cache revalidation).
+ *
+ * Notifies the series' followers only on the real DRAFT/ARCHIVED ->
+ * PUBLISHED transition (`wasPublished` below) -- never on a repeat call for
+ * an episode that's already PUBLISHED (this action can be invoked more than
+ * once, e.g. a double click), and never merely because the episode was
+ * edited afterward. See notifyFollowersOfNewEpisode's own doc comment for
+ * the DB-level idempotency guarantee behind this.
+ */
 export async function publishEpisode(id: string) {
-  const existing = await prisma.episode.findUnique({ where: { id }, select: { id: true } });
+  const existing = await prisma.episode.findUnique({ where: { id }, select: { id: true, status: true } });
   if (!existing) throw new AdminContentError("لم يتم العثور على هذه الحلقة.");
 
   await assertMinimumContentForPublish(id);
 
-  return prisma.episode.update({
+  const wasPublished = existing.status === "PUBLISHED";
+
+  const episode = await prisma.episode.update({
     where: { id },
     data: { status: "PUBLISHED" },
-    include: { series: { select: { slug: true } } },
+    include: { series: { select: { id: true, slug: true, title: true } } },
   });
+
+  if (!wasPublished) {
+    await notifyFollowersOfNewEpisode({
+      id: episode.id,
+      slug: episode.slug,
+      title: episode.title,
+      youtubeTitle: episode.youtubeTitle,
+      series: episode.series ? { id: episode.series.id, title: episode.series.title } : null,
+    });
+  }
+
+  return episode;
 }
 
 /** Unpublishes an episode back to DRAFT. Never deletes anything. */

@@ -20,21 +20,22 @@ enum UserRole {
 }
 
 model User {
-  id           String               @id @default(cuid())
-  email        String               @unique
-  name         String?
+  id            String               @id @default(cuid())
+  email         String               @unique
+  name          String?
   /// scrypt hash (see src/lib/auth/password.ts). Null for accounts that never
   /// got a server-side password -- those cannot sign in to the server session.
-  passwordHash String?
+  passwordHash  String?
   /// Gates /admin. Checked against the database on every guarded request
   /// (src/lib/auth/server.ts), never trusted from the session cookie.
-  role         UserRole             @default(USER)
-  progresses   WatchProgress[]
-  saves        SavedEpisode[]
-  notes        Note[]
-  follows      FollowedSeries[]
-  resetTokens  PasswordResetToken[]
-  createdAt    DateTime             @default(now())
+  role          UserRole             @default(USER)
+  progresses    WatchProgress[]
+  saves         SavedEpisode[]
+  notes         Note[]
+  follows       FollowedSeries[]
+  resetTokens   PasswordResetToken[]
+  notifications Notification[]
+  createdAt     DateTime             @default(now())
 }
 
 /// A single-use, time-limited password reset request (Phase: password reset).
@@ -149,6 +150,7 @@ model Episode {
   transcripts     Transcript[]
   recommendations Recommendation[]
   mindMap         MindMap?
+  notifications   Notification[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -232,6 +234,41 @@ model FollowedSeries {
 
   @@id([userId, seriesId])
   @@index([seriesId])
+}
+
+/// Phase 4C: the only notification type today is a followed series' episode
+/// going live. Kept as an enum (matching this schema's existing convention --
+/// ContentStatus, UserRole, ...) rather than a free string, and deliberately
+/// narrow -- add a value here only once a second real trigger exists.
+enum NotificationType {
+  NEW_EPISODE
+}
+
+/// A persistent in-app notification for one user (Phase 4C). `episodeId` is
+/// nullable so the model isn't NEW_EPISODE-specific, but for that type it's
+/// always set -- `@@unique([userId, type, episodeId])` is what actually makes
+/// "publish" idempotent: a repeat publish of the same episode hits this
+/// constraint (via createMany's skipDuplicates in
+/// lib/notifications/notify.ts) instead of relying on application logic
+/// alone. `href` is precomputed at creation time (e.g. `/episodes/[slug]`) so
+/// the UI never has to re-derive a route from `type` + `episodeId`.
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  href      String
+  episodeId String?
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  episode Episode? @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type, episodeId])
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
 }
 
 model Note {
