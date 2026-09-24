@@ -1,10 +1,10 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Check, Play } from "lucide-react";
 import type { Episode } from "@/types/episode";
 import { EpisodeMeta } from "./episode-meta";
 import { ProgressBar } from "@/components/shared/progress-bar";
 import { cn } from "@/lib/utils/cn";
+import { EpisodeThumbnail } from "@/components/content/episode-thumbnail";
 
 /**
  * A single row in a series' episode list. `mediaRef` is how SeriesEpisodeList
@@ -53,7 +53,7 @@ export function EpisodeListItem({
         <div className="media-stretch w-[46%] shrink-0 sm:w-44">
           <div aria-hidden="true" className="aspect-video" />
           <div ref={mediaRef} className="media">
-            <Image src={episode.thumbnailUrl} alt="" fill sizes="(max-width: 640px) 46vw, 176px" className="object-cover" />
+            <EpisodeThumbnail src={episode.thumbnailUrl} alt="" fill sizes="(max-width: 640px) 46vw, 176px" className="object-cover" />
             <span className="play-mark">
               <Play size={13} fill="currentColor" />
             </span>

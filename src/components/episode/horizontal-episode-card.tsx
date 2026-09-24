@@ -1,9 +1,9 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Play } from "lucide-react";
 import type { Episode } from "@/types/episode";
 import type { Series } from "@/types/series";
 import { EpisodeMeta } from "./episode-meta";
+import { EpisodeThumbnail } from "@/components/content/episode-thumbnail";
 
 /**
  * Compact episode card that adapts to its width: on narrow screens the
@@ -25,7 +25,7 @@ export function HorizontalEpisodeCard({
       <Link href={`/episodes/${episode.slug}`} className="media-stretch block">
         <div aria-hidden="true" className="aspect-video" />
         <span className="media">
-          <Image
+          <EpisodeThumbnail
             src={episode.thumbnailUrl}
             alt=""
             fill

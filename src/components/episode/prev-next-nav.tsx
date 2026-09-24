@@ -1,7 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Episode } from "@/types/episode";
+import { EpisodeThumbnail } from "@/components/content/episode-thumbnail";
 
 /** Previous/next episode within the same series — keeps the sequence navigable from the episode page itself. */
 export function PrevNextNav({ previous, next }: { previous: Episode | null; next: Episode | null }) {
@@ -16,7 +16,7 @@ export function PrevNextNav({ previous, next }: { previous: Episode | null; next
         >
           <ChevronRight size={18} className="hidden shrink-0 text-[var(--muted)] sm:block" aria-hidden="true" />
           <div className="media relative aspect-video w-28 shrink-0 overflow-hidden sm:w-32">
-            <Image src={previous.thumbnailUrl} alt="" fill sizes="(min-width: 640px) 128px, 112px" className="object-cover" />
+            <EpisodeThumbnail src={previous.thumbnailUrl} alt="" fill sizes="(min-width: 640px) 128px, 112px" className="object-cover" />
           </div>
           <span className="min-w-0">
             <span className="block text-xs font-bold text-[var(--muted)]">الحلقة السابقة</span>
@@ -33,7 +33,7 @@ export function PrevNextNav({ previous, next }: { previous: Episode | null; next
           className="glass-panel hover-zoom group flex min-w-0 items-center gap-4 p-3 sm:p-4"
         >
           <div className="media relative aspect-video w-28 shrink-0 overflow-hidden sm:w-32">
-            <Image src={next.thumbnailUrl} alt="" fill sizes="(min-width: 640px) 128px, 112px" className="object-cover" />
+            <EpisodeThumbnail src={next.thumbnailUrl} alt="" fill sizes="(min-width: 640px) 128px, 112px" className="object-cover" />
           </div>
           <span className="min-w-0 flex-1">
             <span className="block text-xs font-bold text-[var(--muted)]">الحلقة التالية</span>

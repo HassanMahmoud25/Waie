@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, Play, Search, SearchX, X } from "lucide-react";
 import type { Episode } from "@/types/episode";
@@ -12,6 +11,7 @@ import { RESULT_FORMS, formatCount, formatDuration } from "@/lib/utils/format";
 import { listQuickTopicsAction, searchContentAction } from "@/app/(site)/search/actions";
 import { TopicChipsSkeleton } from "@/components/content/loading-skeletons";
 import { SearchResultRow } from "./search-result-row";
+import { EpisodeThumbnail } from "@/components/content/episode-thumbnail";
 
 const DEBOUNCE_MS = 250;
 const TRANSITION_MS = 220;
@@ -230,7 +230,7 @@ function EpisodeResultRow({ episode, onClick }: { episode: Episode; onClick?: ()
       className="glass-panel hover-zoom flex items-center gap-3 p-2.5"
     >
       <div className="media relative aspect-video w-24 shrink-0 overflow-hidden sm:w-28">
-        <Image src={episode.thumbnailUrl} alt="" fill sizes="112px" className="object-cover" />
+        <EpisodeThumbnail src={episode.thumbnailUrl} alt="" fill sizes="112px" className="object-cover" />
         <span className="play-mark">
           <Play size={11} fill="currentColor" />
         </span>

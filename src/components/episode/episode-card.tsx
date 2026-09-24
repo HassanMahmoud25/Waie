@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Play } from "lucide-react";
 import type { Episode } from "@/types/episode";
@@ -6,6 +5,7 @@ import type { Series } from "@/types/series";
 import { formatDuration } from "@/lib/utils/format";
 import { EpisodeIdentity } from "./episode-identity";
 import { EpisodeMeta } from "./episode-meta";
+import { EpisodeThumbnail } from "@/components/content/episode-thumbnail";
 
 /** Standard card: the default grid item for rails, topic pages, series grids and related-episode lists. */
 export function EpisodeCard({ episode, series }: { episode: Episode; series?: Series | null }) {
@@ -15,7 +15,7 @@ export function EpisodeCard({ episode, series }: { episode: Episode; series?: Se
         href={`/episodes/${episode.slug}`}
         className="media relative block aspect-[16/9] min-w-0 overflow-hidden"
       >
-        <Image
+        <EpisodeThumbnail
           src={episode.thumbnailUrl}
           alt={episode.title}
           fill

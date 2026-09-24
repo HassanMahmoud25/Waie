@@ -1,10 +1,10 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, Play } from "lucide-react";
 import type { Episode } from "@/types/episode";
 import type { Series } from "@/types/series";
 import { formatDuration } from "@/lib/utils/format";
 import { EpisodeIdentity } from "@/components/episode/episode-identity";
+import { EpisodeThumbnail } from "@/components/content/episode-thumbnail";
 
 /**
  * Homepage "continue watching" tile: EpisodeCard's thumbnail/typography, plus
@@ -34,7 +34,7 @@ export function ContinueWatchingCard({
         href={`/episodes/${episode.slug}`}
         className="media relative block aspect-[16/9] min-w-0 overflow-hidden"
       >
-        <Image
+        <EpisodeThumbnail
           src={episode.thumbnailUrl}
           alt={episode.title}
           fill
