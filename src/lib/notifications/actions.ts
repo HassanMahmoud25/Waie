@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
 import { getSessionUser } from "@/lib/auth/server";
+import { getUnreadNotificationCount } from "@/lib/notifications/queries";
 
 export type MarkNotificationReadResult = { ok: true } | { ok: false; error: string };
 
@@ -57,4 +58,16 @@ export async function markAllNotificationsAsReadAction(): Promise<MarkAllNotific
     console.error("markAllNotificationsAsReadAction failed:", error);
     return { ok: false, error: "حدث خطأ غير متوقع." };
   }
+}
+
+/**
+ * Thin Server Action wrapper around getUnreadNotificationCount() (Phase
+ * 4C.1) -- the one thing NotificationsBell's client-side freshness check
+ * polls. A plain server helper can't be called from a Client Component;
+ * this is the boundary, same as every other client-triggered read/write in
+ * this app. Deliberately returns just the number, never the notification
+ * list, so a 60-120s poll stays cheap.
+ */
+export async function getUnreadNotificationCountAction(): Promise<number> {
+  return getUnreadNotificationCount();
 }

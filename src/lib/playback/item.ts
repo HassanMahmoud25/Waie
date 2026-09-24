@@ -1,5 +1,6 @@
 import type { Episode } from "@/types/episode";
 import type { ProgressEntry } from "@/hooks/use-library";
+import { getSoundCloudEmbedSrc } from "@/lib/audio/soundcloud";
 
 export type MediaMode = "video" | "audio";
 
@@ -17,8 +18,23 @@ export type MediaItem = {
   subtitle: string;
   thumbnailUrl: string;
   youtubeVideoId: string;
-  /** Waie's own published audio of this episode (its podcast feed, or an editor-set URL); null when there isn't any -- never YouTube. See docs/audio-pipeline.md. */
+  /**
+   * A file Waie's own <audio> engine (lib/playback/engine.ts) can play
+   * directly -- its podcast feed, or a direct-file editor-set URL; null when
+   * there isn't one -- never YouTube. See docs/audio-pipeline.md. Null
+   * whenever soundcloudEmbedSrc is set (see toMediaItem below): those two
+   * are mutually exclusive representations of "this episode's audio source".
+   */
   audioUrl: string | null;
+  /**
+   * Set when the episode's resolved audio is a SoundCloud track page/embed
+   * URL rather than a direct file -- `<audio src>` can't play a SoundCloud
+   * page (it's HTML, not a media stream), so AudioSurface renders
+   * SoundCloudAudioSurface's own `<iframe>` widget instead for these. Never
+   * fed into lib/playback/engine.ts: an iframe we don't own isn't a source
+   * the engine's single <audio> element can manage. See lib/audio/soundcloud.ts.
+   */
+  soundcloudEmbedSrc: string | null;
   /**
    * Length of the audio, when it's a different cut of the episode than the video (the podcast edit of some
    * episodes is trimmed or extended). Omitted/equal to durationSeconds -> same recording, same timeline.
@@ -39,7 +55,9 @@ export const NO_NEIGHBORS: PlaybackNeighbors = { previous: null, next: null };
 
 /** `audio` is what the episode resolved to (see lib/audio/podcast-feed.ts); omit it to use only an explicit `Episode.audioUrl`. */
 export function toMediaItem(episode: Episode, subtitle: string, audio?: AudioSource | null): MediaItem {
-  const audioUrl = audio === undefined ? episode.audioUrl : audio?.url;
+  const resolvedUrl = audio === undefined ? episode.audioUrl : audio?.url;
+  const soundcloudEmbedSrc = resolvedUrl ? getSoundCloudEmbedSrc(resolvedUrl) : null;
+  const audioUrl = soundcloudEmbedSrc ? null : resolvedUrl;
   return {
     episodeId: episode.id,
     slug: episode.slug,
@@ -48,6 +66,7 @@ export function toMediaItem(episode: Episode, subtitle: string, audio?: AudioSou
     thumbnailUrl: episode.thumbnailUrl,
     youtubeVideoId: episode.youtubeVideoId,
     audioUrl: audioUrl || null,
+    soundcloudEmbedSrc,
     ...(audioUrl && audio && audio.durationSeconds !== episode.durationSeconds ? { audioDurationSeconds: audio.durationSeconds } : {}),
     durationSeconds: episode.durationSeconds,
   };

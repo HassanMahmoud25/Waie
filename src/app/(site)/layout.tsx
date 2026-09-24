@@ -4,7 +4,7 @@ import { getSavedEpisodeIds } from "@/lib/library/saved-episodes";
 import { getWatchProgress } from "@/lib/library/progress";
 import { getUserNotes } from "@/lib/library/notes";
 import { getFollowedSeriesIds } from "@/lib/library/followed-series";
-import { getNotifications, getUnreadNotificationCount } from "@/lib/notifications/queries";
+import { getNotifications, getUnreadNotificationCount, HEADER_NOTIFICATIONS_LIMIT } from "@/lib/notifications/queries";
 import { SiteHeader } from "@/components/navigation/site-header";
 import { SiteFooter } from "@/components/navigation/site-footer";
 import { PageTransition } from "@/components/shared/page-transition";
@@ -29,7 +29,9 @@ export default async function SiteLayout({ children }: { children: ReactNode }) 
       getWatchProgress(),
       getUserNotes(),
       getFollowedSeriesIds(),
-      getNotifications(),
+      // Header dropdown only -- a small glance, never the full bounded list
+      // /notifications itself reads (see getNotifications' own doc comment).
+      getNotifications(HEADER_NOTIFICATIONS_LIMIT),
       getUnreadNotificationCount(),
     ]);
   const isAuthenticated = Boolean(sessionUser);

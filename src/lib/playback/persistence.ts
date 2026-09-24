@@ -31,8 +31,16 @@ function isItem(value: unknown): value is MediaItem {
     typeof item.thumbnailUrl === "string" &&
     typeof item.youtubeVideoId === "string" &&
     (item.audioUrl === null || typeof item.audioUrl === "string") &&
+    // Optional in the sense that a session stored before this field existed
+    // won't have it -- normalized to null just below, never trusted as-is.
+    (item.soundcloudEmbedSrc === undefined || item.soundcloudEmbedSrc === null || typeof item.soundcloudEmbedSrc === "string") &&
     typeof item.durationSeconds === "number"
   );
+}
+
+/** A stored item predates soundcloudEmbedSrc (or has it malformed) -- always resolve to a real MediaItem shape. */
+function normalizeItem(item: MediaItem): MediaItem {
+  return { ...item, soundcloudEmbedSrc: item.soundcloudEmbedSrc ?? null };
 }
 
 /** Storage is user-editable and outlives deploys, so trust nothing in it: anything malformed falls back to "no session". */
@@ -48,7 +56,7 @@ export function readStoredMedia(): StoredMedia {
       volume: typeof parsed.volume === "number" && parsed.volume >= 0 && parsed.volume <= 1 ? parsed.volume : DEFAULTS.volume,
       session:
         session && isItem(session.item) && isMode(session.mode) && typeof session.position === "number"
-          ? { item: session.item, mode: session.mode, position: Math.max(0, session.position) }
+          ? { item: normalizeItem(session.item), mode: session.mode, position: Math.max(0, session.position) }
           : null,
     };
   } catch {

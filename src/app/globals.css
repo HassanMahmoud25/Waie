@@ -820,16 +820,29 @@
   }
 
   .notif-panel__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
     max-height: 360px;
     overflow-y: auto;
     padding-top: 0.3rem;
   }
 
   /* /notifications (the full page, not the header dropdown) -- no clipping,
-     and the message is free to wrap across lines. */
+     roomier rows, and the message is free to wrap across lines. */
   .notif-panel__list--page {
     max-height: none;
     overflow: visible;
+    gap: 0.4rem;
+  }
+
+  .notif-panel__list--page .notif-item {
+    padding: 0.85rem;
+  }
+
+  .notif-panel__list--page .notif-item__thumb {
+    width: 128px;
+    border-radius: 14px;
   }
 
   .notif-panel__list--page .notif-item__message {
@@ -837,43 +850,79 @@
     white-space: normal;
   }
 
+  /* Each row: thumbnail first in DOM order, text after -- in a plain (not
+     row-reverse) flex row this lands on the inline-start side (right under
+     the app's global `dir="rtl"`) automatically, exactly like every other
+     thumbnail+text row in the app (HorizontalEpisodeCard, EpisodeListItem),
+     with no hardcoded left/right. */
   .notif-item {
+    position: relative;
     display: flex;
-    align-items: flex-start;
-    gap: 0.6rem;
+    align-items: center;
+    gap: 0.7rem;
     width: 100%;
-    padding: 0.65rem 0.6rem;
+    padding: 0.6rem;
     border-radius: 12px;
     text-align: start;
-    transition: background 0.15s ease;
+    transition:
+      background 0.15s ease,
+      transform 0.15s ease;
   }
 
   .notif-item:hover {
     background: var(--glass-light-strong);
   }
 
-  .notif-item__dot {
-    flex-shrink: 0;
-    margin-top: 0.4rem;
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: transparent;
+  .notif-item:active {
+    transform: scale(0.985);
   }
 
-  .notif-item--unread .notif-item__dot {
-    background: var(--brand);
+  /* Subtle unread treatment: a very light brand-tinted gradient (fading back
+     to the normal row background) plus a bolder title below -- no dot, no
+     border, no shadow. The header badge count is already the primary unread
+     signal; this is just a quiet nudge inside the list itself. */
+  .notif-item--unread {
+    background: linear-gradient(to inline-end, color-mix(in srgb, var(--brand) 10%, var(--glass-light)), var(--glass-light));
+  }
+
+  .notif-item--unread:hover {
+    background: linear-gradient(to inline-end, color-mix(in srgb, var(--brand) 14%, var(--glass-light-strong)), var(--glass-light-strong));
+  }
+
+  .notif-item__thumb {
+    position: relative;
+    flex-shrink: 0;
+    width: 96px;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border-radius: 12px;
+    background: var(--surface);
+  }
+
+  .notif-item__thumb img {
+    object-fit: cover;
   }
 
   .notif-item__body {
     display: flex;
     min-width: 0;
+    flex: 1;
     flex-direction: column;
-    gap: 0.15rem;
+    gap: 0.1rem;
+  }
+
+  .notif-item__series {
+    font-size: 0.68rem;
   }
 
   .notif-item__title {
     font-size: 0.84rem;
+    font-weight: 700;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+
+  .notif-item--unread .notif-item__title {
     font-weight: 800;
     color: var(--ink);
   }
@@ -881,13 +930,14 @@
   .notif-item__message {
     font-size: 0.8rem;
     font-weight: 500;
-    color: var(--ink-soft);
+    color: var(--muted);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
   .notif-item__time {
+    margin-top: 0.1rem;
     font-size: 0.7rem;
     font-weight: 600;
     color: var(--muted);
@@ -907,6 +957,14 @@
 
   .notif-panel__footer:hover {
     color: var(--ink);
+  }
+
+  .notif-page__empty {
+    display: grid;
+    place-items: center;
+    min-height: 44vh;
+    padding-block: 2rem;
+    text-align: center;
   }
 
   .icon-btn-on-media {
@@ -3545,11 +3603,25 @@
   }
 
   /* The mark stays exactly where the animation left it while the overlay
-     fades -- no push-in, no drift. */
+     fades -- no push-in, no drift. Its own opacity fades out faster than the
+     background's (a fraction of --boot-fade): a solid white mark reads at
+     much higher contrast against the page underneath than the dark
+     background wash does at the same numeric opacity, so fading both at the
+     same rate left a visible ghost of the mark hanging over page content
+     (worst over a short page, where it lands squarely on real UI) well after
+     the background had already dissolved into the page. Letting the mark
+     finish first removes that ghost while the background's own slower fade
+     is unchanged. */
   .boot-overlay__mark {
     position: relative;
     display: grid;
     place-items: center;
+    opacity: 1;
+    transition: opacity calc(var(--boot-fade) * 0.4) ease;
+  }
+
+  html[data-boot="leaving"] .boot-overlay__mark {
+    opacity: 0;
   }
 
   /* The logo is an animated WebP that plays once (ink mass painted in, the

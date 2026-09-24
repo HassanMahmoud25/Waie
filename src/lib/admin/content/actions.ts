@@ -63,6 +63,13 @@ export async function createEpisodeAction(youtubeUrlOrId: string): Promise<Creat
   try {
     const result = await createDraftContentFromYouTube(parsed.data.youtubeUrlOrId);
     revalidatePath("/admin/episodes");
+    // The overview's "recent episodes" tile (src/app/admin/page.tsx) reads
+    // the same listAllEpisodes() data and was the one admin route this
+    // helper's revalidation set silently missed -- a session that had /admin
+    // open before a create/publish, then soft-navigated back to it, could
+    // keep showing a stale list (missing thumbnail included) until a hard
+    // reload (Phase 4C.1 thumbnail-reliability fix).
+    revalidatePath("/admin");
     if (result.kind === "short") {
       return { ok: true, data: { kind: "short", title: result.short.youtubeTitle } };
     }
@@ -93,6 +100,7 @@ export async function updateEpisodeContentAction(
     const episode = await updateEpisodeContent(id, parsed.data);
     revalidatePath("/admin/episodes");
     revalidatePath(`/admin/episodes/${id}`);
+    revalidatePath("/admin");
     revalidatePublicEpisodePaths(episode.slug, episode.series?.slug ?? null);
     return { ok: true, data: { id: episode.id, slug: episode.slug } };
   } catch (error) {
@@ -110,6 +118,7 @@ export async function publishEpisodeAction(id: string): Promise<ActionResult<{ i
     const episode = await publishEpisode(id);
     revalidatePath("/admin/episodes");
     revalidatePath(`/admin/episodes/${id}`);
+    revalidatePath("/admin");
     revalidatePublicEpisodePaths(episode.slug, episode.series?.slug ?? null);
     return { ok: true, data: { id: episode.id, slug: episode.slug } };
   } catch (error) {
@@ -127,6 +136,7 @@ export async function unpublishEpisodeAction(id: string): Promise<ActionResult<{
     const episode = await unpublishEpisode(id);
     revalidatePath("/admin/episodes");
     revalidatePath(`/admin/episodes/${id}`);
+    revalidatePath("/admin");
     revalidatePublicEpisodePaths(episode.slug, episode.series?.slug ?? null);
     return { ok: true, data: { id: episode.id, slug: episode.slug } };
   } catch (error) {
