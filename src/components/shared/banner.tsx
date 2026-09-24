@@ -1,7 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
+import { EpisodeThumbnail } from "@/components/content/episode-thumbnail";
 
 type BannerProps = {
   href: string;
@@ -131,7 +131,7 @@ export function Banner({
           align === "block" && (isFeature ? "rounded-none md:rounded-[var(--radius-banner)]" : "rounded-[var(--radius-banner)]"),
         )}
       >
-        <Image src={imageUrl} alt={imageAlt} fill priority={priority} sizes={sizes} className="object-cover" />
+        <EpisodeThumbnail src={imageUrl} alt={imageAlt} fill priority={priority} sizes={sizes} className="object-cover" />
         <span className={cn("scrim", isFeature && "hidden md:block")} aria-hidden="true" />
       </div>
 

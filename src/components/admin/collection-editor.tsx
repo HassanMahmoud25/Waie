@@ -2,7 +2,6 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import {
   ChevronDown,
@@ -18,6 +17,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/admin/status-badge";
+import { EpisodeThumbnail } from "@/components/content/episode-thumbnail";
 import { EPISODE_FORMS, formatArabicDate, formatCount } from "@/lib/utils/format";
 import {
   updateCollectionAction,
@@ -295,7 +295,7 @@ export function CollectionEditor({
                 <div key={episode.id} className="admin-row">
                   <div className="admin-thumb">
                     {episode.thumbnailUrl && (
-                      <Image src={episode.thumbnailUrl} alt="" fill sizes="128px" className="object-cover" />
+                      <EpisodeThumbnail src={episode.thumbnailUrl} alt="" fill sizes="128px" className="object-cover" />
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -367,7 +367,7 @@ export function CollectionEditor({
                   <div key={episode.id} className="admin-row">
                     <div className="admin-thumb">
                       {episode.thumbnailUrl && (
-                        <Image src={episode.thumbnailUrl} alt="" fill sizes="128px" className="object-cover" />
+                        <EpisodeThumbnail src={episode.thumbnailUrl} alt="" fill sizes="128px" className="object-cover" />
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
