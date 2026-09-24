@@ -8,6 +8,10 @@ type SavedEpisodesContextValue = {
   isAuthenticated: boolean;
   isSaved: (episodeId: string) => boolean;
   toggleSaved: (episodeId: string) => void;
+  /** True while a toggle's Server Action call is in flight. */
+  isSaving: boolean;
+  /** The server's own user-facing message from the most recent failed toggle, or null. Cleared on the next toggle attempt. */
+  saveError: string | null;
 };
 
 const SavedEpisodesContext = createContext<SavedEpisodesContextValue | null>(null);
@@ -31,7 +35,8 @@ export function SavedEpisodesProvider({
   children: ReactNode;
 }) {
   const [savedIds, setSavedIds] = useState<Set<string>>(() => new Set(initialSavedEpisodeIds));
-  const [, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const isSaved = useCallback((episodeId: string) => savedIds.has(episodeId), [savedIds]);
 
@@ -41,6 +46,7 @@ export function SavedEpisodesProvider({
       // are expected to route signed-out visitors to /login instead of calling this.
       if (!isAuthenticated) return;
 
+      setSaveError(null);
       const wasSaved = savedIds.has(episodeId);
       setSavedIds((prev) => {
         const next = new Set(prev);
@@ -52,7 +58,10 @@ export function SavedEpisodesProvider({
       startTransition(async () => {
         const result = await toggleSavedEpisodeAction(episodeId);
         // Reconcile to the database's actual answer either way -- this also
-        // silently undoes the optimistic flip if the request failed.
+        // undoes the optimistic flip if the request failed, and surfaces the
+        // action's own already-safe, user-facing message (never a raw
+        // server/DB error -- see toggleSavedEpisodeAction's own error
+        // strings) so the revert isn't silent.
         setSavedIds((prev) => {
           const next = new Set(prev);
           const isNowSaved = result.ok ? result.saved : wasSaved;
@@ -60,14 +69,15 @@ export function SavedEpisodesProvider({
           else next.delete(episodeId);
           return next;
         });
+        if (!result.ok) setSaveError(result.error);
       });
     },
     [savedIds, isAuthenticated],
   );
 
   const value = useMemo<SavedEpisodesContextValue>(
-    () => ({ savedEpisodeIds: [...savedIds], isAuthenticated, isSaved, toggleSaved }),
-    [savedIds, isAuthenticated, isSaved, toggleSaved],
+    () => ({ savedEpisodeIds: [...savedIds], isAuthenticated, isSaved, toggleSaved, isSaving: isPending, saveError }),
+    [savedIds, isAuthenticated, isSaved, toggleSaved, isPending, saveError],
   );
 
   return <SavedEpisodesContext.Provider value={value}>{children}</SavedEpisodesContext.Provider>;

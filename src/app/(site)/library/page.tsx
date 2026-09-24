@@ -2,20 +2,19 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { contentRepository } from "@/lib/repositories";
 import { getSessionUser } from "@/lib/auth/server";
+import { getContinueWatching } from "@/lib/library/continue-watching";
 import { LibraryContent } from "@/components/library/library-content";
 
 export const metadata: Metadata = { title: "مكتبتي" };
 
 export default async function LibraryPage() {
   // Real, server-verified session -- used here only to know who's actually
-  // signed in. The saved-episodes/progress data below is still read from
-  // localStorage via LibraryContent/useLibrary (unchanged; that migration is
-  // a separate, later phase), so the copy below is intentionally honest about
-  // that rather than implying sync already works.
-  const [episodes, series, sessionUser] = await Promise.all([
+  // signed in (and, below, to fetch the account's own Continue Watching rows).
+  const [episodes, series, sessionUser, continueWatching] = await Promise.all([
     contentRepository.listEpisodes(),
     contentRepository.listSeries(),
     getSessionUser(),
+    getContinueWatching(),
   ]);
 
   return (
@@ -26,8 +25,8 @@ export default async function LibraryPage() {
       </h1>
       {sessionUser ? (
         <p className="mt-4 max-w-xl text-lg leading-8 text-[var(--ink-soft)]">
-          سجّلت الدخول باسم <b className="text-[var(--ink)]">{sessionUser.email}</b>. تُحفظ حلقاتك وتقدّمك فيها
-          حاليًا على هذا الجهاز؛ مزامنتها عبر أجهزتك ستتوفر قريبًا.
+          سجّلت الدخول باسم <b className="text-[var(--ink)]">{sessionUser.email}</b>. حلقاتك المحفوظة وتقدّمك في
+          المشاهدة محفوظة على حسابك وتصلك أينما سجّلت الدخول.
         </p>
       ) : (
         <p className="mt-4 max-w-xl text-lg leading-8 text-[var(--ink-soft)]">
@@ -39,7 +38,7 @@ export default async function LibraryPage() {
         </p>
       )}
 
-      <LibraryContent episodes={episodes} series={series} />
+      <LibraryContent episodes={episodes} series={series} continueWatching={continueWatching} />
     </main>
   );
 }

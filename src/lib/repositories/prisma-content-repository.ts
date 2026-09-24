@@ -293,6 +293,12 @@ export const prismaContentRepository: ContentRepository = {
     return row ? toSeries(row) : null;
   },
 
+  async getSeriesByIds(ids) {
+    if (ids.length === 0) return [];
+    const rows = await prisma.series.findMany({ where: { id: { in: ids } } });
+    return rows.map(toSeries);
+  },
+
   /** Admin-only: every series regardless of status -- used by /admin pages so a draft series never silently disappears from their own list. */
   async listAllSeries() {
     const [rows, counts] = await Promise.all([prisma.series.findMany(), publishedEpisodeCounts()]);
@@ -325,6 +331,12 @@ export const prismaContentRepository: ContentRepository = {
       prisma.series.count({ where: { topicId: row.id } }),
     ]);
     return { ...toTopic(row), episodeCount, seriesCount } satisfies TopicWithStats;
+  },
+
+  async getTopicsByIds(ids) {
+    if (ids.length === 0) return [];
+    const rows = await prisma.topic.findMany({ where: { id: { in: ids } } });
+    return rows.map(toTopic);
   },
 
   async listCollections() {
@@ -377,7 +389,14 @@ export const prismaContentRepository: ContentRepository = {
   },
 
   async getTranscriptByEpisode(episodeId) {
-    const row = await prisma.transcript.findFirst({ where: { episodeId } });
+    // "ar" is the only language this app's admin CMS has ever written (see
+    // lib/admin/content/transcripts.ts's own doc comment) -- there is no
+    // multi-language authoring UI, so this is the intended transcript, not
+    // an assumed fallback. Uses the model's own @@unique([episodeId,
+    // language]) constraint directly instead of an unfiltered findFirst,
+    // which could return an arbitrary row if more than one language ever
+    // exists for the same episode.
+    const row = await prisma.transcript.findUnique({ where: { episodeId_language: { episodeId, language: "ar" } } });
     return row ? toTranscript(row) : null;
   },
 

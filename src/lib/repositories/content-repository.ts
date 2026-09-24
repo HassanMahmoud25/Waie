@@ -1,6 +1,6 @@
 import type { Episode } from "@/types/episode";
 import type { Series, SeriesWithStats } from "@/types/series";
-import type { TopicWithStats } from "@/types/topic";
+import type { Topic, TopicWithStats } from "@/types/topic";
 import type { Collection } from "@/types/collection";
 import type { Recommendation } from "@/types/recommendation";
 import type { Transcript } from "@/types/transcript";
@@ -28,11 +28,15 @@ export interface ContentRepository {
   listSeries(): Promise<SeriesWithStats[]>;
   getSeriesBySlug(slug: string): Promise<SeriesWithStats | null>;
   getSeriesById(id: string): Promise<Series | null>;
+  /** Targeted batch lookup (no stats) -- for resolving a handful of series by id, e.g. an episode's own series plus its related episodes', without loading the whole table. */
+  getSeriesByIds(ids: string[]): Promise<Series[]>;
   /** Admin-only: every series regardless of status (drafts/archived included). Mirrors listAllEpisodes. */
   listAllSeries(): Promise<SeriesWithStats[]>;
 
   listTopics(): Promise<TopicWithStats[]>;
   getTopicBySlug(slug: string): Promise<TopicWithStats | null>;
+  /** Targeted batch lookup (no stats) -- mirrors getSeriesByIds. */
+  getTopicsByIds(ids: string[]): Promise<Topic[]>;
 
   listCollections(): Promise<Collection[]>;
   getCollectionBySlug(slug: string): Promise<Collection | null>;

@@ -8,3 +8,11 @@
  * importable from client code, server actions, and plain modules alike.
  */
 export const COMPLETE_THRESHOLD = 0.95;
+
+/**
+ * Max rail length for "أكمل من حيث توقفت" (Continue Watching). Shared between
+ * the authenticated/database path (lib/library/continue-watching.ts) and the
+ * anonymous/localStorage path (hooks/use-continue-watching.ts) so both cut
+ * off at the same size.
+ */
+export const CONTINUE_WATCHING_LIMIT = 12;

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
+import { cache } from "react";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { contentRepository } from "@/lib/repositories";
 import { siteConfig } from "@/config/site";
 import { Breadcrumbs } from "@/components/navigation/breadcrumbs";
@@ -11,18 +11,23 @@ import { EpisodePlayerProvider } from "@/components/episode/player-context";
 import { EpisodeMedia } from "@/components/media/episode-media";
 import { EpisodeKnowledgeTabs } from "@/components/episode/episode-knowledge-tabs";
 import { EpisodeNotes } from "@/components/episode/episode-notes";
-import { EpisodeDescription } from "@/components/episode/episode-description";
 import { PrevNextNav } from "@/components/episode/prev-next-nav";
 import { RelatedEpisodes } from "@/components/episode/related-episodes";
 import { BookmarkButton } from "@/components/shared/bookmark-button";
 import { ShareButton } from "@/components/shared/share-button";
 import { MarkWatchedButton } from "@/components/shared/mark-watched-button";
 import { HostAvatars } from "@/components/host/host-avatars";
-import { Tag } from "@/components/ui/tag";
 import { resolveAudioUrls } from "@/lib/audio/podcast-feed";
 import { NO_NEIGHBORS, toMediaItem } from "@/lib/playback/item";
 import { toIso8601Duration } from "@/lib/utils/format";
 import { resolveEpisodeHosts } from "@/lib/utils/content";
+
+/**
+ * Request-memoized (React cache()) so generateMetadata and the page body --
+ * which both need the same episode row -- share one DB call per request
+ * instead of two. Same pattern as getSessionUser() (lib/auth/server.ts).
+ */
+const getEpisode = cache((slug: string) => contentRepository.getEpisodeBySlug(slug));
 
 export async function generateMetadata({
   params,
@@ -30,17 +35,38 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const episode = await contentRepository.getEpisodeBySlug(slug);
+  const episode = await getEpisode(slug);
+  // Empty, not a throw: the page component's own notFound() (below) is what
+  // actually renders the 404 -- this just avoids asserting metadata for
+  // content that doesn't exist, and lets root layout's defaults show through
+  // for the brief moment before notFound() takes over.
   if (!episode) return {};
+
+  const path = `/episodes/${slug}`;
 
   return {
     title: episode.title,
     description: episode.description,
+    alternates: {
+      canonical: path,
+    },
     openGraph: {
+      // Next.js metadata merges openGraph as a whole object, not per-field --
+      // so siteName/locale from the root layout must be restated here or
+      // they're silently dropped on every episode page.
       type: "video.other",
+      siteName: siteConfig.name,
+      locale: "ar_AR",
       title: episode.title,
       description: episode.description,
+      url: path,
       images: [{ url: episode.thumbnailUrl }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: episode.title,
+      description: episode.description,
+      images: [episode.thumbnailUrl],
     },
   };
 }
@@ -51,20 +77,10 @@ export default async function EpisodePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const episode = await contentRepository.getEpisodeBySlug(slug);
+  const episode = await getEpisode(slug);
   if (!episode) notFound();
 
-  const [
-    allSeries,
-    allTopics,
-    recommendations,
-    transcript,
-    mindMap,
-    related,
-    adjacent,
-  ] = await Promise.all([
-    contentRepository.listSeries(),
-    contentRepository.listTopics(),
+  const [recommendations, transcript, mindMap, related, adjacent] = await Promise.all([
     contentRepository.getRecommendationsByEpisode(episode.id),
     contentRepository.getTranscriptByEpisode(episode.id),
     contentRepository.getMindMapByEpisode(episode.id),
@@ -72,25 +88,36 @@ export default async function EpisodePage({
     contentRepository.getAdjacentEpisodes(episode.id),
   ]);
 
-  const seriesById = new Map(allSeries.map((s) => [s.id, s]));
+  // Only the series this episode and its related picks actually belong to --
+  // never the whole table. Depends on `related` above, so it can't join the
+  // batch it's derived from; it runs alongside resolveAudioUrls below instead
+  // (that one depends on `adjacent` from the same batch), since neither
+  // depends on the other.
+  const seriesIds = Array.from(new Set([episode.seriesId, ...related.map((e) => e.seriesId)].filter(Boolean)));
+
+  const [seriesRows, audioUrls] = await Promise.all([
+    contentRepository.getSeriesByIds(seriesIds),
+    // Audio for this episode and its neighbours (for the player's previous/next): the podcast feed's
+    // recording of the same episode, unless an editor set an explicit audioUrl.
+    resolveAudioUrls([episode, adjacent.previous, adjacent.next].filter((item) => item !== null)),
+  ]);
+
+  const seriesById = new Map(seriesRows.map((s) => [s.id, s]));
   const series = seriesById.get(episode.seriesId) ?? null;
-  const episodeTopics = allTopics.filter((topic) =>
-    episode.topicIds.includes(topic.id),
-  );
   const episodeUrl = `${siteConfig.url}/episodes/${episode.slug}`;
   const episodeHosts = resolveEpisodeHosts(episode);
   const subtitle = series?.title ?? "";
-  // Audio for this episode and its neighbours (for the player's previous/next): the podcast feed's
-  // recording of the same episode, unless an editor set an explicit audioUrl.
-  const audioUrls = await resolveAudioUrls(
-    [episode, adjacent.previous, adjacent.next].filter((item) => item !== null),
-  );
   const toItem = (item: typeof episode) => toMediaItem(item, subtitle, audioUrls.get(item.id) ?? null);
   const mediaItem = toItem(episode);
   const mediaNeighbors = {
     previous: adjacent.previous ? toItem(adjacent.previous) : NO_NEIGHBORS.previous,
     next: adjacent.next ? toItem(adjacent.next) : NO_NEIGHBORS.next,
   };
+
+  // Only emitted when this episode actually has resolved audio (podcast feed
+  // match or an editorial override, see resolveAudioUrls) -- never asserted
+  // for an episode the podcast doesn't carry.
+  const episodeAudio = audioUrls.get(episode.id) ?? null;
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -104,6 +131,31 @@ export default async function EpisodePage({
         duration: toIso8601Duration(episode.durationSeconds),
         embedUrl: `https://www.youtube-nocookie.com/embed/${episode.youtubeVideoId}`,
       },
+      ...(episodeAudio
+        ? [
+            {
+              "@type": "PodcastEpisode",
+              url: episodeUrl,
+              name: episode.title,
+              description: episode.description,
+              datePublished: episode.publishedAt.toISOString(),
+              ...(episode.episodeNumber !== null ? { episodeNumber: episode.episodeNumber } : {}),
+              // The podcast's own cut can run a different length than the video
+              // (see resolveAudioUrls) -- episodeAudio.durationSeconds is that
+              // audio recording's real duration, not the video's.
+              associatedMedia: {
+                "@type": "AudioObject",
+                contentUrl: episodeAudio.url,
+                duration: toIso8601Duration(episodeAudio.durationSeconds),
+              },
+              partOfSeries: {
+                "@type": "PodcastSeries",
+                name: siteConfig.name,
+                url: siteConfig.url,
+              },
+            },
+          ]
+        : []),
       {
         "@type": "BreadcrumbList",
         itemListElement: [
@@ -219,22 +271,6 @@ export default async function EpisodePage({
           </section>
 
           <section className="container section">
-            {/* <article>
-              <p className="eyebrow-pill w-fit">عن الحلقة</p>
-              <div className="mt-4 max-w-2xl text-xl leading-9 text-[var(--ink-soft)]">
-                <EpisodeDescription description={episode.description} />
-              </div>
-              {episodeTopics.length > 0 && (
-                <div className="mt-8 flex flex-wrap gap-2">
-                  {episodeTopics.map((topic) => (
-                    <Link key={topic.id} href={`/topics/${topic.slug}`}>
-                      <Tag>{topic.title}</Tag>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </article> */}
-
             <p className="eyebrow-pill w-fit">تصفّح الحلقات</p>
             <h2 className="mt-3 text-xl font-black leading-[1.8] tracking-[-.03em] md:text-2xl">
               الحلقة السابقة والتالية

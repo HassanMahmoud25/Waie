@@ -32,6 +32,7 @@ model User {
   progresses   WatchProgress[]
   saves        SavedEpisode[]
   notes        Note[]
+  follows      FollowedSeries[]
   resetTokens  PasswordResetToken[]
   createdAt    DateTime             @default(now())
 }
@@ -87,6 +88,7 @@ model Series {
   topicId          String?
   topic            Topic?        @relation(fields: [topicId], references: [id])
   episodes         Episode[]
+  followers        FollowedSeries[]
 
   /// The YouTube playlist this series was originally discovered/created
   /// from, kept only for traceability. Once set, sync never uses this to
@@ -213,6 +215,23 @@ model SavedEpisode {
   episode   Episode  @relation(fields: [episodeId], references: [id], onDelete: Cascade)
 
   @@id([userId, episodeId])
+}
+
+/// A user following a Series (Phase 4A) -- same shape/conventions as
+/// SavedEpisode above. The composite id doubles as the uniqueness guarantee
+/// (a user can't follow the same series twice) and gives userId a free
+/// index; `@@index([seriesId])` is the other direction, so the future
+/// notification system can answer "which users follow this Series" without
+/// a table scan.
+model FollowedSeries {
+  userId    String
+  seriesId  String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  series    Series   @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+
+  @@id([userId, seriesId])
+  @@index([seriesId])
 }
 
 model Note {

@@ -55,6 +55,55 @@ export async function toggleSavedEpisodeAction(episodeId: string): Promise<Toggl
   }
 }
 
+export type ToggleFollowedSeriesResult = { ok: true; following: boolean } | { ok: false; error: string };
+
+/**
+ * Toggles whether the signed-in user follows this series. Mirrors
+ * toggleSavedEpisodeAction exactly, including the P2002 race handling --
+ * see that function's comment for why. The user id always comes from the
+ * server session, never a client-supplied id.
+ *
+ * Only a PUBLISHED series can be followed -- a draft/archived series isn't
+ * reachable from the public Series page, so a request for one is either
+ * stale (the series was unpublished after the button rendered) or
+ * malicious, and either way should read as "not found" rather than
+ * silently creating a follow row for content nobody can see.
+ */
+export async function toggleFollowedSeriesAction(seriesId: string): Promise<ToggleFollowedSeriesResult> {
+  const user = await getSessionUser();
+  if (!user) return { ok: false, error: "سجّل الدخول لمتابعة السلاسل." };
+
+  if (typeof seriesId !== "string" || seriesId.trim() === "") {
+    return { ok: false, error: "سلسلة غير صحيحة." };
+  }
+
+  try {
+    const series = await prisma.series.findFirst({ where: { id: seriesId, status: "PUBLISHED" }, select: { id: true } });
+    if (!series) return { ok: false, error: "لم يتم العثور على هذه السلسلة." };
+
+    const existing = await prisma.followedSeries.findUnique({
+      where: { userId_seriesId: { userId: user.id, seriesId } },
+    });
+
+    if (existing) {
+      await prisma.followedSeries.delete({ where: { userId_seriesId: { userId: user.id, seriesId } } });
+      return { ok: true, following: false };
+    }
+
+    await prisma.followedSeries.create({ data: { userId: user.id, seriesId } });
+    return { ok: true, following: true };
+  } catch (error) {
+    // Two rapid clicks (or two tabs) can race past the findUnique check above --
+    // the composite primary key is the real guard. A duplicate create means it's
+    // followed either way; report the true state instead of a spurious error.
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      return { ok: true, following: true };
+    }
+    console.error("toggleFollowedSeriesAction failed:", error);
+    return { ok: false, error: "حدث خطأ غير متوقع." };
+  }
+}
+
 export type SetEpisodeProgressResult = { ok: true } | { ok: false; error: string };
 
 /**

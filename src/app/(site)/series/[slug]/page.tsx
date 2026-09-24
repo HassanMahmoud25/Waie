@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { contentRepository } from "@/lib/repositories";
 import { Breadcrumbs } from "@/components/navigation/breadcrumbs";
 import { SeriesEpisodeList } from "@/components/series/series-episode-list";
+import { FollowSeriesButton } from "@/components/series/follow-series-button";
 import { EmptyState } from "@/components/content/empty-state";
 import { findSeriesCoverEpisode } from "@/lib/utils/content";
 import { EPISODE_FORMS, formatCount } from "@/lib/utils/format";
@@ -86,10 +87,13 @@ export default async function SeriesDetailPage({
           <p className="mt-4 max-w-2xl text-base leading-8 text-[var(--on-brand-soft)] md:text-lg">
             {series.description}
           </p>
-          <p className="glass-dark mt-6 w-fit rounded-[var(--radius-pill)] px-4 py-2 text-sm font-bold text-[var(--on-brand-soft)]">
-            {formatCount(series.episodeCount, EPISODE_FORMS)} · ابدأ من البداية
-            أو أكمل من حيث توقفت
-          </p>
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <p className="glass-dark w-fit rounded-[var(--radius-pill)] px-4 py-2 text-sm font-bold text-[var(--on-brand-soft)]">
+              {formatCount(series.episodeCount, EPISODE_FORMS)} · ابدأ من البداية
+              أو أكمل من حيث توقفت
+            </p>
+            <FollowSeriesButton seriesId={series.id} />
+          </div>
         </div>
       </section>
 

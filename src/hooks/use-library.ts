@@ -16,7 +16,7 @@ export type ProgressEntry = {
   /** Epoch ms of the last write -- lets series-level UI pick "the episode you're currently on" as whichever has progress and the most recent timestamp. */
   updatedAt: number;
 };
-type LibraryState = { savedEpisodeIds: string[]; progress: Record<string, ProgressEntry> };
+type LibraryState = { progress: Record<string, ProgressEntry> };
 
 /** 0-100, clamped. Derived from the stored entry rather than re-persisted, so it can never drift from the seconds/duration it's computed from. */
 export function getProgressPercent(entry: ProgressEntry | undefined): number {
@@ -25,7 +25,7 @@ export function getProgressPercent(entry: ProgressEntry | undefined): number {
 }
 
 const STORAGE_KEY = "waie:library:v1";
-const emptyState: LibraryState = { savedEpisodeIds: [], progress: {} };
+const emptyState: LibraryState = { progress: {} };
 
 /** Watching past this fraction of the episode counts as finished, same as most streaming apps -- the viewer shouldn't have to scrub to the exact last second for it to "count". */
 const COMPLETE_THRESHOLD = 0.95;
@@ -142,7 +142,7 @@ export function useLibrary() {
 
   useEffect(() => subscribeProgressStore(setDbProgressState), []);
 
-  const { savedEpisodeIds, isSaved, toggleSaved, isAuthenticated } = useSavedEpisodesContext();
+  const { savedEpisodeIds, isSaved, toggleSaved, isAuthenticated, isSaving, saveError } = useSavedEpisodesContext();
 
   // Authenticated: the DB store is already hydrated before first paint (see
   // ProgressProvider), so there's no wait -- unlike the anonymous path, which
@@ -186,6 +186,8 @@ export function useLibrary() {
     isSaved,
     toggleSaved,
     isAuthenticated,
+    isSaving,
+    saveError,
     getProgress,
     setProgress,
     toggleCompleted,

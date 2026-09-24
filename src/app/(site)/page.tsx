@@ -11,10 +11,11 @@ import { Banner } from "@/components/shared/banner";
 import { Reveal } from "@/components/shared/reveal";
 import { HostsShowcase } from "@/components/host/hosts-showcase";
 import { findSeriesCoverEpisode } from "@/lib/utils/content";
+import { getContinueWatching } from "@/lib/library/continue-watching";
 import { EPISODE_FORMS, SERIES_FORMS, TOPIC_FORMS, formatCount, pluralNoun } from "@/lib/utils/format";
 
 export default async function Home() {
-  const [latest, popular, series, topics, collections, allEpisodes] =
+  const [latest, popular, series, topics, collections, allEpisodes, continueWatching] =
     await Promise.all([
       contentRepository.listLatestEpisodes(8),
       contentRepository.listPopularEpisodes(6),
@@ -22,6 +23,7 @@ export default async function Home() {
       contentRepository.listTopics(),
       contentRepository.listCollections(),
       contentRepository.listEpisodes(),
+      getContinueWatching(),
     ]);
 
   const seriesById = new Map(series.map((s) => [s.id, s]));
@@ -71,7 +73,7 @@ export default async function Home() {
     <main>
       <SiteHero stats={heroStats} latestEpisode={latest[0] ?? null} />
 
-      <ContinueWatchingSection episodes={allEpisodes} series={series} />
+      <ContinueWatchingSection episodes={allEpisodes} series={series} initialItems={continueWatching} />
 
       {bentoSeries.length > 0 && (
         <section className="section">
