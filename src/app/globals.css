@@ -782,13 +782,15 @@
     line-height: 1;
   }
 
+  /* top/left/width are computed in JS from the trigger's real viewport rect
+     and clamped to stay fully on-screen at any width (see
+     NotificationsBell's `reposition`) -- fixed, not absolute, so placement
+     never depends on an ancestor's stacking context, and never overflows
+     the viewport the way a static `inset-inline-end: 0` anchor did on
+     narrow screens. */
   .notif-panel {
-    position: absolute;
-    inset-inline-end: 0;
-    top: calc(100% + 0.4rem);
+    position: fixed;
     z-index: 60;
-    width: 320px;
-    max-width: calc(100vw - 2rem);
     padding: 0.5rem;
     border-radius: 18px;
     transform-origin: top;
@@ -817,6 +819,29 @@
 
   .notif-panel__mark-all:hover {
     color: var(--ink);
+  }
+
+  .notif-panel__mark-all:disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  .notif-panel__mark-all--danger {
+    color: #a3392c;
+  }
+
+  .notif-panel__mark-all--danger:hover {
+    color: #7a2a20;
+  }
+
+  .notif-panel__error {
+    margin: 0.4rem 0.6rem 0;
+    padding: 0.5rem 0.7rem;
+    border-radius: 10px;
+    background: color-mix(in srgb, #a3392c 10%, transparent);
+    color: #a3392c;
+    font-size: 0.76rem;
+    font-weight: 700;
   }
 
   .notif-panel__list {
@@ -848,6 +873,24 @@
   .notif-panel__list--page .notif-item__message {
     overflow: visible;
     white-space: normal;
+  }
+
+  /* Below `sm` (640px, the same breakpoint `.container` itself switches on):
+     stack the thumbnail above the text instead of forcing both into one
+     fixed-width row -- the same reasoning HorizontalEpisodeCard's mobile
+     layout already documents ("a row would squeeze both into ~140px
+     slivers"). `.notif-item` never picked up that pattern, which is what
+     made the page read as cramped/unbalanced on a phone. Scoped to the page
+     list only -- the header dropdown stays a compact row at every width. */
+  @media (max-width: 640px) {
+    .notif-panel__list--page .notif-item {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .notif-panel__list--page .notif-item__thumb {
+      width: 100%;
+    }
   }
 
   /* Each row: thumbnail first in DOM order, text after -- in a plain (not
@@ -941,6 +984,50 @@
     font-size: 0.7rem;
     font-weight: 600;
     color: var(--muted);
+  }
+
+  /* Wraps each row + its delete button -- the button is a sibling of the
+     `.notif-item` link (not nested inside it: an <a>/<button> can't nest),
+     positioned absolute against this wrapper's corner instead. */
+  .notif-item-row {
+    position: relative;
+  }
+
+  /* Reserve room on the far end so title/message text never runs under the
+     delete button -- only the text column needs it; the mobile stacked
+     thumbnail (see the page-list media query above) is left full-width, with
+     the button simply overlaid on its corner. */
+  .notif-item-row .notif-item__body {
+    padding-inline-end: 2.1rem;
+  }
+
+  .notif-item__delete {
+    position: absolute;
+    top: 0.45rem;
+    inset-inline-end: 0.45rem;
+    z-index: 1;
+    display: inline-grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    color: var(--ink-soft);
+    background: color-mix(in srgb, var(--paper) 80%, transparent);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    transition:
+      background 0.15s ease,
+      color 0.15s ease;
+  }
+
+  .notif-item__delete:hover {
+    background: var(--paper);
+    color: #a3392c;
+  }
+
+  .notif-item__delete:disabled {
+    opacity: 0.5;
+    pointer-events: none;
   }
 
   .notif-panel__footer {

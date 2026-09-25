@@ -71,3 +71,56 @@ export async function markAllNotificationsAsReadAction(): Promise<MarkAllNotific
 export async function getUnreadNotificationCountAction(): Promise<number> {
   return getUnreadNotificationCount();
 }
+
+export type DeleteNotificationResult = { ok: true } | { ok: false; error: string };
+
+/**
+ * Permanently removes one of the signed-in user's own notifications.
+ * Ownership-scoped exactly like markNotificationAsReadAction -- an id that
+ * doesn't exist or belongs to someone else just matches zero rows, so this
+ * is safe to call repeatedly. Safe to hard-delete: `Notification` rows are
+ * a pure read-state record (see prisma/schema.prisma) that nothing else in
+ * the schema depends on, unlike e.g. SavedEpisode/WatchProgress.
+ */
+export async function deleteNotificationAction(notificationId: string): Promise<DeleteNotificationResult> {
+  const user = await getSessionUser();
+  if (!user) return { ok: false, error: "سجّل الدخول لعرض إشعاراتك." };
+  if (typeof notificationId !== "string" || notificationId.trim() === "") {
+    return { ok: false, error: "إشعار غير صحيح." };
+  }
+
+  try {
+    await prisma.notification.deleteMany({ where: { id: notificationId, userId: user.id } });
+    revalidatePath("/notifications");
+    return { ok: true };
+  } catch (error) {
+    console.error("deleteNotificationAction failed:", error);
+    return { ok: false, error: "حدث خطأ غير متوقع." };
+  }
+}
+
+export type ClearNotificationHistoryResult = { ok: true } | { ok: false; error: string };
+
+/**
+ * Permanently deletes every one of the signed-in user's notifications, read
+ * or unread -- "clear history", not "clear read only". Safe for the same
+ * reason deleteNotificationAction is: a Notification row has no other
+ * consumer in the schema, so wiping it can't break saved episodes, watch
+ * progress, or the follow relationship that will generate the next one. If
+ * the same episode is republished later, notifyFollowersOfNewEpisode's
+ * `@@unique([userId, type, episodeId])` no longer blocks a fresh
+ * notification (the old row is gone), so that's correct, not a bug.
+ */
+export async function clearNotificationHistoryAction(): Promise<ClearNotificationHistoryResult> {
+  const user = await getSessionUser();
+  if (!user) return { ok: false, error: "سجّل الدخول لعرض إشعاراتك." };
+
+  try {
+    await prisma.notification.deleteMany({ where: { userId: user.id } });
+    revalidatePath("/notifications");
+    return { ok: true };
+  } catch (error) {
+    console.error("clearNotificationHistoryAction failed:", error);
+    return { ok: false, error: "حدث خطأ غير متوقع." };
+  }
+}
