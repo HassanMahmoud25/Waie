@@ -82,3 +82,9 @@ uploading a new name). Keep the full length -- no trimmed intros -- so the timel
 
 - Playback state (position, mode) is restored after a refresh but never auto-started.
 - If the audio fails to load, the player says so and offers to switch to video at the same position.
+- Backgrounding a playing video hands playback off to this same audio automatically (see
+  `visibilitychange` in `lib/playback/engine.ts`): a hidden tab gives the YouTube iframe no
+  background execution, so a video actually playing at that moment switches to Waie's own `<audio>`
+  element at the equivalent position (via `convertPosition`, same as the manual Watch/Listen switch)
+  and keeps going where the platform allows it. Never reversed automatically on return -- the
+  visitor stays on audio until they explicitly switch back to Watch.

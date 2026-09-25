@@ -230,9 +230,25 @@ function init() {
   // the last moment we're guaranteed to run before the OS might freeze or kill the page, so
   // persist then; coming back, re-read the element (timers and events can be throttled while
   // hidden, and the OS may have paused us for a call or an unplugged headset).
+  //
+  // Video is the one exception: a hidden/backgrounded tab gives a cross-origin YouTube iframe no
+  // background execution, and YouTube's own developer policies (see docs/audio-pipeline.md)
+  // already forbid it from playing hidden anyway -- mobile in particular suspends it the instant
+  // the page backgrounds. Waie's own <audio> element is a real media element the browser/OS *do*
+  // grant background playback to (Media Session is already wired below), so a video actually
+  // playing at the moment the tab hides hands off to it: setMode("audio") is the exact same
+  // path the manual Watch/Listen switch already uses -- same audio URL, same convertPosition
+  // timeline mapping, same "pause the video before loading audio" sequencing (see start()) -- so
+  // there is never a second, competing source. Never reversed automatically on return (see the
+  // `else` branch below): once handed to audio, it stays audio until the visitor explicitly
+  // switches back, same as SoundCloud/Spotify's own apps.
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) {
-      saveProgress();
+      if (mode === "video" && isPlaying && item?.audioUrl) {
+        setMode("audio");
+      } else {
+        saveProgress();
+      }
     } else {
       if (audioActive()) refreshAudio();
       publishTime();
