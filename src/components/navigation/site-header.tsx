@@ -53,8 +53,8 @@ export function SiteHeader({
     <header className="sticky top-0 z-50 px-3.5 pt-3 sm:px-6 sm:pt-4">
       <div
         className={cn(
-          "site-header-bar mx-auto flex max-w-[1200px] items-center justify-between gap-4 rounded-[22px] px-4 transition-[height,box-shadow,background-color] duration-300 sm:px-6",
-          isScrolled ? "h-[58px] shadow-[var(--shadow-md)]" : "h-[68px]",
+          "site-header-bar mx-auto flex max-w-300 items-center justify-between gap-4 rounded-[22px] px-4 transition-[height,box-shadow,background-color] duration-300 sm:px-6 bg-white/50 backdrop-blur-md",
+          isScrolled ? "h-14.5 shadow-(--shadow-md)" : "h-17",
         )}
       >
         <Link href="/" className="shrink-0" aria-label="وعي، الصفحة الرئيسية">
@@ -201,7 +201,11 @@ function HeaderAuth({ user }: { user: SessionUser | null }) {
           </Link>
           {/* Real server logout (see lib/auth/actions.ts) -- the same action /admin's logout uses. */}
           <form action={logoutAction}>
-            <button type="submit" role="menuitem" className="user-menu__item user-menu__item--danger w-full">
+            <button
+              type="submit"
+              role="menuitem"
+              className="user-menu__item user-menu__item--danger w-full"
+            >
               <LogOut size={16} /> تسجيل الخروج
             </button>
           </form>
