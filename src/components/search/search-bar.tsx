@@ -1,4 +1,5 @@
-import { Search } from "lucide-react";
+import Link from "next/link";
+import { Search, X } from "lucide-react";
 
 /** Plain GET form — works without JavaScript, and /search reads `q` server-side. */
 export function SearchBar({ defaultValue = "" }: { defaultValue?: string }) {
@@ -20,6 +21,15 @@ export function SearchBar({ defaultValue = "" }: { defaultValue?: string }) {
           placeholder="ابحث عن صحابي، أو موضوع، أو حلقة..."
           className="w-full min-w-0 bg-transparent py-3 text-[.95rem] font-bold outline-none placeholder:font-normal placeholder:text-[var(--muted)] sm:text-base"
         />
+        {defaultValue && (
+          <Link
+            href="/search"
+            aria-label="مسح البحث"
+            className="grid size-7 shrink-0 place-items-center rounded-full text-[var(--muted)] transition hover:bg-black/5 hover:text-[var(--ink)]"
+          >
+            <X size={15} aria-hidden="true" />
+          </Link>
+        )}
       </div>
       <button className="btn btn-ink shrink-0 rounded-full px-5 sm:px-7" type="submit">
         <Search size={16} /> <span className="hidden sm:inline">بحث</span>

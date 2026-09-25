@@ -20,6 +20,8 @@ import type { Recommendation } from "@/types/recommendation";
 import type { Transcript } from "@/types/transcript";
 import type { MindMap, MindMapNode } from "@/types/mind-map";
 import type { SearchResults } from "@/types/search";
+import { normalizeSearchText } from "@/lib/search/normalize";
+import { SCORE, extractNumberToken, scoreContains, scoreEpisodeNumber, scoreTitle } from "@/lib/search/rank";
 
 // ---------------------------------------------------------------------------
 // Mapping: Prisma rows (with the YouTube-owned/editorial split) -> the app's
@@ -433,30 +435,74 @@ export const prismaContentRepository: ContentRepository = {
   },
 
   async search(query) {
-    const normalized = query.trim();
-    if (!normalized) {
+    const trimmed = query.trim();
+    if (!trimmed) {
       return { episodes: [], series: [], topics: [] } satisfies SearchResults;
     }
 
-    const contains = { contains: normalized, mode: "insensitive" as const };
+    const normalizedQuery = normalizeSearchText(trimmed);
+    const numberToken = extractNumberToken(trimmed);
+    if (!normalizedQuery && !numberToken) {
+      return { episodes: [], series: [], topics: [] } satisfies SearchResults;
+    }
 
+    // Arabic normalization (digit script, diacritics, letter variants) can't
+    // be expressed as a plain Postgres `contains`, so the published
+    // candidate set -- already what listEpisodes()/listSeries()/listTopics()
+    // fetch unconditionally elsewhere in this file -- is scored and ranked
+    // in JS instead. At this catalog's scale (see docs/audio-pipeline.md)
+    // that's a negligible cost; it would need revisiting only if the
+    // catalog grew by orders of magnitude.
     const [episodeRows, seriesRows, topicRows] = await Promise.all([
-      prisma.episode.findMany({
-        where: {
-          ...isPublishedWhere,
-          OR: [{ title: contains }, { youtubeTitle: contains }, { description: contains }, { youtubeDescription: contains }],
-        },
-        include: episodeInclude,
-        orderBy: { youtubePublishedAt: "desc" },
-      }),
-      prisma.series.findMany({ where: { ...isPublishedWhere, OR: [{ title: contains }, { description: contains }] } }),
-      prisma.topic.findMany({ where: { OR: [{ title: contains }, { description: contains }] } }),
+      prisma.episode.findMany({ where: isPublishedWhere, include: episodeInclude, orderBy: { youtubePublishedAt: "desc" } }),
+      prisma.series.findMany({ where: isPublishedWhere }),
+      prisma.topic.findMany(),
     ]);
 
+    const seriesTitleById = new Map(seriesRows.map((row) => [row.id, row.title]));
+
+    const scoredEpisodes = episodeRows
+      .map((row) => {
+        const description = row.description ?? row.youtubeDescription ?? "";
+        const seriesTitle = row.seriesId ? seriesTitleById.get(row.seriesId) : undefined;
+        const score = Math.max(
+          scoreTitle(normalizeSearchText(row.title ?? row.youtubeTitle), normalizedQuery),
+          scoreTitle(normalizeSearchText(row.youtubeTitle), normalizedQuery),
+          scoreEpisodeNumber(row.episodeNumber, numberToken),
+          seriesTitle ? scoreContains(normalizeSearchText(seriesTitle), normalizedQuery, SCORE.SERIES_TITLE) : 0,
+          scoreContains(normalizeSearchText(description), normalizedQuery, SCORE.DESCRIPTION),
+        );
+        return { row, score };
+      })
+      .filter((entry) => entry.score > 0)
+      .sort((a, b) => b.score - a.score || b.row.youtubePublishedAt.getTime() - a.row.youtubePublishedAt.getTime());
+
+    const scoredSeries = seriesRows
+      .map((row) => ({
+        row,
+        score: Math.max(
+          scoreTitle(normalizeSearchText(row.title), normalizedQuery),
+          scoreContains(normalizeSearchText(row.description ?? ""), normalizedQuery, SCORE.DESCRIPTION),
+        ),
+      }))
+      .filter((entry) => entry.score > 0)
+      .sort((a, b) => b.score - a.score);
+
+    const scoredTopics = topicRows
+      .map((row) => ({
+        row,
+        score: Math.max(
+          scoreTitle(normalizeSearchText(row.title), normalizedQuery),
+          scoreContains(normalizeSearchText(row.description ?? ""), normalizedQuery, SCORE.DESCRIPTION),
+        ),
+      }))
+      .filter((entry) => entry.score > 0)
+      .sort((a, b) => b.score - a.score);
+
     return {
-      episodes: episodeRows.map(toEpisode),
-      series: seriesRows.map(toSeries),
-      topics: topicRows.map(toTopic),
+      episodes: scoredEpisodes.map((entry) => toEpisode(entry.row)),
+      series: scoredSeries.map((entry) => toSeries(entry.row)),
+      topics: scoredTopics.map((entry) => toTopic(entry.row)),
     } satisfies SearchResults;
   },
 };

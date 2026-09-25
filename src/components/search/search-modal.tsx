@@ -135,6 +135,19 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
             className="w-full min-w-0 bg-transparent text-base font-bold outline-none placeholder:font-normal placeholder:text-[var(--muted)] sm:text-lg"
             aria-label="ابحث في وعي"
           />
+          {query && (
+            <button
+              type="button"
+              onClick={() => {
+                setQuery("");
+                inputRef.current?.focus();
+              }}
+              aria-label="مسح البحث"
+              className="icon-btn shrink-0 !size-8"
+            >
+              <X size={14} />
+            </button>
+          )}
           <kbd className="hidden shrink-0 rounded-md border border-[var(--line)] px-1.5 py-0.5 text-[.7rem] font-bold text-[var(--muted)] sm:block">
             Esc
           </kbd>
