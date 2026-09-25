@@ -9,6 +9,7 @@ import {
   updateEpisodeContent,
   publishEpisode,
   unpublishEpisode,
+  deleteEpisode,
 } from "@/lib/admin/content/episodes";
 
 /**
@@ -143,5 +144,29 @@ export async function unpublishEpisodeAction(id: string): Promise<ActionResult<{
     if (error instanceof AdminContentError) return { ok: false, error: error.message };
     console.error("unpublishEpisodeAction failed:", error);
     return { ok: false, error: "حدث خطأ غير متوقع أثناء إلغاء النشر." };
+  }
+}
+
+/**
+ * Permanently deletes an episode -- requireAdmin() is the only thing that
+ * gates this (see lib/auth/server.ts): the delete UI only exists inside the
+ * admin editor, but this action is reachable directly, so it re-checks
+ * authorization itself exactly like every action above instead of trusting
+ * the caller ever went through that UI.
+ */
+export async function deleteEpisodeAction(id: string): Promise<ActionResult<{ id: string }>> {
+  await requireAdmin();
+  if (typeof id !== "string" || id.trim() === "") return { ok: false, error: "حلقة غير صحيحة." };
+
+  try {
+    const { slug, seriesSlug } = await deleteEpisode(id);
+    revalidatePath("/admin/episodes");
+    revalidatePath("/admin");
+    revalidatePublicEpisodePaths(slug, seriesSlug);
+    return { ok: true, data: { id } };
+  } catch (error) {
+    if (error instanceof AdminContentError) return { ok: false, error: error.message };
+    console.error("deleteEpisodeAction failed:", error);
+    return { ok: false, error: "حدث خطأ غير متوقع أثناء الحذف." };
   }
 }

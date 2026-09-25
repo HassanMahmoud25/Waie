@@ -2060,6 +2060,20 @@
     background-size: 200% 100%;
   }
 
+  /* A placeholder sitting on a dark surface (the admin overview's cinematic
+     quick-add card) -- same recipe as .admin-field--on-dark's translucent
+     white, since --surface/--line are light-theme tokens that would go
+     invisible against .admin-quickadd's dark background. */
+  .skeleton--on-dark {
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.1) 25%,
+      rgba(255, 255, 255, 0.22) 50%,
+      rgba(255, 255, 255, 0.1) 75%
+    );
+    background-size: 200% 100%;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .skeleton {
       animation: none;
@@ -2068,6 +2082,10 @@
 
     .skeleton--strong {
       background: color-mix(in srgb, var(--ink) 9%, var(--surface));
+    }
+
+    .skeleton--on-dark {
+      background: rgba(255, 255, 255, 0.16);
     }
   }
 

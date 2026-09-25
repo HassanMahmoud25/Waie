@@ -3,12 +3,18 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { CircleAlert, CircleCheck, ExternalLink, Loader2 } from "lucide-react";
+import { CircleAlert, CircleCheck, ExternalLink, Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { EpisodeThumbnail } from "@/components/content/episode-thumbnail";
+import { EpisodeDeleteModal } from "@/components/admin/episode-delete-modal";
 import { formatArabicDate, formatDuration } from "@/lib/utils/format";
-import { updateEpisodeContentAction, publishEpisodeAction, unpublishEpisodeAction } from "@/lib/admin/content/actions";
+import {
+  updateEpisodeContentAction,
+  publishEpisodeAction,
+  unpublishEpisodeAction,
+  deleteEpisodeAction,
+} from "@/lib/admin/content/actions";
 import type { getEpisodeForAdmin } from "@/lib/admin/content/episodes";
 import type { SeriesWithStats } from "@/types/series";
 import type { TopicWithStats } from "@/types/topic";
@@ -52,6 +58,9 @@ export function EpisodeEditor({
   const [isSaving, startSave] = useTransition();
   const [publishError, setPublishError] = useState<string | null>(null);
   const [isPublishing, startPublish] = useTransition();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isDeleting, startDelete] = useTransition();
 
   function handleSave() {
     setSaveState({});
@@ -87,6 +96,24 @@ export function EpisodeEditor({
       }
       setStatus(status === "PUBLISHED" ? "DRAFT" : "PUBLISHED");
       router.refresh();
+    });
+  }
+
+  function handleCancelDelete() {
+    if (isDeleting) return;
+    setShowDeleteModal(false);
+    setDeleteError(null);
+  }
+
+  function handleConfirmDelete() {
+    setDeleteError(null);
+    startDelete(async () => {
+      const result = await deleteEpisodeAction(episode.id);
+      if (!result.ok) {
+        setDeleteError(result.error);
+        return;
+      }
+      router.push("/admin/episodes");
     });
   }
 
@@ -298,6 +325,34 @@ export function EpisodeEditor({
           )}
         </div>
       </div>
+
+      {/* Delete -- its own dashed panel, same convention as series-editor.tsx/
+          topic-editor.tsx, kept visually separate (and never the default focus)
+          from Save/Publish above. */}
+      <div className="admin-panel admin-panel--dashed flex flex-wrap items-center justify-between gap-4 p-5">
+        <div>
+          <p className="font-bold">حذف الحلقة</p>
+          <p className="mt-1 text-sm leading-7 text-[var(--ink-soft)]">
+            حذف نهائي لا يمكن التراجع عنه -- يشمل نص الحلقة وتوصياتها وخريطتها، وملاحظات المستخدمين وحفظهم وتقدّمهم فيها.
+          </p>
+        </div>
+        <Button
+          variant="danger"
+          onClick={() => setShowDeleteModal(true)}
+          icon={<Trash2 size={16} aria-hidden="true" />}
+          iconPosition="start"
+        >
+          حذف نهائي
+        </Button>
+      </div>
+
+      <EpisodeDeleteModal
+        episode={showDeleteModal ? { id: episode.id, title } : null}
+        isDeleting={isDeleting}
+        error={deleteError}
+        onCancel={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 }

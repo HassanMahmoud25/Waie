@@ -239,3 +239,31 @@ export async function unpublishEpisode(id: string) {
     include: { series: { select: { slug: true } } },
   });
 }
+
+/**
+ * Permanently deletes an episode. Unlike deleteSeries/deleteTopic (lib/admin/
+ * content/series.ts, topics.ts), there is nothing that *points at* an
+ * episode the way Episode.seriesId points at Series -- every relation that
+ * references Episode (EpisodeTopic, CollectionItem, WatchProgress,
+ * SavedEpisode, Note, Transcript, Recommendation, MindMap, Notification) is
+ * ON DELETE CASCADE at the database level (see prisma/schema.prisma and the
+ * applied prisma/migrations/20260922033754_init/migration.sql), and none of
+ * those rows have any existence independent of this one episode. So there is
+ * no "still referenced elsewhere, refuse" case to check here -- a single
+ * `episode.delete` is enough, and Postgres cascades the rest atomically.
+ *
+ * Returns the slug/series slug the row had *before* deletion, since the
+ * caller (deleteEpisodeAction) needs them to revalidate the now-gone public
+ * pages -- reading them after delete would just be a miss.
+ */
+export async function deleteEpisode(id: string): Promise<{ slug: string; seriesSlug: string | null }> {
+  const existing = await prisma.episode.findUnique({
+    where: { id },
+    select: { slug: true, series: { select: { slug: true } } },
+  });
+  if (!existing) throw new AdminContentError("لم يتم العثور على هذه الحلقة.");
+
+  await prisma.episode.delete({ where: { id } });
+
+  return { slug: existing.slug, seriesSlug: existing.series?.slug ?? null };
+}
