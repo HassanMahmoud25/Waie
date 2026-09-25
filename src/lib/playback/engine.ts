@@ -108,6 +108,8 @@ let lastSavedAt = 0;
 let audio: HTMLAudioElement | null = null;
 /** A position to jump to once the new audio source knows its length -- iOS Safari ignores currentTime writes before metadata is loaded. */
 let pendingStartAt: number | null = null;
+/** See tryUnlockAudio: whether the shared <audio> element has ever been given a genuine, gesture-backed play() on this page. */
+let audioUnlocked = false;
 
 let yt: YTPlayer | null = null;
 let ytReady = false;
@@ -258,6 +260,15 @@ function init() {
   window.addEventListener("pageshow", () => {
     if (audioActive()) refreshAudio();
   });
+
+  // See tryUnlockAudio's own doc comment: arms the shared <audio> element the first real chance
+  // there is (any gesture, anywhere on the page -- deliberately not scoped to a play button, since
+  // the one that actually starts a video is inside a cross-origin iframe we can't see), so the
+  // video->background-audio handoff's own play() call, later, from a non-gesture context, is
+  // allowed instead of silently rejected. Capturing so it still sees the gesture even if some
+  // other handler stops propagation. Removes itself once a prime actually succeeds.
+  document.addEventListener("pointerdown", tryUnlockAudio, true);
+  document.addEventListener("keydown", tryUnlockAudio, true);
 }
 
 // ---------------------------------------------------------------------------
@@ -473,6 +484,77 @@ function stopAudio() {
   audio.removeAttribute("src");
   audio.load();
   pendingStartAt = null;
+}
+
+/**
+ * Primes the shared <audio> element with a real, gesture-backed play()+pause() the first chance
+ * there is one, so a *later*, non-gesture play() -- the video->background-audio handoff below, the
+ * lock screen's own play button, skip-to-next -- is allowed instead of silently rejected.
+ *
+ * Why this is needed at all: the click that starts a video happens inside YouTube's cross-origin
+ * iframe. That's a real user gesture, but it belongs to youtube-nocookie.com's own document, not
+ * ours -- it gives our origin no autoplay credit, and it never touches our own <audio> element,
+ * which WebKit in particular requires to be played at least once by a *direct* gesture on this
+ * document before it'll allow a later programmatic play() on it (see ensureAudio()'s own note: this
+ * permission, once granted, lasts the element's whole lifetime, not just the one call -- which is
+ * exactly why one successful prime here is enough for the rest of the session). So a visitor who
+ * only ever plays the YouTube-native button never otherwise gives our page a qualifying gesture --
+ * this listens for literally any (pointerdown/keydown, not scoped to a specific button) and uses it.
+ *
+ * Standards-compliant, not a workaround: this is the same "unlock" pattern browsers themselves
+ * document for exactly this situation -- a real play() call, synchronously inside a real gesture,
+ * immediately paused. No fabricated state, no fake playback; `audioUnlocked` only flips once the
+ * browser's own play() promise has actually resolved.
+ *
+ * Deliberately not `element.muted = true` here (confirmed empirically, not assumed): a fully-muted
+ * (or volume 0) element has no audible contribution, and Chrome classifies that as "video-only
+ * background media" -- subject to its own background power-saving pause independently of the
+ * autoplay-gesture policy, which rejects the prime with an AbortError the instant the page is even
+ * momentarily hidden, gesture or not. A very low but non-zero volume keeps a real, audible (if
+ * practically inaudible) contribution, which keeps this a normal foreground media element instead.
+ */
+const UNLOCK_PROBE_VOLUME = 0.01;
+
+function tryUnlockAudio() {
+  if (audioUnlocked || audioActive()) return; // already unlocked, or real audio is genuinely live -- never touch that
+  const url = item?.audioUrl ?? slotItem?.audioUrl;
+  if (!url) return; // no episode with audio known yet -- the listener stays armed for a later gesture
+
+  const element = ensureAudio();
+  const wasVolume = element.volume;
+  element.volume = UNLOCK_PROBE_VOLUME;
+  element.src = url;
+
+  const finish = () => {
+    // A real, legitimate play() -- e.g. the visitor clicked Listen on this very gesture, which
+    // fires after this capturing listener but within the same dispatch -- can take the element
+    // over while this probe is still settling (play() calls on the same element race; the newer
+    // one wins, per spec). That's a real playback session now; it owns the element's volume/src,
+    // so just recognize the element as unlocked (it demonstrably can play) and get out of the way.
+    if (audioActive()) {
+      audioUnlocked = true;
+    } else {
+      element.volume = wasVolume;
+      stopAudio();
+    }
+    if (audioUnlocked) {
+      document.removeEventListener("pointerdown", tryUnlockAudio, true);
+      document.removeEventListener("keydown", tryUnlockAudio, true);
+    }
+  };
+
+  try {
+    Promise.resolve(element.play())
+      .then(() => {
+        audioUnlocked = true;
+      })
+      .catch(() => {
+        // Not allowed from this particular gesture/context -- stays armed, tries again next time.
+      })
+      .finally(finish);
+  } catch {
+    finish();
+  }
 }
 
 // ---------------------------------------------------------------------------
