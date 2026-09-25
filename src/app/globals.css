@@ -826,14 +826,6 @@
     pointer-events: none;
   }
 
-  .notif-panel__mark-all--danger {
-    color: #a3392c;
-  }
-
-  .notif-panel__mark-all--danger:hover {
-    color: #7a2a20;
-  }
-
   .notif-panel__error {
     margin: 0.4rem 0.6rem 0;
     padding: 0.5rem 0.7rem;
@@ -854,43 +846,39 @@
   }
 
   /* /notifications (the full page, not the header dropdown) -- no clipping,
-     roomier rows, and the message is free to wrap across lines. */
+     a touch more breathing room per row. Otherwise identical to the dropdown:
+     same compact thumbnail, same single-line title/message, no separate
+     mobile layout -- a ~52px thumbnail never has to fight the text column
+     for room the way the old 96/128px hero thumbnail did, so the row is the
+     same shape at every width. */
   .notif-panel__list--page {
     max-height: none;
     overflow: visible;
-    gap: 0.4rem;
+    gap: 0.3rem;
   }
 
-  .notif-panel__list--page .notif-item {
-    padding: 0.85rem;
+  .notif-panel__list--page .notif-item-row {
+    padding: 0.6rem;
   }
 
-  .notif-panel__list--page .notif-item__thumb {
-    width: 128px;
+  /* The card. Background/padding/radius live here, not on `.notif-item`
+     (the link) -- the menu trigger is a sibling of the link, not nested
+     inside it (an <a>/<button> can't nest), and needs to sit *inside* this
+     same visual box so trigger and content read as one row, not two
+     disconnected pieces with page background showing between them. A
+     persistent (not hover-only) fill is what actually "covers" that gap. */
+  .notif-item-row {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.45rem;
     border-radius: 14px;
+    background: var(--glass-light);
+    transition: background 0.15s ease;
   }
 
-  .notif-panel__list--page .notif-item__message {
-    overflow: visible;
-    white-space: normal;
-  }
-
-  /* Below `sm` (640px, the same breakpoint `.container` itself switches on):
-     stack the thumbnail above the text instead of forcing both into one
-     fixed-width row -- the same reasoning HorizontalEpisodeCard's mobile
-     layout already documents ("a row would squeeze both into ~140px
-     slivers"). `.notif-item` never picked up that pattern, which is what
-     made the page read as cramped/unbalanced on a phone. Scoped to the page
-     list only -- the header dropdown stays a compact row at every width. */
-  @media (max-width: 640px) {
-    .notif-panel__list--page .notif-item {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .notif-panel__list--page .notif-item__thumb {
-      width: 100%;
-    }
+  .notif-item-row:hover {
+    background: var(--glass-light-strong);
   }
 
   /* Each row: thumbnail first in DOM order, text after -- in a plain (not
@@ -899,51 +887,32 @@
      thumbnail+text row in the app (HorizontalEpisodeCard, EpisodeListItem),
      with no hardcoded left/right. */
   .notif-item {
-    position: relative;
     display: flex;
     align-items: center;
-    gap: 0.7rem;
-    width: 100%;
-    padding: 0.6rem;
-    border-radius: 12px;
+    gap: 0.65rem;
+    flex: 1;
+    min-width: 0;
     text-align: start;
-    transition:
-      background 0.15s ease,
-      transform 0.15s ease;
-  }
-
-  .notif-item:hover {
-    background: var(--glass-light-strong);
   }
 
   .notif-item:active {
-    transform: scale(0.985);
+    opacity: 0.8;
   }
 
-  /* Subtle unread treatment: a very light brand-tinted gradient (fading back
-     to the normal row background) plus a bolder title below -- no dot, no
-     border, no shadow. The header badge count is already the primary unread
-     signal; this is just a quiet nudge inside the list itself. */
-  .notif-item--unread {
-    background: linear-gradient(to inline-end, color-mix(in srgb, var(--brand) 10%, var(--glass-light)), var(--glass-light));
-  }
-
-  .notif-item--unread:hover {
-    background: linear-gradient(to inline-end, color-mix(in srgb, var(--brand) 14%, var(--glass-light-strong)), var(--glass-light-strong));
-  }
-
+  /* `.media-stretch`/`.media` are the same pattern EpisodeListItem uses to
+     keep a thumbnail and its text block reading as one balanced unit
+     instead of a small image floating next to a taller column: the
+     thumbnail stretches to the row's own (text-driven) height rather than
+     sitting fixed at a 16:9 height that leaves empty space above/below it.
+     `--radius-image` (20px) is sized for a full episode-card thumbnail, too
+     round at this compact width, so it's overridden here. */
   .notif-item__thumb {
-    position: relative;
+    width: 76px;
     flex-shrink: 0;
-    width: 96px;
-    aspect-ratio: 16 / 9;
-    overflow: hidden;
-    border-radius: 12px;
-    background: var(--surface);
   }
 
-  .notif-item__thumb img {
-    object-fit: cover;
+  .notif-item__thumb-media {
+    border-radius: 10px;
   }
 
   .notif-item__body {
@@ -951,16 +920,54 @@
     min-width: 0;
     flex: 1;
     flex-direction: column;
-    gap: 0.1rem;
+    gap: 0.05rem;
   }
 
-  .notif-item__series {
-    font-size: 0.68rem;
-  }
-
-  .notif-item__title {
-    font-size: 0.84rem;
+  /* Context line (series name) -- plain small muted text, deliberately not
+     the gold `.episode-card__series` pill: that pill's the right weight for
+     an episode card, but reads as loud/card-like repeated down a notification
+     list. A notification row should feel like a row, not a stacked card. */
+  .notif-item__context {
+    font-size: 0.7rem;
     font-weight: 700;
+    color: var(--muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .notif-item__title-row {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  /* The one unread cue -- a small brand-colored dot before the title,
+     replacing the old full-row gradient wash. Obvious at a glance, adds
+     zero visual weight to a read row once it's gone. */
+  .notif-item__dot {
+    flex-shrink: 0;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--brand);
+  }
+
+  /* The episode title (from `message`, the notification's actual payload)
+     -- the one thing that identifies *which* episode, so it's the row's
+     primary text. The generic "new episode in {series}" copy (`title`) is
+     dropped from display entirely: the context line already names the
+     series, and repeating "new episode" added a line without adding
+     information. */
+  .notif-item__title {
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.85rem;
+    font-weight: 600;
     color: var(--ink-soft);
     line-height: 1.5;
   }
@@ -970,64 +977,85 @@
     color: var(--ink);
   }
 
-  .notif-item__message {
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: var(--muted);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
   .notif-item__time {
-    margin-top: 0.1rem;
+    margin-top: 0.05rem;
     font-size: 0.7rem;
     font-weight: 600;
     color: var(--muted);
   }
 
-  /* Wraps each row + its delete button -- the button is a sibling of the
-     `.notif-item` link (not nested inside it: an <a>/<button> can't nest),
-     positioned absolute against this wrapper's corner instead. */
-  .notif-item-row {
+  .notif-menu-root {
     position: relative;
+    flex-shrink: 0;
   }
 
-  /* Reserve room on the far end so title/message text never runs under the
-     delete button -- only the text column needs it; the mobile stacked
-     thumbnail (see the page-list media query above) is left full-width, with
-     the button simply overlaid on its corner. */
-  .notif-item-row .notif-item__body {
-    padding-inline-end: 2.1rem;
-  }
-
-  .notif-item__delete {
-    position: absolute;
-    top: 0.45rem;
-    inset-inline-end: 0.45rem;
-    z-index: 1;
+  .notif-menu-trigger {
     display: inline-grid;
     place-items: center;
-    width: 26px;
-    height: 26px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
-    color: var(--ink-soft);
-    background: color-mix(in srgb, var(--paper) 80%, transparent);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+    color: var(--muted);
     transition:
       background 0.15s ease,
       color 0.15s ease;
   }
 
-  .notif-item__delete:hover {
-    background: var(--paper);
-    color: #a3392c;
+  .notif-menu-trigger:hover {
+    background: var(--glass-light-strong);
+    color: var(--ink);
   }
 
-  .notif-item__delete:disabled {
+  .notif-menu-trigger:disabled {
     opacity: 0.5;
     pointer-events: none;
+  }
+
+  /* top/left/width are computed in JS from the trigger's real viewport rect
+     and clamped to the same 14px gutter NotificationsBell's own panel uses
+     (see OverflowMenu's `reposition`) -- a per-item trigger sits at its
+     row's own trailing edge (safe to just open inward), but the page
+     header's "more actions" trigger sits wherever its flex siblings leave
+     it, not reliably at any edge, so both share this same clamped logic
+     rather than assuming a safe direction. */
+  .notif-menu {
+    position: fixed;
+    z-index: 70;
+    padding: 0.35rem;
+    border-radius: 14px;
+    transform-origin: top;
+    animation: user-menu-in 0.18s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .notif-menu[data-state="closed"] {
+    animation-name: user-menu-out;
+  }
+
+  .notif-menu__item {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    width: 100%;
+    padding: 0.55rem 0.7rem;
+    border-radius: 10px;
+    text-align: start;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--ink);
+    transition:
+      background 0.15s ease,
+      color 0.15s ease;
+  }
+
+  .notif-menu__item:hover {
+    background: var(--glass-light-strong);
+  }
+
+  /* Deliberately the same weight as the other item at rest -- only turns the
+     danger color on hover/focus, so "remove" never reads as more prominent
+     than "mark as read/unread" just for existing in the list. */
+  .notif-menu__item--danger:hover {
+    color: #a3392c;
   }
 
   .notif-panel__footer {
@@ -2504,6 +2532,19 @@
     color: #fff;
     background: #000;
     box-shadow: var(--shadow-sm);
+  }
+
+  /* Compact variant for a lightweight filter (e.g. notifications' All/Unread)
+     next to page-level actions -- same pill language, smaller footprint than
+     the full-size tabs used for an episode's knowledge sections. */
+  .tab-list--compact {
+    padding: 0.25rem;
+    gap: 0.2rem;
+  }
+
+  .tab-trigger--compact {
+    padding: 0.4rem 0.85rem;
+    font-size: 0.78rem;
   }
 
   /* ==========================================================================

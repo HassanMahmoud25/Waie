@@ -40,6 +40,32 @@ export async function markNotificationAsReadAction(notificationId: string): Prom
   }
 }
 
+/**
+ * Marks one notification back as unread -- the symmetric counterpart to
+ * markNotificationAsReadAction, same ownership scoping. `readAt` is nullable
+ * specifically so this direction is just as valid as the other; there's
+ * nothing elsewhere in the schema that assumes reads are one-way.
+ */
+export async function markNotificationAsUnreadAction(notificationId: string): Promise<MarkNotificationReadResult> {
+  const user = await getSessionUser();
+  if (!user) return { ok: false, error: "سجّل الدخول لعرض إشعاراتك." };
+  if (typeof notificationId !== "string" || notificationId.trim() === "") {
+    return { ok: false, error: "إشعار غير صحيح." };
+  }
+
+  try {
+    await prisma.notification.updateMany({
+      where: { id: notificationId, userId: user.id, readAt: { not: null } },
+      data: { readAt: null },
+    });
+    revalidatePath("/notifications");
+    return { ok: true };
+  } catch (error) {
+    console.error("markNotificationAsUnreadAction failed:", error);
+    return { ok: false, error: "حدث خطأ غير متوقع." };
+  }
+}
+
 export type MarkAllNotificationsReadResult = { ok: true } | { ok: false; error: string };
 
 /** Marks every one of the signed-in user's unread notifications as read, scoped to `userId: user.id` exactly like the single-notification action above. */

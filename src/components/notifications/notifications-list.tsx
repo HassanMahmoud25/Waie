@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
-import { Bell, X } from "lucide-react";
+import { Bell, MoreVertical, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
-import { formatShortArabicDate } from "@/lib/utils/format";
+import { formatRelativeArabicDate } from "@/lib/utils/format";
 import {
   markNotificationAsReadAction,
+  markNotificationAsUnreadAction,
   markAllNotificationsAsReadAction,
   deleteNotificationAction,
   clearNotificationHistoryAction,
@@ -15,6 +16,9 @@ import {
 import { EmptyState } from "@/components/content/empty-state";
 import { EpisodeThumbnail } from "@/components/content/episode-thumbnail";
 import { ClearNotificationsModal } from "@/components/notifications/clear-notifications-modal";
+import { NotificationItemMenu } from "@/components/notifications/notification-item-menu";
+import { OverflowMenu } from "@/components/notifications/overflow-menu";
+import { Tabs, TabList, Tab, TabPanel } from "@/components/navigation/tabs";
 import type { AppNotification } from "@/types/notification";
 
 /**
@@ -39,6 +43,7 @@ export function NotificationsList({ initialNotifications }: { initialNotificatio
   const [error, setError] = useState<string | null>(null);
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
+  const [filter, setFilter] = useState<"all" | "unread">("all");
 
   useEffect(() => {
     setNotifications(initialNotifications);
@@ -62,6 +67,44 @@ export function NotificationsList({ initialNotifications }: { initialNotificatio
     startTransition(async () => {
       const result = await markNotificationAsReadAction(notificationId);
       if (result.ok) router.refresh();
+    });
+  }
+
+  function markAsReadFromMenu(notificationId: string) {
+    const notification = notifications.find((item) => item.id === notificationId);
+    if (!notification || notification.readAt) return;
+    const nowIso = new Date().toISOString();
+
+    setNotifications((prev) => prev.map((item) => (item.id === notificationId ? { ...item, readAt: nowIso } : item)));
+
+    startTransition(async () => {
+      const result = await markNotificationAsReadAction(notificationId);
+      if (result.ok) {
+        router.refresh();
+      } else {
+        setNotifications((prev) => prev.map((item) => (item.id === notificationId ? { ...item, readAt: null } : item)));
+        setError(result.error);
+      }
+    });
+  }
+
+  function markAsUnreadFromMenu(notificationId: string) {
+    const notification = notifications.find((item) => item.id === notificationId);
+    if (!notification || !notification.readAt) return;
+    const previousReadAt = notification.readAt;
+
+    setNotifications((prev) => prev.map((item) => (item.id === notificationId ? { ...item, readAt: null } : item)));
+
+    startTransition(async () => {
+      const result = await markNotificationAsUnreadAction(notificationId);
+      if (result.ok) {
+        router.refresh();
+      } else {
+        setNotifications((prev) =>
+          prev.map((item) => (item.id === notificationId ? { ...item, readAt: previousReadAt } : item)),
+        );
+        setError(result.error);
+      }
     });
   }
 
@@ -142,28 +185,18 @@ export function NotificationsList({ initialNotifications }: { initialNotificatio
     );
   }
 
-  return (
-    <div>
-      {error && <p className="notif-panel__error mb-3">{error}</p>}
+  function renderList(items: AppNotification[]) {
+    if (items.length === 0) {
+      return (
+        <div className="">
+          <EmptyState icon={Bell} title="لا توجد إشعارات غير مقروءة" description="كل إشعاراتك مقروءة حاليًا." />
+        </div>
+      );
+    }
 
-      <div className="mb-3 flex flex-wrap items-center justify-end gap-3">
-        {unreadCount > 0 && (
-          <button type="button" className="notif-panel__mark-all" onClick={markAllRead} disabled={isPending}>
-            تحديد الكل كمقروء
-          </button>
-        )}
-        <button
-          type="button"
-          className="notif-panel__mark-all notif-panel__mark-all--danger"
-          onClick={() => setIsClearModalOpen(true)}
-          disabled={isPending}
-        >
-          حذف كل الإشعارات
-        </button>
-      </div>
-
+    return (
       <ul className="notif-panel__list notif-panel__list--page">
-        {notifications.map((notification) => (
+        {items.map((notification) => (
           <li key={notification.id} className="notif-item-row">
             <Link
               href={notification.href}
@@ -171,31 +204,76 @@ export function NotificationsList({ initialNotifications }: { initialNotificatio
               onClick={() => markRead(notification.id)}
             >
               {notification.episode && (
-                <span className="notif-item__thumb">
-                  <EpisodeThumbnail src={notification.episode.thumbnailUrl} alt="" fill sizes="128px" />
+                <span className="notif-item__thumb media-stretch">
+                  <span aria-hidden="true" className="aspect-video" />
+                  <span className="notif-item__thumb-media media">
+                    <EpisodeThumbnail src={notification.episode.thumbnailUrl} alt="" fill sizes="76px" />
+                  </span>
                 </span>
               )}
               <span className="notif-item__body">
                 {notification.episode?.seriesTitle && (
-                  <span className="episode-card__series notif-item__series">{notification.episode.seriesTitle}</span>
+                  <span className="notif-item__context">{notification.episode.seriesTitle}</span>
                 )}
-                <span className="notif-item__title">{notification.title}</span>
-                <span className="notif-item__message">{notification.message}</span>
-                <span className="notif-item__time">{formatShortArabicDate(new Date(notification.createdAt))}</span>
+                <span className="notif-item__title-row">
+                  {!notification.readAt && <span className="notif-item__dot" aria-hidden="true" />}
+                  <span className="notif-item__title">{notification.message}</span>
+                </span>
+                <span className="notif-item__time">{formatRelativeArabicDate(new Date(notification.createdAt))}</span>
               </span>
             </Link>
-            <button
-              type="button"
-              className="notif-item__delete"
-              aria-label="حذف الإشعار"
+            <NotificationItemMenu
+              isRead={Boolean(notification.readAt)}
               disabled={pendingDeleteIds.has(notification.id)}
-              onClick={() => deleteNotification(notification.id)}
-            >
-              <X size={14} />
-            </button>
+              onMarkRead={() => markAsReadFromMenu(notification.id)}
+              onMarkUnread={() => markAsUnreadFromMenu(notification.id)}
+              onRemove={() => deleteNotification(notification.id)}
+            />
           </li>
         ))}
       </ul>
+    );
+  }
+
+  return (
+    <div>
+      {error && <p className="notif-panel__error mb-3">{error}</p>}
+
+      <Tabs activeId={filter} onActiveChange={(id) => setFilter(id as "all" | "unread")} defaultActiveId="all">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <TabList aria-label="تصفية الإشعارات" className="tab-list--compact">
+            <Tab id="all">الكل</Tab>
+            <Tab id="unread">{unreadCount > 0 ? `غير مقروءة (${unreadCount})` : "غير مقروءة"}</Tab>
+          </TabList>
+
+          <div className="flex items-center gap-1">
+            {unreadCount > 0 && (
+              <button type="button" className="notif-panel__mark-all" onClick={markAllRead} disabled={isPending}>
+                تحديد الكل كمقروء
+              </button>
+            )}
+            <OverflowMenu triggerLabel="خيارات إضافية" triggerIcon={<MoreVertical size={16} />} disabled={isPending}>
+              {(close) => (
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="notif-menu__item notif-menu__item--danger"
+                  onClick={() => {
+                    close();
+                    setIsClearModalOpen(true);
+                  }}
+                >
+                  <Trash2 size={15} aria-hidden="true" />
+                  حذف كل الإشعارات
+                </button>
+              )}
+            </OverflowMenu>
+          </div>
+        </div>
+
+        <TabPanel id="all">{renderList(notifications)}</TabPanel>
+        <TabPanel id="unread">{renderList(notifications.filter((item) => !item.readAt))}</TabPanel>
+      </Tabs>
 
       <ClearNotificationsModal
         open={isClearModalOpen}

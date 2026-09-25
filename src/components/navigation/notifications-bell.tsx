@@ -4,11 +4,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
-import { Bell, X } from "lucide-react";
+import { Bell } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
-import { formatShortArabicDate } from "@/lib/utils/format";
+import { formatRelativeArabicDate } from "@/lib/utils/format";
 import {
   markNotificationAsReadAction,
+  markNotificationAsUnreadAction,
   markAllNotificationsAsReadAction,
   deleteNotificationAction,
   getUnreadNotificationCountAction,
@@ -16,6 +17,7 @@ import {
 import { IconButton } from "@/components/ui/icon-button";
 import { EmptyState } from "@/components/content/empty-state";
 import { EpisodeThumbnail } from "@/components/content/episode-thumbnail";
+import { NotificationItemMenu } from "@/components/notifications/notification-item-menu";
 import type { AppNotification } from "@/types/notification";
 
 const MENU_TRANSITION_MS = 180;
@@ -211,6 +213,51 @@ export function NotificationsBell({
     });
   }
 
+  // Explicit menu actions (unlike `markRead` above, these aren't a
+  // side-effect of navigating away) get full revert-on-failure + error
+  // surfacing, same as markAllRead/deleteNotification below.
+  function markAsReadFromMenu(notificationId: string) {
+    const notification = notifications.find((item) => item.id === notificationId);
+    if (!notification || notification.readAt) return;
+    const nowIso = new Date().toISOString();
+
+    setNotifications((prev) => prev.map((item) => (item.id === notificationId ? { ...item, readAt: nowIso } : item)));
+    setUnreadCount((prev) => Math.max(0, prev - 1));
+
+    startTransition(async () => {
+      const result = await markNotificationAsReadAction(notificationId);
+      if (result.ok) {
+        router.refresh();
+      } else {
+        setNotifications((prev) => prev.map((item) => (item.id === notificationId ? { ...item, readAt: null } : item)));
+        setUnreadCount((prev) => prev + 1);
+        setError(result.error);
+      }
+    });
+  }
+
+  function markAsUnreadFromMenu(notificationId: string) {
+    const notification = notifications.find((item) => item.id === notificationId);
+    if (!notification || !notification.readAt) return;
+    const previousReadAt = notification.readAt;
+
+    setNotifications((prev) => prev.map((item) => (item.id === notificationId ? { ...item, readAt: null } : item)));
+    setUnreadCount((prev) => prev + 1);
+
+    startTransition(async () => {
+      const result = await markNotificationAsUnreadAction(notificationId);
+      if (result.ok) {
+        router.refresh();
+      } else {
+        setNotifications((prev) =>
+          prev.map((item) => (item.id === notificationId ? { ...item, readAt: previousReadAt } : item)),
+        );
+        setUnreadCount((prev) => Math.max(0, prev - 1));
+        setError(result.error);
+      }
+    });
+  }
+
   function markAllRead() {
     if (unreadCount === 0 || isPending) return;
     const previous = notifications;
@@ -322,32 +369,33 @@ export function NotificationsBell({
                       }}
                     >
                       {notification.episode && (
-                        <span className="notif-item__thumb">
-                          <EpisodeThumbnail src={notification.episode.thumbnailUrl} alt="" fill sizes="96px" />
+                        <span className="notif-item__thumb media-stretch">
+                          <span aria-hidden="true" className="aspect-video" />
+                          <span className="notif-item__thumb-media media">
+                            <EpisodeThumbnail src={notification.episode.thumbnailUrl} alt="" fill sizes="76px" />
+                          </span>
                         </span>
                       )}
                       <span className="notif-item__body">
                         {notification.episode?.seriesTitle && (
-                          <span className="episode-card__series notif-item__series">
-                            {notification.episode.seriesTitle}
-                          </span>
+                          <span className="notif-item__context">{notification.episode.seriesTitle}</span>
                         )}
-                        <span className="notif-item__title">{notification.title}</span>
-                        <span className="notif-item__message">{notification.message}</span>
+                        <span className="notif-item__title-row">
+                          {!notification.readAt && <span className="notif-item__dot" aria-hidden="true" />}
+                          <span className="notif-item__title">{notification.message}</span>
+                        </span>
                         <span className="notif-item__time">
-                          {formatShortArabicDate(new Date(notification.createdAt))}
+                          {formatRelativeArabicDate(new Date(notification.createdAt))}
                         </span>
                       </span>
                     </Link>
-                    <button
-                      type="button"
-                      className="notif-item__delete"
-                      aria-label="حذف الإشعار"
+                    <NotificationItemMenu
+                      isRead={Boolean(notification.readAt)}
                       disabled={pendingDeleteIds.has(notification.id)}
-                      onClick={() => deleteNotification(notification.id)}
-                    >
-                      <X size={14} />
-                    </button>
+                      onMarkRead={() => markAsReadFromMenu(notification.id)}
+                      onMarkUnread={() => markAsUnreadFromMenu(notification.id)}
+                      onRemove={() => deleteNotification(notification.id)}
+                    />
                   </li>
                 ))}
               </ul>

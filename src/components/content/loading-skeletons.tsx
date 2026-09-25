@@ -488,3 +488,40 @@ export function RecommendationCardSkeleton() {
     </Skeleton>
   );
 }
+
+/**
+ * Mirrors one notification row (see .notif-item* in globals.css): a small
+ * 16:9 thumbnail, a context line, a title, a message, a relative time, and
+ * the trailing overflow-menu trigger's own footprint -- reuses the real
+ * typography classes for the text bars (so line height/size match exactly)
+ * but plain Tailwind sizing for the thumbnail/trigger boxes, since those
+ * real classes set their own resting `background`, which would fight the
+ * skeleton's shimmer (same reasoning PrevNextTileSkeleton's thumbnail box
+ * follows above).
+ */
+export function NotificationRowSkeleton() {
+  return (
+    <li className="notif-item-row">
+      <div className="notif-item">
+        <Skeleton className="h-14 w-[76px] shrink-0 rounded-[10px]" tone="strong" />
+        <div className="notif-item__body">
+          <SkeletonText className="notif-item__context" lines={["w-24"]} tone="strong" />
+          <SkeletonText className="notif-item__title mt-1" lines={["w-3/5"]} tone="strong" />
+          <SkeletonText className="notif-item__time mt-1" lines={["w-16"]} tone="strong" />
+        </div>
+      </div>
+      <Skeleton className="h-8 w-8 shrink-0 rounded-full" tone="strong" />
+    </li>
+  );
+}
+
+/** `/notifications`'s list while the Server Component's fetch is in flight (see (site)/notifications/loading.tsx). */
+export function NotificationsPageSkeleton({ count = 6 }: { count?: number }) {
+  return (
+    <ul className="notif-panel__list notif-panel__list--page" aria-hidden="true">
+      {Array.from({ length: count }).map((_, index) => (
+        <NotificationRowSkeleton key={index} />
+      ))}
+    </ul>
+  );
+}
