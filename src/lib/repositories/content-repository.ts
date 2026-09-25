@@ -6,6 +6,7 @@ import type { Recommendation } from "@/types/recommendation";
 import type { Transcript } from "@/types/transcript";
 import type { MindMap } from "@/types/mind-map";
 import type { SearchResults } from "@/types/search";
+import type { ContentStatus } from "@/types/content-status";
 
 /**
  * The one interface every page/component talks to for content. Implemented
@@ -46,6 +47,8 @@ export interface ContentRepository {
 
   /** Admin-only: every episode regardless of status (drafts/archived included). */
   listAllEpisodes(): Promise<Episode[]>;
+  /** Admin-only: episodes matching an optional status and free-text query (title/slug/description/episode number). Empty/omitted query behaves like listAllEpisodes() filtered by status. */
+  searchAdminEpisodes(params: { status?: ContentStatus | null; query?: string }): Promise<Episode[]>;
   getEpisodeById(id: string): Promise<Episode | null>;
   updateEpisode(
     id: string,

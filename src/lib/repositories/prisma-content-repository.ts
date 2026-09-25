@@ -369,6 +369,33 @@ export const prismaContentRepository: ContentRepository = {
     return rows.map(toEpisode);
   },
 
+  async searchAdminEpisodes({ status, query }) {
+    const normalized = query?.trim();
+    const contains = normalized ? { contains: normalized, mode: "insensitive" as const } : null;
+    const asNumber = normalized && /^\d+$/.test(normalized) ? Number(normalized) : null;
+
+    const rows = await prisma.episode.findMany({
+      where: {
+        ...(status ? { status } : {}),
+        ...(contains
+          ? {
+              OR: [
+                { title: contains },
+                { youtubeTitle: contains },
+                { slug: contains },
+                { description: contains },
+                { youtubeDescription: contains },
+                ...(asNumber !== null ? [{ episodeNumber: asNumber }] : []),
+              ],
+            }
+          : {}),
+      },
+      include: episodeInclude,
+      orderBy: { youtubePublishedAt: "desc" },
+    });
+    return rows.map(toEpisode);
+  },
+
   async getEpisodeById(id) {
     const row = await prisma.episode.findUnique({ where: { id }, include: episodeInclude });
     return row ? toEpisode(row) : null;

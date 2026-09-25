@@ -38,6 +38,11 @@ export function AdminCreateFormSkeleton() {
   );
 }
 
+/** Mirrors EpisodeSearchInput's single field (episodes list only). Caller supplies spacing. */
+export function AdminSearchFieldSkeleton() {
+  return <Skeleton className="h-12 w-full rounded-[14px]" />;
+}
+
 /** Mirrors the status-filter tabs (episodes/series/collections; topics has none). */
 export function AdminTabsSkeleton() {
   const widths = ["w-14", "w-20", "w-20", "w-24"];

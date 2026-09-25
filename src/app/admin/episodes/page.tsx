@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Headphones } from "lucide-react";
+import { Suspense } from "react";
+import { Headphones, SearchX } from "lucide-react";
 import { contentRepository } from "@/lib/repositories";
 import { EPISODE_FORMS, formatCount } from "@/lib/utils/format";
 import { AdminShell } from "@/components/admin/admin-shell";
+import { AdminSearchFieldSkeleton } from "@/components/admin/admin-skeletons";
 import { EpisodeRow } from "@/components/admin/episode-row";
 import { CreateEpisodeForm } from "@/components/admin/create-episode-form";
+import { EpisodeSearchInput } from "@/components/admin/episode-search-input";
 import { EmptyState } from "@/components/content/empty-state";
 import { requireAdmin } from "@/lib/auth/server";
 import { cn } from "@/lib/utils/cn";
@@ -23,23 +26,25 @@ const statusTabs: { key: string; label: string; status: ContentStatus | null }[]
 export default async function AdminEpisodesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; q?: string }>;
 }) {
   await requireAdmin();
-  const { status: statusParam } = await searchParams;
+  const { status: statusParam, q } = await searchParams;
   const activeTab = statusTabs.find((tab) => tab.key === statusParam) ?? statusTabs[0];
+  const query = q?.trim() ?? "";
 
   // Admin-only, unfiltered data paths: listAllEpisodes() returns every status
   // (not the public listEpisodes()), and listAllSeries() mirrors it so a
   // draft series' title still resolves here instead of showing "بلا سلسلة".
-  const [allEpisodes, series] = await Promise.all([
+  // allEpisodes stays unfiltered (by status or query) purely to compute the
+  // tab counts below -- the actual rendered list comes from the DB-side
+  // searchAdminEpisodes() so filtering scales past an in-memory array.
+  const [allEpisodes, series, episodes] = await Promise.all([
     contentRepository.listAllEpisodes(),
     contentRepository.listAllSeries(),
+    contentRepository.searchAdminEpisodes({ status: activeTab.status, query }),
   ]);
   const seriesById = new Map(series.map((s) => [s.id, s]));
-  const episodes = activeTab.status
-    ? allEpisodes.filter((episode) => episode.status === activeTab.status)
-    : allEpisodes;
 
   return (
     <AdminShell
@@ -49,13 +54,23 @@ export default async function AdminEpisodesPage({
     >
       <CreateEpisodeForm />
 
-      <nav className="admin-tabs mt-6" aria-label="تصفية حسب الحالة">
+      <div className="mt-6">
+        <Suspense fallback={<AdminSearchFieldSkeleton />}>
+          <EpisodeSearchInput defaultValue={query} />
+        </Suspense>
+      </div>
+
+      <nav className="admin-tabs mt-4" aria-label="تصفية حسب الحالة">
         {statusTabs.map((tab) => {
           const count = tab.status ? allEpisodes.filter((episode) => episode.status === tab.status).length : allEpisodes.length;
+          const href = new URLSearchParams();
+          if (tab.key !== "all") href.set("status", tab.key);
+          if (query) href.set("q", query);
+          const qs = href.toString();
           return (
             <Link
               key={tab.key}
-              href={tab.key === "all" ? "/admin/episodes" : `/admin/episodes?status=${tab.key}`}
+              href={qs ? `/admin/episodes?${qs}` : "/admin/episodes"}
               aria-current={tab.key === activeTab.key ? "page" : undefined}
               className={cn("admin-tab")}
             >
@@ -78,6 +93,12 @@ export default async function AdminEpisodesPage({
               />
             ))}
           </div>
+        ) : query ? (
+          <EmptyState
+            icon={SearchX}
+            title="لا توجد نتائج."
+            description={`لا توجد حلقات تطابق "${query}"${activeTab.status ? ` ضمن ${activeTab.label}` : ""}.`}
+          />
         ) : (
           <EmptyState
             icon={Headphones}
