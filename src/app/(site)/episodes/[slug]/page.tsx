@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { cache } from "react";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { contentRepository } from "@/lib/repositories";
 import { siteConfig } from "@/config/site";
 import { Breadcrumbs } from "@/components/navigation/breadcrumbs";
+import { EpisodeThumbnail } from "@/components/content/episode-thumbnail";
 import { EpisodeIdentity } from "@/components/episode/episode-identity";
 import { EpisodeMeta } from "@/components/episode/episode-meta";
 import { EpisodePlayerProvider } from "@/components/episode/player-context";
@@ -206,7 +206,7 @@ export default async function EpisodePage({
               className="pointer-events-none absolute inset-0 -z-10"
               aria-hidden="true"
             >
-              <Image
+              <EpisodeThumbnail
                 src={episode.thumbnailUrl}
                 alt=""
                 fill
@@ -261,7 +261,7 @@ export default async function EpisodePage({
               </div>
 
               <div className="my-10">
-                <EpisodeMedia item={mediaItem} neighbors={mediaNeighbors} />
+                <EpisodeMedia item={mediaItem} neighbors={mediaNeighbors} key={episode.id} />
               </div>
             </div>
           </section>

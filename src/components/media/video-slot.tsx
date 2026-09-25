@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import Image from "next/image";
 import { Play } from "lucide-react";
 import { usePlayback } from "@/hooks/use-playback";
 import { modeFor, playItem, registerSlot } from "@/lib/playback/engine";
 import type { MediaItem, PlaybackNeighbors } from "@/lib/playback/item";
+import { EpisodeThumbnail } from "@/components/content/episode-thumbnail";
 
 /**
  * The episode page's video area. It is only a *place*: an empty 16:9 frame
@@ -34,7 +34,7 @@ export function VideoSlot({ item, neighbors }: { item: MediaItem; neighbors: Pla
 
   return (
     <div ref={frameRef} className="relative aspect-video overflow-hidden bg-black">
-      <Image
+      <EpisodeThumbnail
         src={item.thumbnailUrl}
         alt=""
         fill

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import Image from "next/image";
+import { EpisodeThumbnail } from "@/components/content/episode-thumbnail";
 import {
   Headphones,
   Loader2,
@@ -68,14 +68,12 @@ export function AudioSurface({
     else playItem(item, { mode: "audio", neighbors });
   };
 
-  console.log("item ====> ", item);
-
   return (
     <div
       ref={frameRef}
       className="relative aspect-video overflow-hidden bg-[var(--cinematic)] text-[var(--on-brand)]"
     >
-      <Image
+      <EpisodeThumbnail
         src={item.thumbnailUrl}
         alt=""
         fill

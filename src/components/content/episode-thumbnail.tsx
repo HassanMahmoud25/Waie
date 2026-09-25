@@ -47,6 +47,21 @@ function withRetryParam(src: string, attempt: number): string {
  * likely to render a just-published episode soon after publish -- admin
  * list/editor, notifications, continue-watching, and the public episode
  * rails.
+ *
+ * `unoptimized`: YouTube's CDN already serves a correctly-sized, compressed
+ * JPEG for every thumbnail variant this app requests -- routing it through
+ * Vercel's own Image Optimization API re-encodes something that doesn't need
+ * re-encoding, and every distinct (url, width, quality) combination counts
+ * against that API's monthly transformation quota. With ~100+ episodes times
+ * several responsive breakpoints times every surface that shows a thumbnail,
+ * that quota is exhausted well before the month is (confirmed in production:
+ * once exhausted, Vercel returns 402 OPTIMIZED_IMAGE_REQUEST_PAYMENT_REQUIRED
+ * for any new/uncached transformation while already-cached ones keep working
+ * -- which is why the same episode could look fine on one surface/width and
+ * broken on another, fine on localhost, which never goes through this API,
+ * and flip on navigation vs. refresh depending only on which exact width got
+ * requested and whether that one happened to be cached already). Going
+ * straight to i.ytimg.com sidesteps that quota entirely.
  */
 export function EpisodeThumbnail({ src, alt, ...props }: Omit<ImageProps, "src"> & { src: string }) {
   const [resolvedSrc, setResolvedSrc] = useState(src);
@@ -62,6 +77,7 @@ export function EpisodeThumbnail({ src, alt, ...props }: Omit<ImageProps, "src">
       {...props}
       alt={alt}
       src={resolvedSrc}
+      unoptimized
       onError={() => {
         attemptRef.current += 1;
         if (attemptRef.current === 1) {

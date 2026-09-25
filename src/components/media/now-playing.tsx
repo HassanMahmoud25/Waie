@@ -1,13 +1,13 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { Clapperboard, Headphones, Loader2, Pause, Play, SkipBack, SkipForward, Volume2, VolumeX, X } from "lucide-react";
 import { usePlayback, usePlaybackTime } from "@/hooks/use-playback";
 import { dismiss, seekTo, setMode, setVolume, skipToNext, skipToPrevious, togglePlayback } from "@/lib/playback/engine";
 import type { PlaybackSnapshot } from "@/lib/playback/engine";
 import type { MediaItem } from "@/lib/playback/item";
+import { EpisodeThumbnail } from "@/components/content/episode-thumbnail";
 import { TimeSlider } from "./time-slider";
 
 type Playing = PlaybackSnapshot & { item: MediaItem };
@@ -128,7 +128,7 @@ export function NowPlayingBar({ state }: { state: Playing }) {
       <ProgressLine />
       <Link href={`/episodes/${item.slug}`} className="media-dock__open" aria-label={`فتح الحلقة: ${item.title}`}>
         <span className="media-dock__thumb">
-          <Image src={item.thumbnailUrl} alt="" fill sizes="80px" className="object-cover" />
+          <EpisodeThumbnail src={item.thumbnailUrl} alt="" fill sizes="80px" className="object-cover" />
         </span>
         <span className="min-w-0">
           <span className="media-dock__title">{item.title}</span>
