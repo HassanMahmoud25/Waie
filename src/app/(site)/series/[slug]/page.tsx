@@ -97,7 +97,7 @@ export default async function SeriesDetailPage({
         </div>
       </section>
 
-      <section className="container py-14 md:py-20">
+      <section className="container section">
         {episodes.length > 0 ? (
           <SeriesEpisodeList episodes={episodes} />
         ) : (

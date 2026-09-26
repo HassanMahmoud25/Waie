@@ -20,6 +20,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   ]);
   const seriesById = new Map(series.map((s) => [s.id, s]));
   const totalResults = results.episodes.length + results.series.length + results.topics.length;
+  const hasSeriesOrTopicResults = results.series.length > 0 || results.topics.length > 0;
 
   return (
     <main className="container py-12 md:py-16">
@@ -47,8 +48,8 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
             </div>
           )}
 
-          {(results.series.length > 0 || results.topics.length > 0) && (
-            <div className="mt-8 flex flex-col gap-6">
+          {hasSeriesOrTopicResults && (
+            <div className="mt-10 flex flex-col gap-6">
               <p className="eyebrow w-fit">السلاسل والمواضيع</p>
               <div className="-mt-3 flex flex-col gap-3">
                 {results.series.map((s) => (
@@ -61,8 +62,12 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
             </div>
           )}
 
+          {hasSeriesOrTopicResults && results.episodes.length > 0 && (
+            <hr className="section-divider" />
+          )}
+
           {results.episodes.length > 0 && (
-            <div className="mt-10 flex flex-col gap-6">
+            <div className={hasSeriesOrTopicResults ? "flex flex-col gap-6" : "mt-10 flex flex-col gap-6"}>
               <p className="eyebrow w-fit">الحلقات</p>
               <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
                 {results.episodes.map((episode) => (

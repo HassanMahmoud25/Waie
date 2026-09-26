@@ -32,7 +32,7 @@ export default function SeriesDetailLoading() {
         </div>
       </section>
 
-      <section className="container py-14 md:py-20">
+      <section className="container section">
         <div className="journey-header">
           <SkeletonText className="text-2xl md:text-3xl" lines={["w-48"]} barHeight="h-[.6em]" />
           {/* SeriesJourneyProgress: 94px tall, or 127px once its row stacks on phones. */}

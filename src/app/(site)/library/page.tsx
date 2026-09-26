@@ -18,7 +18,7 @@ export default async function LibraryPage() {
   ]);
 
   return (
-    <main className="container py-14">
+    <main className="container py-12 md:py-16">
       <p className="eyebrow-pill w-fit">مساحتك الخاصة</p>
       <h1 className="mt-4 text-2xl font-black leading-[1.8] tracking-[-.03em] md:text-3xl">
         مكتبتي

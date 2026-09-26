@@ -156,6 +156,8 @@ export default async function Home() {
         </section>
       )}
 
+      {bentoSeries.length > 0 && latest.length > 0 && <hr className="section-divider container" />}
+
       {latest.length > 0 && (
         <section className="section pt-0">
           <div className="container">

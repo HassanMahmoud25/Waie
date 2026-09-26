@@ -270,6 +270,8 @@ export default async function EpisodePage({
             <EpisodeNotes episodeId={episode.id} durationSeconds={episode.durationSeconds} />
           </section>
 
+          <hr className="section-divider container" />
+
           <section className="container section">
             <p className="eyebrow-pill w-fit">تصفّح الحلقات</p>
             <h2 className="mt-3 text-xl font-black leading-[1.8] tracking-[-.03em] md:text-2xl">
@@ -280,7 +282,9 @@ export default async function EpisodePage({
             </div>
           </section>
 
-          <section className=" pb-14 md:pb-20">
+          <hr className="section-divider container" />
+
+          <section className="section pt-0">
             <div className="container">
               <p className="eyebrow-pill w-fit">للمراجعة والتوسّع</p>
               <h2 className="mt-3 text-xl font-black leading-[1.8] tracking-[-.03em] md:text-2xl">
@@ -298,17 +302,21 @@ export default async function EpisodePage({
         </EpisodePlayerProvider>
 
         {related.length > 0 && (
-          <section className="section pt-0">
-            <div className="container">
-              <p className="eyebrow-pill w-fit">للمتابعة</p>
-              <h2 className="mt-3 text-xl font-black leading-[1.8] tracking-[-.03em] md:text-2xl">
-                حلقات من نفس السلسلة أو الموضوع
-              </h2>
-              <div className="mt-8">
-                <RelatedEpisodes episodes={related} seriesById={seriesById} />
+          <>
+            <hr className="section-divider container" />
+
+            <section className="section pt-0">
+              <div className="container">
+                <p className="eyebrow-pill w-fit">للمتابعة</p>
+                <h2 className="mt-3 text-xl font-black leading-[1.8] tracking-[-.03em] md:text-2xl">
+                  حلقات من نفس السلسلة أو الموضوع
+                </h2>
+                <div className="mt-8">
+                  <RelatedEpisodes episodes={related} seriesById={seriesById} />
+                </div>
               </div>
-            </div>
-          </section>
+            </section>
+          </>
         )}
       </main>
     </>

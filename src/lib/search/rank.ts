@@ -68,3 +68,53 @@ export function scoreContains(normalizedText: string, normalizedQuery: string, t
   if (!normalizedQuery || !normalizedText) return 0;
   return normalizedText.includes(normalizedQuery) ? tierScore : 0;
 }
+
+/**
+ * Admin episode search candidate -- every text field pre-normalized by the
+ * caller (searchAdminEpisodes() in prisma-content-repository.ts) via
+ * normalizeSearchText(), so this stays a pure, DB-independent predicate.
+ */
+export type AdminEpisodeSearchCandidate = {
+  normalizedTitle: string;
+  normalizedYoutubeTitle: string;
+  normalizedSlug: string;
+  normalizedDescription: string | null;
+  normalizedYoutubeDescription: string | null;
+  normalizedSeriesTitle: string | null;
+  episodeNumber: number | null;
+};
+
+/**
+ * Admin episode search: a boolean filter, not a ranked score. Unlike public
+ * search()'s tiered relevance, searchAdminEpisodes() keeps whatever matches
+ * in their existing chronological order -- this is a lookup tool for
+ * finding one specific episode to edit, not a discovery/ranking surface.
+ * Reuses the same deterministic episode-number prefix rule as public search
+ * (scoreEpisodeNumber, ">0" checked as a plain match, not a weight).
+ */
+export function matchesAdminEpisodeQuery(
+  candidate: AdminEpisodeSearchCandidate,
+  normalizedQuery: string,
+  numberToken: string | null,
+): boolean {
+  const numberMatches = scoreEpisodeNumber(candidate.episodeNumber, numberToken) > 0;
+
+  // A purely numeric query ("111", "١١١") means "find this episode number" --
+  // only the dedicated prefix rule above should decide it. Every episode
+  // title literally contains its own number (e.g. "وعي 211 | ..."), so
+  // without this, a plain title-substring check would let "11" match episode
+  // 211 too (title text "211" contains "11"), silently reintroducing the
+  // exact kind of unrelated numeric match the prefix rule exists to reject.
+  if (/^\d+$/.test(normalizedQuery)) return numberMatches;
+
+  if (numberMatches) return true;
+  if (!normalizedQuery) return false;
+  return (
+    candidate.normalizedTitle.includes(normalizedQuery) ||
+    candidate.normalizedYoutubeTitle.includes(normalizedQuery) ||
+    candidate.normalizedSlug.includes(normalizedQuery) ||
+    (candidate.normalizedDescription?.includes(normalizedQuery) ?? false) ||
+    (candidate.normalizedYoutubeDescription?.includes(normalizedQuery) ?? false) ||
+    (candidate.normalizedSeriesTitle?.includes(normalizedQuery) ?? false)
+  );
+}

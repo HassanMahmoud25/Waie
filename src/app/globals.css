@@ -83,6 +83,19 @@
   --mobile-nav-clearance: calc(
     var(--mobile-tab-bar-height) + env(safe-area-inset-bottom) + 14px
   );
+
+  /* The vertical gap between major stacked sections -- `.section`'s own
+     padding-block, and (on each side) `.section-divider`'s margin. One
+     shared token so both always move together and a divider's own
+     breathing room stays proportional to the site's normal section
+     rhythm, even though it ends up more generous than an undivided gap. */
+  --section-gap: clamp(3rem, 6vw, 5.5rem);
+}
+
+@media (max-width: 639px) {
+  :root {
+    --section-gap: 2.5rem;
+  }
 }
 
 /*
@@ -289,13 +302,7 @@
      Layout primitives
      ========================================================================== */
   .section {
-    padding-block: clamp(3rem, 6vw, 5.5rem);
-  }
-
-  @media (max-width: 639px) {
-    .section {
-      padding-block: 2.5rem;
-    }
+    padding-block: var(--section-gap);
   }
 
   /* A softly tinted, borderless section band — replaces flat `bg-[var(--surface)]`
@@ -319,6 +326,24 @@
      sibling combinator collapses it automatically regardless of which
      sections happen to render. */
   .section + .section {
+    padding-top: 0;
+  }
+
+  /* A `.section-divider` between two `.section`s (see below) already owns
+     the *entire* gap itself, split evenly on each side of its line -- so
+     the sections around it must not also contribute their own padding at
+     that seam, or the gap doubles and the line stops reading as centered.
+     Written as relational selectors, not a `pb-0`/`pt-0` in the section's
+     own className, for the same reason as the plain `.section + .section`
+     rule above: whether a divider ends up there can be data-dependent
+     (e.g. Home's continue-watching rail, decided client-side), so no fixed
+     class list can predict it. `:has()` is already relied on elsewhere in
+     this file (see the mobile tab bar rules below). */
+  .section:has(+ .section-divider) {
+    padding-bottom: 0;
+  }
+
+  .section-divider + .section {
     padding-top: 0;
   }
 
@@ -354,6 +379,34 @@
   .section-link:hover {
     color: var(--ink);
     gap: 0.6rem;
+  }
+
+  /* A hairline seam between two major, independently-headed sections that
+     would otherwise blend into one undifferentiated run (e.g. Library's
+     saved/completed lists, or two flat-background rails on Home) --
+     deliberately much lower-contrast than a real border. Whitespace + each
+     section's own heading stay the primary separator; this is a secondary,
+     supporting cue.
+
+     Renders as a real <hr>: a 1px line with its own margin on *each* side
+     (60% of `--section-gap` -- more breathing room than an undivided
+     section-to-section gap gets on either side alone, without ballooning
+     into a much bigger pause than the rest of the page's rhythm), so it
+     sits genuinely centered rather than stuck to either neighbor. The two
+     sections it separates must not contribute their own padding/margin on
+     this seam (a `.section` element needs `pb-0`/`pt-0` here same as any
+     other adjacent-section seam; a plain margin-stacked block simply omits
+     its usual `mt-*`) -- otherwise the gap doubles up again on top of
+     this. Pages whose divider isn't already inside a `.container`-
+     constrained ancestor also add the `container` utility class alongside
+     `section-divider`, so the line's width always matches the content
+     column instead of running full-bleed. */
+  .section-divider {
+    display: block;
+    height: 1px;
+    margin-block: calc(var(--section-gap) * 0.6);
+    border: none;
+    background: var(--line-soft);
   }
 
   /* ==========================================================================

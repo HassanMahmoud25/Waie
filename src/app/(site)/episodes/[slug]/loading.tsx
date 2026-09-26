@@ -71,6 +71,8 @@ export default function EpisodeLoading() {
         <EpisodeNotesSkeleton />
       </section>
 
+      <hr className="section-divider container" />
+
       <section className="container section">
         <EyebrowPillSkeleton width="w-28" />
         <SkeletonText className={headingClassName} lines={["w-56"]} barHeight="h-[.55em]" />
@@ -80,7 +82,9 @@ export default function EpisodeLoading() {
         </div>
       </section>
 
-      <section className="pb-14 md:pb-20">
+      <hr className="section-divider container" />
+
+      <section className="section pt-0">
         <div className="container">
           <EyebrowPillSkeleton width="w-32" />
           <SkeletonText className={headingClassName} lines={["w-64"]} barHeight="h-[.55em]" />
@@ -95,6 +99,8 @@ export default function EpisodeLoading() {
           </div>
         </div>
       </section>
+
+      <hr className="section-divider container" />
 
       <section className="section pt-0">
         <div className="container">

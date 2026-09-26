@@ -21,7 +21,7 @@ import type { Transcript } from "@/types/transcript";
 import type { MindMap, MindMapNode } from "@/types/mind-map";
 import type { SearchResults } from "@/types/search";
 import { normalizeSearchText } from "@/lib/search/normalize";
-import { SCORE, extractNumberToken, scoreContains, scoreEpisodeNumber, scoreTitle } from "@/lib/search/rank";
+import { SCORE, extractNumberToken, matchesAdminEpisodeQuery, scoreContains, scoreEpisodeNumber, scoreTitle } from "@/lib/search/rank";
 
 // ---------------------------------------------------------------------------
 // Mapping: Prisma rows (with the YouTube-owned/editorial split) -> the app's
@@ -372,30 +372,52 @@ export const prismaContentRepository: ContentRepository = {
   },
 
   async searchAdminEpisodes({ status, query }) {
-    const normalized = query?.trim();
-    const contains = normalized ? { contains: normalized, mode: "insensitive" as const } : null;
-    const asNumber = normalized && /^\d+$/.test(normalized) ? Number(normalized) : null;
-
+    // status stays a real Prisma `where` (cheap exact-enum equality, already
+    // covered by @@index([status, youtubePublishedAt])); the free-text query
+    // can't be, since Arabic-Indic digit/diacritic/letter-variant
+    // normalization has no plain-ILIKE equivalent -- so it's matched in JS
+    // against this already-bounded, status-filtered set (see search() above
+    // for the identical reasoning on the public side). Deliberately a filter,
+    // not a ranked search: this is a lookup tool for finding one specific
+    // episode to edit, so matches stay in the same chronological order the
+    // rest of the admin list already uses, never reordered by relevance.
     const rows = await prisma.episode.findMany({
-      where: {
-        ...(status ? { status } : {}),
-        ...(contains
-          ? {
-              OR: [
-                { title: contains },
-                { youtubeTitle: contains },
-                { slug: contains },
-                { description: contains },
-                { youtubeDescription: contains },
-                ...(asNumber !== null ? [{ episodeNumber: asNumber }] : []),
-              ],
-            }
-          : {}),
-      },
+      where: status ? { status } : {},
       include: episodeInclude,
       orderBy: { youtubePublishedAt: "desc" },
     });
-    return rows.map(toEpisode);
+
+    const trimmed = query?.trim() ?? "";
+    if (!trimmed) return rows.map(toEpisode);
+
+    const normalizedQuery = normalizeSearchText(trimmed);
+    const numberToken = extractNumberToken(trimmed);
+    if (!normalizedQuery && !numberToken) return [];
+
+    // Lean, admin-scoped (not published-only) id -> title lookup -- mirrors
+    // listAllSeries()'s "admin sees draft series titles too" behavior, minus
+    // the episode-count stats that method computes and search doesn't need.
+    const seriesRows = await prisma.series.findMany({ select: { id: true, title: true } });
+    const seriesTitleById = new Map(seriesRows.map((row) => [row.id, row.title]));
+
+    const matchesQuery = (row: EpisodeRow) => {
+      const seriesTitle = row.seriesId ? seriesTitleById.get(row.seriesId) : undefined;
+      return matchesAdminEpisodeQuery(
+        {
+          normalizedTitle: normalizeSearchText(row.title ?? row.youtubeTitle),
+          normalizedYoutubeTitle: normalizeSearchText(row.youtubeTitle),
+          normalizedSlug: normalizeSearchText(row.slug),
+          normalizedDescription: row.description ? normalizeSearchText(row.description) : null,
+          normalizedYoutubeDescription: row.youtubeDescription ? normalizeSearchText(row.youtubeDescription) : null,
+          normalizedSeriesTitle: seriesTitle ? normalizeSearchText(seriesTitle) : null,
+          episodeNumber: row.episodeNumber,
+        },
+        normalizedQuery,
+        numberToken,
+      );
+    };
+
+    return rows.filter(matchesQuery).map(toEpisode);
   },
 
   async getEpisodeById(id) {

@@ -53,24 +53,27 @@ export function LibraryContent({
   return (
     <>
       {continueWatchingItems.length > 0 && (
-        <section className="mt-10">
-          <SectionHeading eyebrow="تابع مشاهدتك" title="كمل من حيث توقفت" />
-          <ContentRail>
-            {continueWatchingItems.map(({ episode, series: episodeSeries, percent, remainingSeconds }) => (
-              <div className="hover-rise" key={episode.id}>
-                <ContinueWatchingCard
-                  episode={episode}
-                  series={episodeSeries}
-                  percent={percent}
-                  remainingSeconds={remainingSeconds}
-                />
-              </div>
-            ))}
-          </ContentRail>
-        </section>
+        <>
+          <section className="mt-(--section-gap)">
+            <SectionHeading eyebrow="تابع مشاهدتك" title="كمل من حيث توقفت" />
+            <ContentRail>
+              {continueWatchingItems.map(({ episode, series: episodeSeries, percent, remainingSeconds }) => (
+                <div className="hover-rise" key={episode.id}>
+                  <ContinueWatchingCard
+                    episode={episode}
+                    series={episodeSeries}
+                    percent={percent}
+                    remainingSeconds={remainingSeconds}
+                  />
+                </div>
+              ))}
+            </ContentRail>
+          </section>
+          <hr className="section-divider" />
+        </>
       )}
 
-      <section className="mt-14">
+      <section className={continueWatchingItems.length === 0 ? "mt-(--section-gap)" : undefined}>
         <SectionHeading eyebrow="جديدها يصلك أولًا" title="السلاسل التي تتابعها" />
         {followedSeries.length > 0 ? (
           <div className="grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-2">
@@ -89,7 +92,9 @@ export function LibraryContent({
         )}
       </section>
 
-      <section className="mt-14">
+      <hr className="section-divider" />
+
+      <section>
         <SectionHeading eyebrow="للرجوع إليها" title="الحلقات المحفوظة" />
         {savedEpisodes.length > 0 ? (
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
@@ -106,7 +111,9 @@ export function LibraryContent({
         )}
       </section>
 
-      <section className="mt-14">
+      <hr className="section-divider" />
+
+      <section>
         <SectionHeading eyebrow="أرشيفك" title="حلقات أنهيتها" />
         {completedEpisodes.length > 0 ? (
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">

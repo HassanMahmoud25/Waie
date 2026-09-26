@@ -47,7 +47,15 @@ export interface ContentRepository {
 
   /** Admin-only: every episode regardless of status (drafts/archived included). */
   listAllEpisodes(): Promise<Episode[]>;
-  /** Admin-only: episodes matching an optional status and free-text query (title/slug/description/episode number). Empty/omitted query behaves like listAllEpisodes() filtered by status. */
+  /**
+   * Admin-only: episodes matching an optional status and free-text query
+   * (title/youtubeTitle/slug/description/youtubeDescription/series title),
+   * Arabic-normalized, plus episodeNumber (exact or left-prefix match, e.g.
+   * "11" finds 11 and 111 but not 211). A filter, not a ranked search --
+   * matches keep the existing chronological order, never reordered by
+   * relevance. Empty/omitted query behaves like listAllEpisodes() filtered
+   * by status.
+   */
   searchAdminEpisodes(params: { status?: ContentStatus | null; query?: string }): Promise<Episode[]>;
   getEpisodeById(id: string): Promise<Episode | null>;
   updateEpisode(

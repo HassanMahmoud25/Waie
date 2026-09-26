@@ -32,28 +32,35 @@ export function ContinueWatchingSection({
   if (items.length === 0) return null;
 
   return (
-    <section className="section">
-      <div className="container">
-        <Reveal>
-          <span className="home-eyebrow">مساحتك الخاصة</span>
-          <h2 className="mt-3 text-xl font-black leading-[1.25] tracking-[-.02em] sm:text-2xl">
-            أكمل من حيث توقفت
-          </h2>
+    <>
+      <section className="section">
+        <div className="container">
+          <Reveal>
+            <span className="home-eyebrow">مساحتك الخاصة</span>
+            <h2 className="mt-3 text-xl font-black leading-[1.25] tracking-[-.02em] sm:text-2xl">
+              أكمل من حيث توقفت
+            </h2>
 
-          <ContentRail className="rail--wide mt-8">
-            {items.map(({ episode, series: episodeSeries, percent, remainingSeconds }) => (
-              <div className="hover-rise" key={episode.id}>
-                <ContinueWatchingCard
-                  episode={episode}
-                  series={episodeSeries}
-                  percent={percent}
-                  remainingSeconds={remainingSeconds}
-                />
-              </div>
-            ))}
-          </ContentRail>
-        </Reveal>
-      </div>
-    </section>
+            <ContentRail className="rail--wide mt-8">
+              {items.map(({ episode, series: episodeSeries, percent, remainingSeconds }) => (
+                <div className="hover-rise" key={episode.id}>
+                  <ContinueWatchingCard
+                    episode={episode}
+                    series={episodeSeries}
+                    percent={percent}
+                    remainingSeconds={remainingSeconds}
+                  />
+                </div>
+              ))}
+            </ContentRail>
+          </Reveal>
+        </div>
+      </section>
+      {/* Always followed by another flat-canvas section (bentoSeries, or
+          whichever plain rail ends up next) -- the `.section:has(+
+          .section-divider)`/`.section-divider + .section` rules in
+          globals.css zero the padding on both sides of this automatically. */}
+      <hr className="section-divider container" />
+    </>
   );
 }

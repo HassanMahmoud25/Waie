@@ -193,11 +193,12 @@ export function EpisodeCardGridSkeleton({ count = 6, className = "gap-8" }: { co
 export function LibraryContentSkeleton() {
   return (
     <>
-      <section className="mt-10">
+      <section className="mt-(--section-gap)">
         <SectionHeadingSkeleton />
         <EpisodeCardGridSkeleton count={3} />
       </section>
-      <section className="mt-14">
+      <hr className="section-divider" />
+      <section>
         <SectionHeadingSkeleton />
         <EpisodeCardGridSkeleton count={3} />
       </section>
