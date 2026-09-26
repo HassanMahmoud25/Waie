@@ -1,4 +1,4 @@
-import type { Episode } from "@/types/episode";
+import type { EpisodeJourneySummary } from "@/types/episode";
 import { getProgressPercent, type ProgressEntry } from "@/hooks/use-library";
 import { cn } from "@/lib/utils/cn";
 import { EPISODE_FORMS, pluralNoun } from "@/lib/utils/format";
@@ -50,13 +50,19 @@ type EpisodeState = "completed" | "current" | "upcoming";
  * point actually reached, including live progress into the current
  * episode -- so the trail keeps drifting forward as the viewer watches, not
  * just when an episode crosses the completion threshold.
+ *
+ * Takes the series' lightweight journey summaries (every episode's id/title,
+ * see ContentRepository.listSeriesJourneySummaries), not the full episode
+ * payload -- this only ever reads `.id`/`.title`, so the "N of M" count and
+ * dot trail stay accurate for the whole series regardless of how many full
+ * episode cards have actually been loaded into the page yet.
  */
 export function SeriesJourneyProgress({
   episodes,
   progress,
   currentEpisodeId,
 }: {
-  episodes: Episode[];
+  episodes: EpisodeJourneySummary[];
   progress: Record<string, ProgressEntry>;
   currentEpisodeId: string | null;
 }) {
@@ -106,11 +112,18 @@ export function SeriesJourneyProgress({
               : i === currentIndex
                 ? "current"
                 : "upcoming";
+            // Fixed precision, not the raw float: Math.sin()-derived values like
+            // 33.70689655172414 hit a React hydration mismatch here, because the
+            // browser's CSSOM re-serializes a `style` percentage with fewer
+            // significant digits than that (e.g. "33.7069") -- so the string
+            // React compares on hydration never matches what the server sent.
+            // Two decimals is far more precision than a dot's position needs and
+            // short enough that the browser's own serialization never touches it.
             return (
               <span
                 key={episode.id}
                 className={cn("journey-progress__dot", `journey-progress__dot--${state}`)}
-                style={{ left: `${waveX(t)}%`, top: `${(waveY(t) / WAVE_HEIGHT) * 100}%` }}
+                style={{ left: `${waveX(t).toFixed(2)}%`, top: `${((waveY(t) / WAVE_HEIGHT) * 100).toFixed(2)}%` }}
               />
             );
           })}

@@ -10,23 +10,33 @@ import { EpisodeCard } from "@/components/episode/episode-card";
 import { Banner } from "@/components/shared/banner";
 import { Reveal } from "@/components/shared/reveal";
 import { HostsShowcase } from "@/components/host/hosts-showcase";
-import { findSeriesCoverEpisode } from "@/lib/utils/content";
 import { getContinueWatching } from "@/lib/library/continue-watching";
 import { EPISODE_FORMS, SERIES_FORMS, TOPIC_FORMS, formatCount, pluralNoun } from "@/lib/utils/format";
 
 export default async function Home() {
-  const [latest, popular, series, topics, collections, allEpisodes, continueWatching] =
+  const [latest, popular, series, topics, collections, episodeCount, continueWatching] =
     await Promise.all([
       contentRepository.listLatestEpisodes(8),
       contentRepository.listPopularEpisodes(6),
       contentRepository.listSeries(),
       contentRepository.listTopics(),
       contentRepository.listCollections(),
-      contentRepository.listEpisodes(),
+      contentRepository.countPublishedEpisodes(),
       getContinueWatching(),
     ]);
 
   const seriesById = new Map(series.map((s) => [s.id, s]));
+
+  // Cover thumbnails for every series (bounded to one row per series, see
+  // getSeriesCoverThumbnails) and for each collection's first episode
+  // (bounded to one row per collection id) -- never the full episode table.
+  const [seriesCoverThumbnails, collectionCoverEpisodes] = await Promise.all([
+    contentRepository.getSeriesCoverThumbnails(series.map((s) => s.id)),
+    contentRepository.getEpisodesByIds(collections.map((c) => c.episodeIds[0]).filter((id): id is string => Boolean(id))),
+  ]);
+  const collectionCovers = new Map(
+    collectionCoverEpisodes.map((episode) => [episode.id, episode.thumbnailUrl] as const),
+  );
 
   // One consolidated, size-varied "series" showcase instead of a separate
   // full-bleed banner plus a uniform grid -- the biggest series reads as a
@@ -38,32 +48,19 @@ export default async function Home() {
     .sort((a, b) => b.episodeCount - a.episodeCount)
     .map((s) => ({
       series: s,
-      cover: findSeriesCoverEpisode(allEpisodes, s.id),
+      coverImageUrl: seriesCoverThumbnails[s.id],
     }))
     .filter(
-      (
-        entry,
-      ): entry is {
-        series: (typeof series)[number];
-        cover: NonNullable<typeof entry.cover>;
-      } => Boolean(entry.cover),
+      (entry): entry is { series: (typeof series)[number]; coverImageUrl: string } => Boolean(entry.coverImageUrl),
     )
     .slice(0, 5);
-
-  const collectionCovers = new Map(
-    collections.map((collection) => {
-      const [firstId] = collection.episodeIds;
-      const cover = allEpisodes.find((episode) => episode.id === firstId);
-      return [collection.id, cover?.thumbnailUrl] as const;
-    }),
-  );
 
   const heroStats:
     | { key: HeroStatKey; value: string; label: string }[]
     | undefined =
-    allEpisodes.length > 0
+    episodeCount > 0
       ? [
-          { key: "episodes", value: `${allEpisodes.length}`, label: pluralNoun(allEpisodes.length, EPISODE_FORMS) },
+          { key: "episodes", value: `${episodeCount}`, label: pluralNoun(episodeCount, EPISODE_FORMS) },
           { key: "series", value: `${series.length}`, label: pluralNoun(series.length, SERIES_FORMS) },
           { key: "topics", value: `${topics.length}`, label: pluralNoun(topics.length, TOPIC_FORMS) },
         ]
@@ -73,7 +70,7 @@ export default async function Home() {
     <main>
       <SiteHero stats={heroStats} latestEpisode={latest[0] ?? null} />
 
-      <ContinueWatchingSection episodes={allEpisodes} series={series} initialItems={continueWatching} />
+      <ContinueWatchingSection series={series} initialItems={continueWatching} />
 
       {bentoSeries.length > 0 && (
         <section className="section">
@@ -95,7 +92,7 @@ export default async function Home() {
                 {bentoSeries[0] && (
                   <Banner
                     href={`/series/${bentoSeries[0].series.slug}`}
-                    imageUrl={bentoSeries[0].cover.thumbnailUrl}
+                    imageUrl={bentoSeries[0].coverImageUrl}
                     imageAlt={bentoSeries[0].series.title}
                     eyebrow="السلسلة الأبرز"
                     title={bentoSeries[0].series.title}
@@ -108,10 +105,10 @@ export default async function Home() {
                 )}
                 {bentoSeries.length > 1 && (
                   <ContentRail className="rail--wide">
-                    {bentoSeries.slice(1).map(({ series: s, cover }) => (
+                    {bentoSeries.slice(1).map(({ series: s, coverImageUrl }) => (
                       <Banner
                         href={`/series/${s.slug}`}
-                        imageUrl={cover.thumbnailUrl}
+                        imageUrl={coverImageUrl}
                         imageAlt={s.title}
                         eyebrow="سلسلة"
                         title={s.title}
@@ -127,12 +124,12 @@ export default async function Home() {
               </div>
 
               <div className="series-bento mt-8 hidden md:grid">
-                {bentoSeries.map(({ series: s, cover }, index) => {
+                {bentoSeries.map(({ series: s, coverImageUrl }, index) => {
                   const isFirst = index === 0;
                   return (
                     <Banner
                       href={`/series/${s.slug}`}
-                      imageUrl={cover.thumbnailUrl}
+                      imageUrl={coverImageUrl}
                       imageAlt={s.title}
                       eyebrow={isFirst ? "السلسلة الأبرز" : "سلسلة"}
                       title={s.title}

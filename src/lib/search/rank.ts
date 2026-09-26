@@ -71,7 +71,7 @@ export function scoreContains(normalizedText: string, normalizedQuery: string, t
 
 /**
  * Admin episode search candidate -- every text field pre-normalized by the
- * caller (searchAdminEpisodes() in prisma-content-repository.ts) via
+ * caller (searchAdminEpisodesCursor() in prisma-content-repository.ts) via
  * normalizeSearchText(), so this stays a pure, DB-independent predicate.
  */
 export type AdminEpisodeSearchCandidate = {
@@ -86,7 +86,7 @@ export type AdminEpisodeSearchCandidate = {
 
 /**
  * Admin episode search: a boolean filter, not a ranked score. Unlike public
- * search()'s tiered relevance, searchAdminEpisodes() keeps whatever matches
+ * search()'s tiered relevance, searchAdminEpisodesCursor() keeps whatever matches
  * in their existing chronological order -- this is a lookup tool for
  * finding one specific episode to edit, not a discovery/ranking surface.
  * Reuses the same deterministic episode-number prefix rule as public search

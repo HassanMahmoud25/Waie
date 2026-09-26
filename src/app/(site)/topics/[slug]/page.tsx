@@ -4,8 +4,9 @@ import Link from "next/link";
 import { ArrowLeft, Layers } from "lucide-react";
 import { contentRepository } from "@/lib/repositories";
 import { Breadcrumbs } from "@/components/navigation/breadcrumbs";
-import { EpisodeCard } from "@/components/episode/episode-card";
 import { EmptyState } from "@/components/content/empty-state";
+import { EpisodeGridLoader } from "@/components/content/episode-grid-loader";
+import { loadMoreTopicEpisodesAction } from "./actions";
 
 export async function generateMetadata({
   params,
@@ -27,12 +28,14 @@ export default async function TopicDetailPage({
   const topic = await contentRepository.getTopicBySlug(slug);
   if (!topic) notFound();
 
-  const [episodes, series] = await Promise.all([
-    contentRepository.listEpisodesByTopic(topic.id),
+  // First batch only (database-limited, see listEpisodesByTopicCursor) --
+  // EpisodeGridLoader fetches further batches itself as the visitor scrolls.
+  const [firstBatch, series] = await Promise.all([
+    contentRepository.listEpisodesByTopicCursor(topic.id, {}),
     contentRepository.listSeries(),
   ]);
+
   const relatedSeries = series.filter((s) => s.topicId === topic.id);
-  const seriesById = new Map(series.map((s) => [s.id, s]));
 
   return (
     <main className="container py-14">
@@ -88,15 +91,15 @@ export default async function TopicDetailPage({
         <h2 className="text-2xl font-black tracking-[-.02em] md:text-3xl">
           حلقات في الموضوع
         </h2>
-        {episodes.length > 0 ? (
-          <div className="mt-7 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {episodes.map((episode) => (
-              <EpisodeCard
-                episode={episode}
-                series={seriesById.get(episode.seriesId) ?? null}
-                key={episode.id}
-              />
-            ))}
+        {firstBatch.items.length > 0 ? (
+          <div className="mt-7">
+            <EpisodeGridLoader
+              key={topic.id}
+              initialEpisodes={firstBatch.items}
+              initialCursor={firstBatch.nextCursor}
+              fetchMore={loadMoreTopicEpisodesAction.bind(null, topic.id)}
+              series={series}
+            />
           </div>
         ) : (
           <EmptyState title="سيُضاف محتوى إلى هذا الموضوع قريبًا" />

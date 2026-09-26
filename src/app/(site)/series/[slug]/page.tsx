@@ -6,7 +6,6 @@ import { Breadcrumbs } from "@/components/navigation/breadcrumbs";
 import { SeriesEpisodeList } from "@/components/series/series-episode-list";
 import { FollowSeriesButton } from "@/components/series/follow-series-button";
 import { EmptyState } from "@/components/content/empty-state";
-import { findSeriesCoverEpisode } from "@/lib/utils/content";
 import { EPISODE_FORMS, formatCount } from "@/lib/utils/format";
 
 export async function generateMetadata({
@@ -29,13 +28,17 @@ export default async function SeriesDetailPage({
   const series = await contentRepository.getSeriesBySlug(slug);
   if (!series) notFound();
 
-  const [episodes, allEpisodes] = await Promise.all([
-    contentRepository.listEpisodesBySeries(series.id),
-    contentRepository.listEpisodes(),
+  // The first batch of episodes (database-limited, see
+  // listEpisodesBySeriesCursor) plus the series' full but lightweight
+  // "journey" metadata (id/title only, see listSeriesJourneySummaries) --
+  // never the complete episode payload in one request. SeriesEpisodeList
+  // loads further batches itself as the visitor scrolls.
+  const [firstBatch, journeySummaries, coverThumbnails] = await Promise.all([
+    contentRepository.listEpisodesBySeriesCursor(series.id, {}),
+    contentRepository.listSeriesJourneySummaries(series.id),
+    contentRepository.getSeriesCoverThumbnails([series.id]),
   ]);
-  const coverImageUrl =
-    series.coverImage ??
-    findSeriesCoverEpisode(allEpisodes, series.id)?.thumbnailUrl;
+  const coverImageUrl = series.coverImage ?? coverThumbnails[series.id];
   const coverImageMobileUrl = series.coverImageMobile ?? coverImageUrl;
 
   return (
@@ -98,8 +101,14 @@ export default async function SeriesDetailPage({
       </section>
 
       <section className="container section">
-        {episodes.length > 0 ? (
-          <SeriesEpisodeList episodes={episodes} />
+        {firstBatch.items.length > 0 ? (
+          <SeriesEpisodeList
+            key={series.id}
+            seriesId={series.id}
+            initialEpisodes={firstBatch.items}
+            initialCursor={firstBatch.nextCursor}
+            journeySummaries={journeySummaries}
+          />
         ) : (
           <>
             <h2 className="text-2xl font-black tracking-[-.02em] md:text-3xl">

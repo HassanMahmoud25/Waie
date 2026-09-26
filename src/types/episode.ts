@@ -39,3 +39,16 @@ export type Episode = {
 export type EpisodeWithSeries = Episode & {
   series: Series | null;
 };
+
+/**
+ * Just enough to compute a series' overall progress (the "N of M episodes"
+ * stat and dot trail in SeriesJourneyProgress) without the full episode
+ * payload -- see ContentRepository.listSeriesJourneySummaries. Deliberately
+ * excludes thumbnailUrl/description/etc: this represents *every* episode in
+ * a series (which can be large), so it stays cheap regardless of how many
+ * of those episodes have their full card data loaded into the page yet.
+ */
+export type EpisodeJourneySummary = {
+  id: string;
+  title: string;
+};

@@ -4,7 +4,7 @@ import { normalizeSearchText } from "./normalize";
 import { extractNumberToken, matchesAdminEpisodeQuery, type AdminEpisodeSearchCandidate } from "./rank";
 
 /**
- * Mirrors searchAdminEpisodes()'s own two-step shape (prisma-content-repository.ts):
+ * Mirrors searchAdminEpisodesCursor()'s own two-step shape (prisma-content-repository.ts):
  * Prisma filters by status first (a plain, DB-level equality -- not re-tested
  * here, nothing to normalize), then this JS layer filters the status-scoped
  * rows by the free-text/episode-number query. `episodes` below stands in for
@@ -87,7 +87,7 @@ function toCandidate(episode: FixtureEpisode): AdminEpisodeSearchCandidate {
   };
 }
 
-/** Simulates searchAdminEpisodes(): Prisma-level status filter, then the JS query filter. */
+/** Simulates searchAdminEpisodesCursor(): Prisma-level status filter, then the JS query filter. */
 function searchCatalog(query: string, status?: FixtureEpisode["status"]): string[] {
   const trimmed = query.trim();
   const statusScoped = status ? CATALOG.filter((episode) => episode.status === status) : CATALOG;

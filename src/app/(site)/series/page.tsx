@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { contentRepository } from "@/lib/repositories";
 import { SeriesCard } from "@/components/series/series-card";
 import { EmptyState } from "@/components/content/empty-state";
-import { findSeriesCoverEpisode } from "@/lib/utils/content";
 
 export const metadata: Metadata = {
   title: "السلاسل",
@@ -10,10 +9,10 @@ export const metadata: Metadata = {
 };
 
 export default async function SeriesPage() {
-  const [series, episodes] = await Promise.all([
-    contentRepository.listSeries(),
-    contentRepository.listEpisodes(),
-  ]);
+  const series = await contentRepository.listSeries();
+  // One thumbnail per series (at most one row per series id) -- never the
+  // full episode table just to find each series' own cover art.
+  const seriesCoverThumbnails = await contentRepository.getSeriesCoverThumbnails(series.map((s) => s.id));
 
   return (
     <main className="container py-12 md:py-16">
@@ -26,7 +25,7 @@ export default async function SeriesPage() {
       {series.length > 0 ? (
         <div className="mt-14 grid grid-cols-1 gap-x-8 gap-y-12 lg:grid-cols-2">
           {series.map((s, index) => {
-            const coverImageUrl = s.coverImage ?? findSeriesCoverEpisode(episodes, s.id)?.thumbnailUrl;
+            const coverImageUrl = s.coverImage ?? seriesCoverThumbnails[s.id];
             if (!coverImageUrl) return null;
             return <SeriesCard series={s} coverImageUrl={coverImageUrl} index={index} key={s.id} />;
           })}

@@ -2,10 +2,13 @@
 
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { CircleDot, Flag } from "lucide-react";
-import type { Episode } from "@/types/episode";
+import type { Episode, EpisodeJourneySummary } from "@/types/episode";
 import { getProgressPercent, useLibrary } from "@/hooks/use-library";
+import { useCursorPagination } from "@/hooks/use-cursor-pagination";
 import { EpisodeListItem } from "@/components/episode/episode-list-item";
 import { SeriesJourneyProgress } from "@/components/series/series-journey-progress";
+import { LoadMoreSentinel } from "@/components/content/load-more-sentinel";
+import { loadMoreSeriesEpisodesAction } from "@/app/(site)/series/[slug]/actions";
 
 /** How far each card's hidden pass-through drifts off its true center --
  *  alternating sides by index so consecutive gap curves swing opposite
@@ -133,8 +136,31 @@ function vividize([r, g, b]: [number, number, number]): [number, number, number]
  * to render, and never travels behind the "start/end" labels themselves
  * (the anchor is the icon's edge, not the label row's midpoint).
  */
-export function SeriesEpisodeList({ episodes }: { episodes: Episode[] }) {
+export function SeriesEpisodeList({
+  seriesId,
+  initialEpisodes,
+  initialCursor,
+  journeySummaries,
+}: {
+  seriesId: string;
+  /** The first batch, already rendered server-side. */
+  initialEpisodes: Episode[];
+  initialCursor: string | null;
+  /** Every episode in the series (id/title only) -- see SeriesJourneyProgress's own doc comment for why this stays separate from the incrementally-loaded `episodes` below. */
+  journeySummaries: EpisodeJourneySummary[];
+}) {
   const { isHydrated, progress, getProgress } = useLibrary();
+  const {
+    items: episodes,
+    hasMore,
+    isLoading,
+    error,
+    loadMore,
+  } = useCursorPagination<Episode>({
+    initialItems: initialEpisodes,
+    initialCursor,
+    fetchMore: (cursor) => loadMoreSeriesEpisodesAction(seriesId, cursor),
+  });
   const containerRef = useRef<HTMLDivElement>(null);
   const startIconRef = useRef<HTMLSpanElement>(null);
   const endIconRef = useRef<HTMLSpanElement>(null);
@@ -144,16 +170,20 @@ export function SeriesEpisodeList({ episodes }: { episodes: Episode[] }) {
   const [chevrons, setChevrons] = useState<Chevron[]>([]);
   const [travelPoint, setTravelPoint] = useState<Point | null>(null);
 
-  // "Completed" is exact (never fabricated) -- the one episode called out as
-  // "watching now" is whichever unfinished episode was touched most
-  // recently, so the highlight tracks the viewer's actual last session
-  // rather than e.g. episode order.
+  // Scanned against journeySummaries (every episode in the series), not the
+  // partial `episodes` batch loaded so far -- progress can reference any
+  // episode in the series, loaded or not, so "N of M completed" and "which
+  // one is current" must stay correct from the very first batch. "Completed"
+  // is exact (never fabricated) -- the one episode called out as "watching
+  // now" is whichever unfinished episode was touched most recently, so the
+  // highlight tracks the viewer's actual last session rather than e.g.
+  // episode order.
   const { completedCount, currentEpisodeId } = useMemo(() => {
     if (!isHydrated) return { completedCount: 0, currentEpisodeId: null as string | null };
     let completed = 0;
     let currentId: string | null = null;
     let currentUpdatedAt = -Infinity;
-    for (const episode of episodes) {
+    for (const episode of journeySummaries) {
       const entry = progress[episode.id];
       if (!entry) continue;
       if (entry.completed) {
@@ -166,9 +196,9 @@ export function SeriesEpisodeList({ episodes }: { episodes: Episode[] }) {
       }
     }
     return { completedCount: completed, currentEpisodeId: currentId };
-  }, [episodes, isHydrated, progress]);
+  }, [journeySummaries, isHydrated, progress]);
 
-  const overallFraction = episodes.length > 0 ? completedCount / episodes.length : 0;
+  const overallFraction = journeySummaries.length > 0 ? completedCount / journeySummaries.length : 0;
 
   useLayoutEffect(() => {
     const container = containerRef.current;
@@ -255,7 +285,7 @@ export function SeriesEpisodeList({ episodes }: { episodes: Episode[] }) {
       <div className="journey-header">
         <h2 className="text-2xl font-black tracking-[-.02em] md:text-3xl">حلقات السلسلة</h2>
         {isHydrated && (
-          <SeriesJourneyProgress episodes={episodes} progress={progress} currentEpisodeId={currentEpisodeId} />
+          <SeriesJourneyProgress episodes={journeySummaries} progress={progress} currentEpisodeId={currentEpisodeId} />
         )}
       </div>
 
@@ -310,11 +340,19 @@ export function SeriesEpisodeList({ episodes }: { episodes: Episode[] }) {
         })}
       </ol>
 
+      {hasMore && <LoadMoreSentinel hasMore={hasMore} isLoading={isLoading} error={error} onLoadMore={loadMore} />}
+
+      {/* The icon span is the SVG route's own end anchor (see the layout
+          effect above) -- it has to stay mounted with real geometry even
+          while more episodes remain, so the route keeps ending just past
+          the last *loaded* card instead of vanishing until the whole series
+          is loaded. Flag + "end of series" only once that's actually true;
+          otherwise a plain waypoint, matching the start pin. */}
       <div className="journey-pin journey-pin--end">
         <span className="journey-pin__icon" ref={endIconRef}>
-          <Flag size={15} strokeWidth={2.25} />
+          {hasMore ? <CircleDot size={15} strokeWidth={2.25} /> : <Flag size={15} strokeWidth={2.25} />}
         </span>
-        <span className="journey-pin__label">نهاية السلسلة</span>
+        <span className="journey-pin__label">{hasMore ? "المزيد من الحلقات قادم" : "نهاية السلسلة"}</span>
         <span className="journey-pin__rule" />
       </div>
     </div>

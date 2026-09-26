@@ -6,7 +6,7 @@ import { contentRepository } from "@/lib/repositories";
 import { EPISODE_FORMS, formatCount } from "@/lib/utils/format";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { AdminSearchFieldSkeleton } from "@/components/admin/admin-skeletons";
-import { EpisodeRow } from "@/components/admin/episode-row";
+import { AdminEpisodeListLoader } from "@/components/admin/admin-episode-list-loader";
 import { CreateEpisodeForm } from "@/components/admin/create-episode-form";
 import { EpisodeSearchInput } from "@/components/admin/episode-search-input";
 import { EmptyState } from "@/components/content/empty-state";
@@ -33,23 +33,23 @@ export default async function AdminEpisodesPage({
   const activeTab = statusTabs.find((tab) => tab.key === statusParam) ?? statusTabs[0];
   const query = q?.trim() ?? "";
 
-  // Admin-only, unfiltered data paths: listAllEpisodes() returns every status
-  // (not the public listEpisodes()), and listAllSeries() mirrors it so a
-  // draft series' title still resolves here instead of showing "بلا سلسلة".
-  // allEpisodes stays unfiltered (by status or query) purely to compute the
-  // tab counts below -- the actual rendered list comes from the DB-side
-  // searchAdminEpisodes() so filtering scales past an in-memory array.
-  const [allEpisodes, series, episodes] = await Promise.all([
-    contentRepository.listAllEpisodes(),
+  // Tab counts come from one GROUP BY (never listAllEpisodes().length), and
+  // listAllSeries() mirrors listAllEpisodes()'s "admin sees every status"
+  // behavior so a draft series' title still resolves here instead of
+  // showing "بلا سلسلة". The actual rendered list is the first cursor-
+  // paginated batch matching the active tab/query -- AdminEpisodeListLoader
+  // fetches further batches itself as the admin clicks "تحميل المزيد", so
+  // this never loads every matching episode into memory at once.
+  const [statusCounts, series, firstBatch] = await Promise.all([
+    contentRepository.countEpisodesByStatus(),
     contentRepository.listAllSeries(),
-    contentRepository.searchAdminEpisodes({ status: activeTab.status, query }),
+    contentRepository.searchAdminEpisodesCursor({ status: activeTab.status, query }),
   ]);
-  const seriesById = new Map(series.map((s) => [s.id, s]));
 
   return (
     <AdminShell
       title="الحلقات"
-      description={`${formatCount(allEpisodes.length, EPISODE_FORMS)} — عدّل المحتوى أو انشر/ألغِ نشر أي حلقة، أو أضف حلقة جديدة من رابط يوتيوب.`}
+      description={`${formatCount(statusCounts.total, EPISODE_FORMS)} — عدّل المحتوى أو انشر/ألغِ نشر أي حلقة، أو أضف حلقة جديدة من رابط يوتيوب.`}
       back={{ label: "لوحة الإدارة", href: "/admin" }}
     >
       <CreateEpisodeForm />
@@ -62,7 +62,7 @@ export default async function AdminEpisodesPage({
 
       <nav className="admin-tabs mt-4" aria-label="تصفية حسب الحالة">
         {statusTabs.map((tab) => {
-          const count = tab.status ? allEpisodes.filter((episode) => episode.status === tab.status).length : allEpisodes.length;
+          const count = tab.status ? statusCounts.byStatus[tab.status] : statusCounts.total;
           const href = new URLSearchParams();
           if (tab.key !== "all") href.set("status", tab.key);
           if (query) href.set("q", query);
@@ -82,17 +82,15 @@ export default async function AdminEpisodesPage({
       </nav>
 
       <div className="mt-4">
-        {episodes.length > 0 ? (
-          <div className="admin-panel">
-            {episodes.map((episode) => (
-              <EpisodeRow
-                episode={episode}
-                seriesTitle={seriesById.get(episode.seriesId)?.title ?? "بلا سلسلة"}
-                showDuration
-                key={episode.id}
-              />
-            ))}
-          </div>
+        {firstBatch.items.length > 0 ? (
+          <AdminEpisodeListLoader
+            key={`${activeTab.key}-${query}`}
+            initialEpisodes={firstBatch.items}
+            initialCursor={firstBatch.nextCursor}
+            status={activeTab.status}
+            query={query}
+            series={series}
+          />
         ) : query ? (
           <EmptyState
             icon={SearchX}

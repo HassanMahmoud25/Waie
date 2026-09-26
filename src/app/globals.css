@@ -3190,6 +3190,57 @@
   }
 
   /* ==========================================================================
+     Load more — the sentinel/loading row at the bottom of an incrementally-
+     loaded episode grid (series/topic pages, search results). Reuses the
+     Series Journey's own accent-glow pulse (see .journey-traveler__pulse
+     above) rather than a generic spinner, so "loading more" still reads as
+     part of the same visual system as the rest of the page.
+     ========================================================================== */
+
+  .load-more {
+    display: flex;
+    min-height: 3.5rem;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  .load-more__row {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+  }
+
+  .load-more__pulse {
+    position: relative;
+    display: inline-flex;
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: var(--accent-strong);
+    box-shadow: 0 0 6px color-mix(in srgb, var(--accent) 70%, transparent);
+  }
+
+  .load-more__pulse::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent) 55%, transparent);
+    animation: journey-pulse-ring 1.6s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  }
+
+  .load-more__text {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--ink-soft);
+  }
+
+  .load-more__text--error {
+    color: var(--danger, #a3392c);
+  }
+
+  /* ==========================================================================
      Episode description — the parsed YouTube description (see
      parse-episode-description.ts): plain paragraphs, inline autolinked URLs,
      gold hashtag chips, and support/listen/social/contact links pulled out

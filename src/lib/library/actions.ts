@@ -3,9 +3,11 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { getSessionUser } from "@/lib/auth/server";
+import { contentRepository } from "@/lib/repositories";
 import { COMPLETE_THRESHOLD } from "@/lib/library/constants";
 import { toEpisodeNote } from "@/lib/library/notes";
 import type { EpisodeNote } from "@/types/note";
+import type { Episode } from "@/types/episode";
 
 export type ToggleSavedEpisodeResult = { ok: true; saved: boolean } | { ok: false; error: string };
 
@@ -298,4 +300,30 @@ export async function deleteNoteAction(noteId: string): Promise<DeleteNoteResult
     console.error("deleteNoteAction failed:", error);
     return { ok: false, error: "حدث خطأ غير متوقع." };
   }
+}
+
+/**
+ * Resolves a client-known set of episode ids (e.g. saved/completed/in-
+ * progress episode ids read from this browser's localStorage, or from the
+ * signed-in user's own saved/progress rows) into full episode data -- a
+ * targeted `IN (...)` lookup (see contentRepository.getEpisodesByIds), never
+ * the full episode table. The ids themselves are never trusted as anything
+ * more than "which published episodes to fetch": there's no per-user data
+ * here to leak, since every returned episode is already public content.
+ */
+export async function getEpisodesByIdsAction(ids: string[]): Promise<Episode[]> {
+  if (!Array.isArray(ids) || ids.length === 0) return [];
+  return contentRepository.getEpisodesByIds(ids);
+}
+
+/**
+ * Resolves a set of series ids to their cover thumbnail (see
+ * contentRepository.getSeriesCoverThumbnails) -- used by Library's
+ * followed-series cards, which (unlike Home/`/series`, both server
+ * components) only learn which series to show once the client has read the
+ * signed-in user's followed-series ids.
+ */
+export async function getSeriesCoverThumbnailsAction(seriesIds: string[]): Promise<Record<string, string>> {
+  if (!Array.isArray(seriesIds) || seriesIds.length === 0) return {};
+  return contentRepository.getSeriesCoverThumbnails(seriesIds);
 }

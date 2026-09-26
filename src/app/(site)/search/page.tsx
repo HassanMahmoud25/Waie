@@ -1,24 +1,32 @@
 import type { Metadata } from "next";
 import { SearchX } from "lucide-react";
 import { contentRepository } from "@/lib/repositories";
+import { DEFAULT_PAGE_SIZE, paginateByCursor } from "@/lib/pagination";
 import { SearchBar } from "@/components/search/search-bar";
 import { SearchResultRow } from "@/components/search/search-result-row";
-import { EpisodeCard } from "@/components/episode/episode-card";
 import { EmptyState } from "@/components/content/empty-state";
+import { EpisodeGridLoader } from "@/components/content/episode-grid-loader";
 import { TopicChip } from "@/components/topic/topic-chip";
 import { RESULT_FORMS, pluralNoun } from "@/lib/utils/format";
+import { loadMoreSearchEpisodesAction } from "./actions";
 
 export const metadata: Metadata = { title: "البحث" };
 
 export default async function SearchPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const { q } = await searchParams;
   const query = q?.trim() ?? "";
+
+  // The full-text match/rank pass (contentRepository.search()) always runs
+  // over every published episode/series/topic first -- only the first batch
+  // of the already-ranked episodes is ever rendered/sent to the client (see
+  // loadMoreSearchEpisodesAction for how further batches are loaded).
   const [results, series, topics] = await Promise.all([
     contentRepository.search(query),
     contentRepository.listSeries(),
     contentRepository.listTopics(),
   ]);
-  const seriesById = new Map(series.map((s) => [s.id, s]));
+  const firstBatch = paginateByCursor(results.episodes, null, (episode) => episode.id, DEFAULT_PAGE_SIZE);
+
   const totalResults = results.episodes.length + results.series.length + results.topics.length;
   const hasSeriesOrTopicResults = results.series.length > 0 || results.topics.length > 0;
 
@@ -66,14 +74,16 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
             <hr className="section-divider" />
           )}
 
-          {results.episodes.length > 0 && (
+          {firstBatch.items.length > 0 && (
             <div className={hasSeriesOrTopicResults ? "flex flex-col gap-6" : "mt-10 flex flex-col gap-6"}>
               <p className="eyebrow w-fit">الحلقات</p>
-              <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-                {results.episodes.map((episode) => (
-                  <EpisodeCard episode={episode} series={seriesById.get(episode.seriesId) ?? null} key={episode.id} />
-                ))}
-              </div>
+              <EpisodeGridLoader
+                key={query}
+                initialEpisodes={firstBatch.items}
+                initialCursor={firstBatch.nextCursor}
+                fetchMore={loadMoreSearchEpisodesAction.bind(null, query)}
+                series={series}
+              />
             </div>
           )}
 

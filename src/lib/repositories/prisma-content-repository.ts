@@ -1,4 +1,5 @@
 import type {
+  Prisma,
   Episode as PrismaEpisode,
   EpisodeTopic as PrismaEpisodeTopic,
   Series as PrismaSeries,
@@ -12,7 +13,8 @@ import type {
 
 import { prisma } from "@/lib/db/prisma";
 import type { ContentRepository } from "./content-repository";
-import type { Episode } from "@/types/episode";
+import type { Episode, EpisodeJourneySummary } from "@/types/episode";
+import type { ContentStatus } from "@/types/content-status";
 import type { Series, SeriesWithStats } from "@/types/series";
 import type { Topic, TopicWithStats } from "@/types/topic";
 import type { Collection } from "@/types/collection";
@@ -22,6 +24,7 @@ import type { MindMap, MindMapNode } from "@/types/mind-map";
 import type { SearchResults } from "@/types/search";
 import { normalizeSearchText } from "@/lib/search/normalize";
 import { SCORE, extractNumberToken, matchesAdminEpisodeQuery, scoreContains, scoreEpisodeNumber, scoreTitle } from "@/lib/search/rank";
+import { DEFAULT_PAGE_SIZE, paginateByCursor, toCursorPage } from "@/lib/pagination";
 
 // ---------------------------------------------------------------------------
 // Mapping: Prisma rows (with the YouTube-owned/editorial split) -> the app's
@@ -120,6 +123,19 @@ function toMindMap(row: PrismaMindMap): MindMap {
 const episodeInclude = { topics: true } as const;
 const isPublishedWhere = { status: "PUBLISHED" as const };
 
+// Editorial seriesOrder wins when set (an admin has manually ordered a
+// series); otherwise falls back to chronological. `id` is a final
+// deterministic tiebreak (episodes never share a seriesOrder/publish
+// timestamp in practice, but pagination needs a strictly total order to
+// stay stable across batches regardless). Shared by listEpisodesBySeries
+// (JS-sorted, needs the whole series) and listEpisodesBySeriesCursor
+// (DB-sorted, one batch at a time) so both ever agree on one order.
+const seriesEpisodeOrderBy: Prisma.EpisodeOrderByWithRelationInput[] = [
+  { seriesOrder: { sort: "asc", nulls: "last" } },
+  { youtubePublishedAt: "asc" },
+  { id: "asc" },
+];
+
 async function publishedEpisodeCounts(): Promise<Map<string, number>> {
   const rows = await prisma.episode.groupBy({
     by: ["seriesId"],
@@ -145,6 +161,10 @@ export const prismaContentRepository: ContentRepository = {
     return rows.map(toEpisode);
   },
 
+  async countPublishedEpisodes() {
+    return prisma.episode.count({ where: isPublishedWhere });
+  },
+
   async getEpisodeBySlug(slug) {
     const row = await prisma.episode.findFirst({
       where: { slug, ...isPublishedWhere },
@@ -157,28 +177,41 @@ export const prismaContentRepository: ContentRepository = {
     const rows = await prisma.episode.findMany({
       where: { seriesId, ...isPublishedWhere },
       include: episodeInclude,
-    });
-    // Editorial seriesOrder wins when set (an admin has manually ordered
-    // this series); otherwise fall back to chronological -- the order
-    // episodes were actually published in.
-    const sorted = [...rows].sort((a, b) => {
-      if (a.seriesOrder != null && b.seriesOrder != null && a.seriesOrder !== b.seriesOrder) {
-        return a.seriesOrder - b.seriesOrder;
-      }
-      if (a.seriesOrder != null && b.seriesOrder == null) return -1;
-      if (a.seriesOrder == null && b.seriesOrder != null) return 1;
-      return a.youtubePublishedAt.getTime() - b.youtubePublishedAt.getTime();
-    });
-    return sorted.map(toEpisode);
-  },
-
-  async listEpisodesByTopic(topicId) {
-    const rows = await prisma.episode.findMany({
-      where: { ...isPublishedWhere, topics: { some: { topicId } } },
-      include: episodeInclude,
-      orderBy: { youtubePublishedAt: "desc" },
+      orderBy: seriesEpisodeOrderBy,
     });
     return rows.map(toEpisode);
+  },
+
+  async listEpisodesBySeriesCursor(seriesId, { cursor = null, limit = DEFAULT_PAGE_SIZE } = {}) {
+    const rows = await prisma.episode.findMany({
+      where: { seriesId, ...isPublishedWhere },
+      include: episodeInclude,
+      orderBy: seriesEpisodeOrderBy,
+      take: limit + 1,
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+    });
+    return toCursorPage(rows.map(toEpisode), limit, (episode) => episode.id);
+  },
+
+  async listSeriesJourneySummaries(seriesId) {
+    const rows = await prisma.episode.findMany({
+      where: { seriesId, ...isPublishedWhere },
+      select: { id: true, title: true, youtubeTitle: true },
+      orderBy: seriesEpisodeOrderBy,
+    });
+    return rows.map((row): EpisodeJourneySummary => ({ id: row.id, title: row.title ?? row.youtubeTitle }));
+  },
+
+  async listEpisodesByTopicCursor(topicId, { cursor = null, limit = DEFAULT_PAGE_SIZE } = {}) {
+    const where = { ...isPublishedWhere, topics: { some: { topicId } } };
+    const rows = await prisma.episode.findMany({
+      where,
+      include: episodeInclude,
+      orderBy: [{ youtubePublishedAt: "desc" }, { id: "desc" }],
+      take: limit + 1,
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+    });
+    return toCursorPage(rows.map(toEpisode), limit, (episode) => episode.id);
   },
 
   async listFeaturedEpisodes() {
@@ -301,6 +334,27 @@ export const prismaContentRepository: ContentRepository = {
     return rows.map(toSeries);
   },
 
+  async getSeriesCoverThumbnails(seriesIds) {
+    if (seriesIds.length === 0) return {};
+    // `distinct` keeps only the first row per seriesId under this orderBy --
+    // featured first (and among those, most recent), otherwise just most
+    // recent -- so this returns at most one row per requested series,
+    // never every episode in it. Same precedence findSeriesCoverEpisode
+    // used to compute in JS over the full episode table.
+    const rows = await prisma.episode.findMany({
+      where: { seriesId: { in: seriesIds }, ...isPublishedWhere },
+      select: { seriesId: true, thumbnailUrl: true, youtubeThumbnailUrl: true },
+      orderBy: [{ featured: "desc" }, { youtubePublishedAt: "desc" }],
+      distinct: ["seriesId"],
+    });
+
+    const thumbnails: Record<string, string> = {};
+    for (const row of rows) {
+      if (row.seriesId) thumbnails[row.seriesId] = row.thumbnailUrl ?? row.youtubeThumbnailUrl;
+    }
+    return thumbnails;
+  },
+
   /** Admin-only: every series regardless of status -- used by /admin pages so a draft series never silently disappears from their own list. */
   async listAllSeries() {
     const [rows, counts] = await Promise.all([prisma.series.findMany(), publishedEpisodeCounts()]);
@@ -371,53 +425,82 @@ export const prismaContentRepository: ContentRepository = {
     return rows.map(toEpisode);
   },
 
-  async searchAdminEpisodes({ status, query }) {
+  async countEpisodesByStatus() {
+    const rows = await prisma.episode.groupBy({ by: ["status"], _count: { _all: true } });
+    const byStatus: Record<ContentStatus, number> = { DRAFT: 0, PUBLISHED: 0, ARCHIVED: 0 };
+    let total = 0;
+    for (const row of rows) {
+      byStatus[row.status] = row._count._all;
+      total += row._count._all;
+    }
+    return { total, byStatus };
+  },
+
+  async listRecentEpisodes(limit = 5) {
+    const rows = await prisma.episode.findMany({
+      include: episodeInclude,
+      orderBy: [{ youtubePublishedAt: "desc" }, { id: "desc" }],
+      take: limit,
+    });
+    return rows.map(toEpisode);
+  },
+
+  async searchAdminEpisodesCursor({ status, query, cursor = null, limit = DEFAULT_PAGE_SIZE }) {
     // status stays a real Prisma `where` (cheap exact-enum equality, already
     // covered by @@index([status, youtubePublishedAt])); the free-text query
     // can't be, since Arabic-Indic digit/diacritic/letter-variant
     // normalization has no plain-ILIKE equivalent -- so it's matched in JS
     // against this already-bounded, status-filtered set (see search() above
-    // for the identical reasoning on the public side). Deliberately a filter,
-    // not a ranked search: this is a lookup tool for finding one specific
-    // episode to edit, so matches stay in the same chronological order the
-    // rest of the admin list already uses, never reordered by relevance.
+    // for the identical reasoning on the public side). This matching pass is
+    // unavoidably server-side and in-memory (same cost as public search, and
+    // the same catalog scale), but only `limit` matches -- never the full
+    // matched set -- are ever handed back to the caller.
     const rows = await prisma.episode.findMany({
       where: status ? { status } : {},
       include: episodeInclude,
-      orderBy: { youtubePublishedAt: "desc" },
+      orderBy: [{ youtubePublishedAt: "desc" }, { id: "desc" }],
     });
 
     const trimmed = query?.trim() ?? "";
-    if (!trimmed) return rows.map(toEpisode);
+    let matched = rows;
+    if (trimmed) {
+      const normalizedQuery = normalizeSearchText(trimmed);
+      const numberToken = extractNumberToken(trimmed);
+      if (!normalizedQuery && !numberToken) {
+        matched = [];
+      } else {
+        // Lean, admin-scoped (not published-only) id -> title lookup --
+        // mirrors listAllSeries()'s "admin sees draft series titles too"
+        // behavior, minus the episode-count stats that method computes and
+        // search doesn't need.
+        const seriesRows = await prisma.series.findMany({ select: { id: true, title: true } });
+        const seriesTitleById = new Map(seriesRows.map((row) => [row.id, row.title]));
 
-    const normalizedQuery = normalizeSearchText(trimmed);
-    const numberToken = extractNumberToken(trimmed);
-    if (!normalizedQuery && !numberToken) return [];
+        const matchesQuery = (row: EpisodeRow) => {
+          const seriesTitle = row.seriesId ? seriesTitleById.get(row.seriesId) : undefined;
+          return matchesAdminEpisodeQuery(
+            {
+              normalizedTitle: normalizeSearchText(row.title ?? row.youtubeTitle),
+              normalizedYoutubeTitle: normalizeSearchText(row.youtubeTitle),
+              normalizedSlug: normalizeSearchText(row.slug),
+              normalizedDescription: row.description ? normalizeSearchText(row.description) : null,
+              normalizedYoutubeDescription: row.youtubeDescription ? normalizeSearchText(row.youtubeDescription) : null,
+              normalizedSeriesTitle: seriesTitle ? normalizeSearchText(seriesTitle) : null,
+              episodeNumber: row.episodeNumber,
+            },
+            normalizedQuery,
+            numberToken,
+          );
+        };
+        matched = rows.filter(matchesQuery);
+      }
+    }
 
-    // Lean, admin-scoped (not published-only) id -> title lookup -- mirrors
-    // listAllSeries()'s "admin sees draft series titles too" behavior, minus
-    // the episode-count stats that method computes and search doesn't need.
-    const seriesRows = await prisma.series.findMany({ select: { id: true, title: true } });
-    const seriesTitleById = new Map(seriesRows.map((row) => [row.id, row.title]));
-
-    const matchesQuery = (row: EpisodeRow) => {
-      const seriesTitle = row.seriesId ? seriesTitleById.get(row.seriesId) : undefined;
-      return matchesAdminEpisodeQuery(
-        {
-          normalizedTitle: normalizeSearchText(row.title ?? row.youtubeTitle),
-          normalizedYoutubeTitle: normalizeSearchText(row.youtubeTitle),
-          normalizedSlug: normalizeSearchText(row.slug),
-          normalizedDescription: row.description ? normalizeSearchText(row.description) : null,
-          normalizedYoutubeDescription: row.youtubeDescription ? normalizeSearchText(row.youtubeDescription) : null,
-          normalizedSeriesTitle: seriesTitle ? normalizeSearchText(seriesTitle) : null,
-          episodeNumber: row.episodeNumber,
-        },
-        normalizedQuery,
-        numberToken,
-      );
-    };
-
-    return rows.filter(matchesQuery).map(toEpisode);
+    // Deliberately a filter, not a ranked search (matches stay in the same
+    // chronological order the rest of the admin list already uses, never
+    // reordered by relevance) -- so, exactly like listEpisodesBySeriesCursor,
+    // the cursor is just the id of the last matching episode already loaded.
+    return paginateByCursor(matched.map(toEpisode), cursor, (episode) => episode.id, limit);
   },
 
   async getEpisodeById(id) {

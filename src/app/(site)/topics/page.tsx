@@ -15,10 +15,10 @@ export const metadata: Metadata = {
 };
 
 export default async function TopicsPage() {
-  const [topics, series, episodes] = await Promise.all([
+  const [topics, series, episodeCount] = await Promise.all([
     contentRepository.listTopics(),
     contentRepository.listSeries(),
-    contentRepository.listEpisodes(),
+    contentRepository.countPublishedEpisodes(),
   ]);
   const chapters = buildTopicChapters(topics, series);
 
@@ -36,7 +36,7 @@ export default async function TopicsPage() {
 
   return (
     <main>
-      <TopicsHero chapters={chapters} topicCount={topics.length} episodeCount={episodes.length} />
+      <TopicsHero chapters={chapters} topicCount={topics.length} episodeCount={episodeCount} />
 
       <div className="mt-4 sm:mt-6">
         {chapters.map((chapter, index) => (

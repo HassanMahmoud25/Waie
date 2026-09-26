@@ -1,6 +1,5 @@
 "use client";
 
-import type { Episode } from "@/types/episode";
 import type { SeriesWithStats } from "@/types/series";
 import type { ContinueWatchingItem } from "@/lib/library/continue-watching";
 import { useContinueWatching } from "@/hooks/use-continue-watching";
@@ -18,16 +17,14 @@ import { ContinueWatchingCard } from "./continue-watching-card";
  * anonymous ones), this section renders nothing.
  */
 export function ContinueWatchingSection({
-  episodes,
   series,
   initialItems,
 }: {
-  episodes: Episode[];
   series: SeriesWithStats[];
   /** Server-computed via lib/library/continue-watching.ts; empty for anonymous visitors. */
   initialItems: ContinueWatchingItem[];
 }) {
-  const items = useContinueWatching(episodes, series, initialItems);
+  const items = useContinueWatching(series, initialItems);
 
   if (items.length === 0) return null;
 
