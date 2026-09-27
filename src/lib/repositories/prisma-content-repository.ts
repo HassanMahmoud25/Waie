@@ -420,11 +420,6 @@ export const prismaContentRepository: ContentRepository = {
     return row ? toCollection(row) : null;
   },
 
-  /** Admin-only: every collection regardless of status. */
-  async listAllCollections() {
-    const rows = await prisma.collection.findMany({ include: { items: true } });
-    return rows.map(toCollection);
-  },
 
   async getEpisodesByIds(ids) {
     if (ids.length === 0) return [];

@@ -6,7 +6,7 @@ import Link from "next/link";
 import { CircleAlert, CircleCheck, ExternalLink, Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/admin/status-badge";
-import { EpisodeThumbnail } from "@/components/content/episode-thumbnail";
+import { AdminMediaRow } from "@/components/admin/admin-media-row";
 import { EpisodeDeleteModal } from "@/components/admin/episode-delete-modal";
 import { ParticipantPicker, type PickablePerson } from "@/components/admin/participant-picker";
 import { formatArabicDate, formatDuration } from "@/lib/utils/format";
@@ -153,26 +153,28 @@ export function EpisodeEditor({
       </div>
 
       {/* Read-only YouTube source info -- never editable from this form. */}
-      <div className="admin-panel flex flex-wrap items-center gap-4 p-5">
-        <div className="admin-thumb">
-          <EpisodeThumbnail src={episode.youtubeThumbnailUrl} alt="" fill sizes="128px" className="object-cover" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="admin-row__title">{episode.youtubeTitle}</p>
-          <p className="meta mt-1">
-            <span>{formatDuration(episode.youtubeDurationSeconds)}</span>
-            <span>{formatArabicDate(episode.youtubePublishedAt)}</span>
-          </p>
-        </div>
-        <a
-          href={episode.youtubeUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn btn-secondary shrink-0"
-        >
-          <ExternalLink size={15} aria-hidden="true" />
-          فتح على يوتيوب
-        </a>
+      <div className="admin-panel">
+        <AdminMediaRow
+          thumbnailUrl={episode.youtubeThumbnailUrl}
+          title={episode.youtubeTitle}
+          meta={
+            <>
+              <span>{formatDuration(episode.youtubeDurationSeconds)}</span>
+              <span>{formatArabicDate(episode.youtubePublishedAt)}</span>
+            </>
+          }
+          action={
+            <a
+              href={episode.youtubeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-secondary shrink-0"
+            >
+              <ExternalLink size={15} aria-hidden="true" />
+              فتح على يوتيوب
+            </a>
+          }
+        />
       </div>
 
       {/* Editorial content -- the only fields Save ever writes. */}

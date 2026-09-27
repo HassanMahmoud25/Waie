@@ -19,11 +19,10 @@ export default async function AdminPage() {
   // Episode count/recent-list come from a GROUP BY and a `take: 5` query
   // (never listAllEpisodes()) -- this tile never loads the whole catalog
   // just to show a count and a five-episode preview.
-  const [episodeStats, series, topics, collections, recentEpisodes] = await Promise.all([
+  const [episodeStats, series, topics, recentEpisodes] = await Promise.all([
     contentRepository.countEpisodesByStatus(),
     contentRepository.listAllSeries(),
     contentRepository.listTopics(),
-    contentRepository.listAllCollections(),
     contentRepository.listRecentEpisodes(5),
   ]);
 
@@ -31,12 +30,11 @@ export default async function AdminPage() {
     { label: "الحلقات", count: episodeStats.total, href: "/admin/episodes" },
     { label: "السلاسل", count: series.length, href: "/admin/series" },
     { label: "المواضيع", count: topics.length, href: "/admin/topics" },
-    { label: "المختارات", count: collections.length, href: "/admin/collections" },
   ];
 
   return (
-    <AdminShell title="لوحة وعي" description="إدارة الحلقات والسلاسل والمواضيع والمختارات.">
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+    <AdminShell title="لوحة وعي" description="إدارة الحلقات والسلاسل والمواضيع.">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
         {sections.map((section) => {
           const Icon = iconFor(section.href);
           return (

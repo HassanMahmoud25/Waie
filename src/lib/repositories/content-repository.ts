@@ -94,8 +94,6 @@ export interface ContentRepository {
 
   listCollections(): Promise<Collection[]>;
   getCollectionBySlug(slug: string): Promise<Collection | null>;
-  /** Admin-only: every collection regardless of status. Mirrors listAllEpisodes. */
-  listAllCollections(): Promise<Collection[]>;
   getEpisodesByIds(ids: string[]): Promise<Episode[]>;
 
   /**

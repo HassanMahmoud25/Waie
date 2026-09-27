@@ -1,4 +1,4 @@
-import { FolderOpen, Headphones, Layers, LayoutDashboard, RefreshCw, Tag, User, type LucideIcon } from "lucide-react";
+import { BarChart3, Headphones, Layers, LayoutDashboard, RefreshCw, Tag, User, type LucideIcon } from "lucide-react";
 
 export type AdminNavItem = {
   label: string;
@@ -29,8 +29,11 @@ export const adminNav: AdminNavGroup[] = [
       { label: "السلاسل", href: "/admin/series", icon: Layers },
       { label: "المواضيع", href: "/admin/topics", icon: Tag },
       { label: "الأشخاص", href: "/admin/people", icon: User },
-      { label: "المختارات", href: "/admin/collections", icon: FolderOpen },
     ],
+  },
+  {
+    label: "التحليلات",
+    items: [{ label: "الإحصائيات", href: "/admin/statistics", icon: BarChart3 }],
   },
   {
     label: "الأدوات",

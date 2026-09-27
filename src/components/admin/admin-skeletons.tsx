@@ -56,21 +56,31 @@ export function AdminTabsSkeleton() {
 }
 
 /**
- * Mirrors one admin-row: a thumbnail (episodes) or a colored icon tile
- * (series/collections/topics), an optional status badge, title and meta
- * lines, and the trailing edit action -- rendered as BOTH the mobile circular
- * icon button and the desktop icon+label button (matching the real button's
- * own `max-sm:` classes), since the previous skeleton hid the action
- * entirely below `sm` while the real row still shows it.
+ * Mirrors one admin-row. The icon-tile rows (series/collections/topics) keep
+ * the plain flex row with the action's own mobile/desktop split (a circular
+ * icon button below `sm`, icon+label from `sm` up -- matching those pages'
+ * still-collapsing edit link). The thumbnail rows (episodes) instead mirror
+ * AdminMediaRow's `.admin-media-row` grid, whose action no longer collapses
+ * -- it just moves to its own full-width line below 640px -- so this branch
+ * tracks that with one action skeleton instead of two.
  */
 function AdminRowSkeleton({ thumbnail, statusBadge }: { thumbnail: boolean; statusBadge: boolean }) {
+  if (thumbnail) {
+    return (
+      <div className="admin-row admin-media-row">
+        <Skeleton className="aspect-video w-[92px] shrink-0 rounded-xl sm:w-32" />
+        <div className="admin-media-row__body">
+          {statusBadge && <Skeleton className="admin-media-row__badges h-4 w-20 rounded-full" />}
+          <Skeleton className="admin-row__title h-4 w-3/4" />
+          <Skeleton className="meta h-3 w-1/2" />
+        </div>
+        <Skeleton className="admin-media-row__action h-11 w-24 rounded-[14px]" />
+      </div>
+    );
+  }
   return (
     <div className="admin-row">
-      {thumbnail ? (
-        <Skeleton className="aspect-video w-[92px] shrink-0 rounded-xl sm:w-32" />
-      ) : (
-        <Skeleton className="size-11 shrink-0 rounded-[14px]" />
-      )}
+      <Skeleton className="size-11 shrink-0 rounded-[14px]" />
       <div className="min-w-0 flex-1">
         {statusBadge && <Skeleton className="h-4 w-20 rounded-full" />}
         <Skeleton className={cn("h-4 w-3/4", statusBadge && "mt-3")} />

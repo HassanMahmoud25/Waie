@@ -17,6 +17,12 @@ export function formatDuration(totalSeconds: number): string {
   return `${minutes} د`;
 }
 
+/** Rounds a duration given in seconds to the nearest whole hour, e.g. "170 س" -- for a KPI tile summarizing a large total where minute-level precision adds noise, not information. */
+export function formatApproxHours(totalSeconds: number): string {
+  const hours = Math.round(Math.max(0, totalSeconds) / 3600);
+  return `${hours} س`;
+}
+
 /** Formats a duration as HH:MM:SS or MM:SS for timestamps (transcript, recommendations, player). */
 export function formatTimestamp(totalSeconds: number): string {
   const safeSeconds = Math.max(0, Math.round(totalSeconds));
@@ -62,6 +68,22 @@ export function formatShortArabicDate(date: Date): string {
     day: "numeric",
     month: "short",
     year: "numeric",
+  }).format(date);
+}
+
+/** Month + year only, for a monthly activity chart's axis labels, e.g. "سبتمبر 2026". */
+export function formatArabicMonth(date: Date): string {
+  return new Intl.DateTimeFormat("ar-EG-u-nu-latn", {
+    month: "long",
+    year: "numeric",
+  }).format(date);
+}
+
+/** Day + short month, no year, for a daily chart's axis labels, e.g. "27 سبت". */
+export function formatShortDayMonth(date: Date): string {
+  return new Intl.DateTimeFormat("ar-EG-u-nu-latn", {
+    day: "numeric",
+    month: "short",
   }).format(date);
 }
 
