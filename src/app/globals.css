@@ -81,7 +81,7 @@
      wherever content needs to clear the bar (see --mobile-nav-clearance). */
   --mobile-tab-bar-height: 74px;
   --mobile-nav-clearance: calc(
-    var(--mobile-tab-bar-height) + env(safe-area-inset-bottom) + 14px
+    var(--mobile-tab-bar-height) + env(safe-area-inset-bottom) + 5px
   );
 
   /* The vertical gap between major stacked sections -- `.section`'s own
@@ -461,8 +461,6 @@
   /* Dark glass — for surfaces sitting on top of photography. */
   .glass-dark {
     background: var(--glass-dark-bg);
-    backdrop-filter: blur(20px) saturate(160%);
-    -webkit-backdrop-filter: blur(20px) saturate(160%);
     border: 1px solid var(--glass-dark-border);
   }
 

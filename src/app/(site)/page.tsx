@@ -11,19 +11,32 @@ import { Banner } from "@/components/shared/banner";
 import { Reveal } from "@/components/shared/reveal";
 import { HostsShowcase } from "@/components/host/hosts-showcase";
 import { getContinueWatching } from "@/lib/library/continue-watching";
-import { EPISODE_FORMS, SERIES_FORMS, TOPIC_FORMS, formatCount, pluralNoun } from "@/lib/utils/format";
+import {
+  EPISODE_FORMS,
+  SERIES_FORMS,
+  TOPIC_FORMS,
+  formatCount,
+  pluralNoun,
+} from "@/lib/utils/format";
 
 export default async function Home() {
-  const [latest, popular, series, topics, collections, episodeCount, continueWatching] =
-    await Promise.all([
-      contentRepository.listLatestEpisodes(8),
-      contentRepository.listPopularEpisodes(6),
-      contentRepository.listSeries(),
-      contentRepository.listTopics(),
-      contentRepository.listCollections(),
-      contentRepository.countPublishedEpisodes(),
-      getContinueWatching(),
-    ]);
+  const [
+    latest,
+    popular,
+    series,
+    topics,
+    collections,
+    episodeCount,
+    continueWatching,
+  ] = await Promise.all([
+    contentRepository.listLatestEpisodes(8),
+    contentRepository.listPopularEpisodes(6),
+    contentRepository.listSeries(),
+    contentRepository.listTopics(),
+    contentRepository.listCollections(),
+    contentRepository.countPublishedEpisodes(),
+    getContinueWatching(),
+  ]);
 
   const seriesById = new Map(series.map((s) => [s.id, s]));
 
@@ -32,10 +45,16 @@ export default async function Home() {
   // (bounded to one row per collection id) -- never the full episode table.
   const [seriesCoverThumbnails, collectionCoverEpisodes] = await Promise.all([
     contentRepository.getSeriesCoverThumbnails(series.map((s) => s.id)),
-    contentRepository.getEpisodesByIds(collections.map((c) => c.episodeIds[0]).filter((id): id is string => Boolean(id))),
+    contentRepository.getEpisodesByIds(
+      collections
+        .map((c) => c.episodeIds[0])
+        .filter((id): id is string => Boolean(id)),
+    ),
   ]);
   const collectionCovers = new Map(
-    collectionCoverEpisodes.map((episode) => [episode.id, episode.thumbnailUrl] as const),
+    collectionCoverEpisodes.map(
+      (episode) => [episode.id, episode.thumbnailUrl] as const,
+    ),
   );
 
   // One consolidated, size-varied "series" showcase instead of a separate
@@ -51,7 +70,10 @@ export default async function Home() {
       coverImageUrl: seriesCoverThumbnails[s.id],
     }))
     .filter(
-      (entry): entry is { series: (typeof series)[number]; coverImageUrl: string } => Boolean(entry.coverImageUrl),
+      (
+        entry,
+      ): entry is { series: (typeof series)[number]; coverImageUrl: string } =>
+        Boolean(entry.coverImageUrl),
     )
     .slice(0, 5);
 
@@ -60,9 +82,21 @@ export default async function Home() {
     | undefined =
     episodeCount > 0
       ? [
-          { key: "episodes", value: `${episodeCount}`, label: pluralNoun(episodeCount, EPISODE_FORMS) },
-          { key: "series", value: `${series.length}`, label: pluralNoun(series.length, SERIES_FORMS) },
-          { key: "topics", value: `${topics.length}`, label: pluralNoun(topics.length, TOPIC_FORMS) },
+          {
+            key: "episodes",
+            value: `${episodeCount}`,
+            label: pluralNoun(episodeCount, EPISODE_FORMS),
+          },
+          {
+            key: "series",
+            value: `${series.length}`,
+            label: pluralNoun(series.length, SERIES_FORMS),
+          },
+          {
+            key: "topics",
+            value: `${topics.length}`,
+            label: pluralNoun(topics.length, TOPIC_FORMS),
+          },
         ]
       : undefined;
 
@@ -70,7 +104,10 @@ export default async function Home() {
     <main>
       <SiteHero stats={heroStats} latestEpisode={latest[0] ?? null} />
 
-      <ContinueWatchingSection series={series} initialItems={continueWatching} />
+      <ContinueWatchingSection
+        series={series}
+        initialItems={continueWatching}
+      />
 
       {bentoSeries.length > 0 && (
         <section className="section">
@@ -97,7 +134,10 @@ export default async function Home() {
                     eyebrow="السلسلة الأبرز"
                     title={bentoSeries[0].series.title}
                     description={bentoSeries[0].series.description}
-                    meta={formatCount(bentoSeries[0].series.episodeCount, EPISODE_FORMS)}
+                    meta={formatCount(
+                      bentoSeries[0].series.episodeCount,
+                      EPISODE_FORMS,
+                    )}
                     ctaLabel="عرض الحلقات"
                     size="feature"
                     sizes="100vw"
@@ -105,20 +145,22 @@ export default async function Home() {
                 )}
                 {bentoSeries.length > 1 && (
                   <ContentRail className="rail--wide">
-                    {bentoSeries.slice(1).map(({ series: s, coverImageUrl }) => (
-                      <Banner
-                        href={`/series/${s.slug}`}
-                        imageUrl={coverImageUrl}
-                        imageAlt={s.title}
-                        eyebrow="سلسلة"
-                        title={s.title}
-                        meta={formatCount(s.episodeCount, EPISODE_FORMS)}
-                        ctaLabel="عرض الحلقات"
-                        size="compact"
-                        sizes="88vw"
-                        key={s.id}
-                      />
-                    ))}
+                    {bentoSeries
+                      .slice(1)
+                      .map(({ series: s, coverImageUrl }) => (
+                        <Banner
+                          href={`/series/${s.slug}`}
+                          imageUrl={coverImageUrl}
+                          imageAlt={s.title}
+                          eyebrow="سلسلة"
+                          title={s.title}
+                          meta={formatCount(s.episodeCount, EPISODE_FORMS)}
+                          ctaLabel="عرض الحلقات"
+                          size="compact"
+                          sizes="88vw"
+                          key={s.id}
+                        />
+                      ))}
                   </ContentRail>
                 )}
               </div>
@@ -153,7 +195,9 @@ export default async function Home() {
         </section>
       )}
 
-      {bentoSeries.length > 0 && latest.length > 0 && <hr className="section-divider container" />}
+      {bentoSeries.length > 0 && latest.length > 0 && (
+        <hr className="section-divider container" />
+      )}
 
       {latest.length > 0 && (
         <section className="section pt-0">
@@ -276,7 +320,7 @@ export default async function Home() {
           />
         </div>
         <div className="container relative pt-10 md:pt-20">
-          <Reveal className="glass-dark mx-auto flex max-w-2xl flex-col items-center gap-5 rounded-(--radius-banner) px-8 py-14 text-center text-white shadow-(--shadow-lg) sm:px-14">
+          <Reveal className="glass-dark mx-auto flex max-w-2xl flex-col items-center gap-5 rounded-(--radius-banner) px-8 py-14 text-center text-white shadow-(--shadow-lg) sm:px-14 bg-black/20 backdrop-blur-md">
             <span className="glass-dark grid size-14 place-items-center rounded-full">
               <BookOpen
                 className="text-(--on-brand-accent)"
