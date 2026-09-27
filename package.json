@@ -7,10 +7,11 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint .",
-    "test": "tsx --test src/lib/search/*.test.ts src/lib/*.test.ts",
+    "test": "tsx --test src/lib/search/*.test.ts src/lib/*.test.ts src/lib/validation/*.test.ts src/lib/admin/content/*.test.ts",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
+    "people:seed-hosts": "tsx scripts/seed-hosts-as-people.ts",
     "admin:create": "tsx scripts/create-admin.ts",
     "audio:encode": "node scripts/encode-audio.mjs"
   },

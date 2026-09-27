@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { EpisodeThumbnail } from "@/components/content/episode-thumbnail";
 import { EpisodeDeleteModal } from "@/components/admin/episode-delete-modal";
+import { ParticipantPicker, type PickablePerson } from "@/components/admin/participant-picker";
 import { formatArabicDate, formatDuration } from "@/lib/utils/format";
 import {
   updateEpisodeContentAction,
@@ -36,10 +37,12 @@ export function EpisodeEditor({
   episode,
   series,
   topics,
+  people,
 }: {
   episode: AdminEpisode;
   series: SeriesWithStats[];
   topics: TopicWithStats[];
+  people: PickablePerson[];
 }) {
   const router = useRouter();
 
@@ -48,6 +51,8 @@ export function EpisodeEditor({
   const [description, setDescription] = useState(episode.description ?? episode.youtubeDescription ?? "");
   const [seriesId, setSeriesId] = useState(episode.seriesId ?? "");
   const [topicIds, setTopicIds] = useState<string[]>(episode.topics.map((t) => t.topicId));
+  // Already ordered by position (see episodeWithTopics's orderBy) -- this order is exactly what Save sends back.
+  const [participantIds, setParticipantIds] = useState<string[]>(episode.participants.map((p) => p.personId));
   const [episodeNumber, setEpisodeNumber] = useState(episode.episodeNumber?.toString() ?? "");
   const [featured, setFeatured] = useState(episode.featured);
   const [audioUrl, setAudioUrl] = useState(episode.audioUrl ?? "");
@@ -70,6 +75,7 @@ export function EpisodeEditor({
         description,
         seriesId: seriesId || null,
         topicIds,
+        participantIds,
         episodeNumber: episodeNumber.trim() === "" ? null : Number(episodeNumber),
         featured,
         audioUrl,
@@ -243,6 +249,14 @@ export function EpisodeEditor({
           </select>
           <p className="mt-2 text-sm leading-7 text-[var(--ink-soft)]">
             اضغط مع الاستمرار على Ctrl (أو Cmd على ماك) لاختيار أكثر من موضوع.
+          </p>
+        </div>
+
+        <div>
+          <label className="admin-label">المشاركون في الحلقة</label>
+          <ParticipantPicker people={people} value={participantIds} onChange={setParticipantIds} />
+          <p className="mt-2 text-sm leading-7 text-[var(--ink-soft)]">
+            الأشخاص الذين ظهروا فعليًا في هذه الحلقة تحديدًا -- يظهرون كصور دائرية متراكبة أعلى صفحة الحلقة العامة. لا علاقة لهذا بصفحة &quot;المقدّمون&quot; الثابتة. رتّب الإضافة حسب الترتيب المطلوب ظهوره.
           </p>
         </div>
 

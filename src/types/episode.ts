@@ -1,5 +1,6 @@
 import type { ContentStatus } from "./content-status";
 import type { Series } from "./series";
+import type { Person } from "./person";
 
 export type Episode = {
   id: string;
@@ -26,13 +27,14 @@ export type Episode = {
   seriesId: string;
   topicIds: string[];
   /**
-   * Host ids (see data/hosts.ts) who actually appear in this episode.
-   * Optional/undefined — not "no hosts" — meaning "use the show's default
-   * lineup" (see resolveEpisodeHosts in lib/utils/content.ts). Set this
-   * explicitly per episode once real per-episode lineups are known (a solo
-   * episode, a guest takeover, etc.).
+   * The people who actually appeared in this episode (see prisma/schema.prisma's
+   * EpisodeParticipant), ordered by the admin's own selection order. Empty for
+   * every episode until an editor explicitly assigns participants -- there is
+   * no default/fallback lineup. Deliberately unrelated to the static Hosts
+   * system (data/hosts.ts): a Person here is an episode-specific participant
+   * record, not one of the show's three fixed hosts.
    */
-  hosts?: string[];
+  participants: Person[];
 };
 
 /** Episode enriched with its resolved series — used wherever a card needs the series title. */

@@ -25,7 +25,26 @@ export { AdminContentError } from "@/lib/admin/content/errors";
  * serializable prop -- still never imported directly by a Client Component.
  */
 
-const episodeWithTopics = { include: { topics: true, series: { select: { slug: true } } } } as const;
+const episodeWithTopics = {
+  include: {
+    topics: true,
+    participants: { orderBy: { position: "asc" }, include: { person: true } },
+    series: { select: { slug: true } },
+  },
+} as const;
+
+/**
+ * Turns the admin's ordered participant-id selection into EpisodeParticipant
+ * rows, with array order becoming `position` -- a pure mapping (no I/O) kept
+ * separate from updateEpisodeContent() so the ordering rule itself is
+ * directly unit-testable (see episodes.test.ts).
+ */
+export function toParticipantRows(
+  episodeId: string,
+  personIds: string[],
+): { episodeId: string; personId: string; position: number }[] {
+  return personIds.map((personId, position) => ({ episodeId, personId, position }));
+}
 
 /** Every episode regardless of status, for a future admin list/edit view. */
 export async function getEpisodeForAdmin(id: string) {
@@ -133,8 +152,11 @@ async function createDraftShort(video: Awaited<ReturnType<typeof fetchVideoMetad
  * are sync-owned, see prisma/schema.prisma's own comment on Episode), never
  * `status` (see publishEpisode/unpublishEpisode below), and never anything
  * client-supplied beyond what updateEpisodeContentSchema already validated.
- * `topicIds`, when provided, atomically replaces the episode's EpisodeTopic
- * rows; when omitted entirely, topics are left untouched.
+ * `topicIds`/`participantIds`, when provided, atomically replace the
+ * episode's EpisodeTopic/EpisodeParticipant rows; when omitted entirely,
+ * each is left untouched. `participantIds`' array order becomes
+ * EpisodeParticipant.position, so the public episode page's avatar row
+ * always reflects the admin's own selection order.
  */
 export async function updateEpisodeContent(id: string, patch: UpdateEpisodeContentInput) {
   const existing = await prisma.episode.findUnique({ where: { id }, select: { id: true } });
@@ -150,7 +172,12 @@ export async function updateEpisodeContent(id: string, patch: UpdateEpisodeConte
     if (count !== patch.topicIds.length) throw new AdminContentError("أحد المواضيع المحددة غير موجود.");
   }
 
-  const { topicIds, ...rest } = patch;
+  if (patch.participantIds) {
+    const count = await prisma.person.count({ where: { id: { in: patch.participantIds } } });
+    if (count !== patch.participantIds.length) throw new AdminContentError("أحد الأشخاص المحددين غير موجود.");
+  }
+
+  const { topicIds, participantIds, ...rest } = patch;
 
   return prisma.$transaction(async (tx) => {
     await tx.episode.update({ where: { id }, data: rest });
@@ -165,7 +192,17 @@ export async function updateEpisodeContent(id: string, patch: UpdateEpisodeConte
       }
     }
 
-    return tx.episode.findUniqueOrThrow({ where: { id }, include: { topics: true, series: { select: { slug: true } } } });
+    if (participantIds) {
+      await tx.episodeParticipant.deleteMany({ where: { episodeId: id } });
+      if (participantIds.length > 0) {
+        await tx.episodeParticipant.createMany({
+          data: toParticipantRows(id, participantIds),
+          skipDuplicates: true,
+        });
+      }
+    }
+
+    return tx.episode.findUniqueOrThrow({ where: { id }, ...episodeWithTopics });
   });
 }
 

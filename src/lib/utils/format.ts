@@ -129,6 +129,7 @@ export const EPISODE_FORMS: ArabicNounForms = { one: "حلقة واحدة", two:
 export const SERIES_FORMS: ArabicNounForms = { one: "سلسلة واحدة", two: "سلسلتان", few: "سلاسل", many: "سلسلة" };
 export const TOPIC_FORMS: ArabicNounForms = { one: "موضوع واحد", two: "موضوعان", few: "مواضيع", many: "موضوع" };
 export const RESULT_FORMS: ArabicNounForms = { one: "نتيجة واحدة", two: "نتيجتان", few: "نتائج", many: "نتيجة" };
+export const PERSON_FORMS: ArabicNounForms = { one: "شخص واحد", two: "شخصان", few: "أشخاص", many: "شخصًا" };
 
 /** The noun alone, agreeing with `count` -- for layouts that render the number separately (e.g. "6" beside "سلاسل"). */
 export function pluralNoun(count: number, forms: ArabicNounForms): string {

@@ -10,6 +10,7 @@ import { getEpisodeForAdmin } from "@/lib/admin/content/episodes";
 import { getTranscriptForAdmin } from "@/lib/admin/content/transcripts";
 import { getMindMapForAdmin, toMindMapRoot } from "@/lib/admin/content/mind-maps";
 import { getRecommendationsForAdmin, toRecommendationDraft } from "@/lib/admin/content/recommendations";
+import { listPeopleForAdmin } from "@/lib/admin/content/people";
 import { requireAdmin } from "@/lib/auth/server";
 
 export const metadata: Metadata = { title: "تعديل حلقة" };
@@ -18,10 +19,11 @@ export default async function EditEpisodePage({ params }: { params: Promise<{ id
   await requireAdmin();
   const { id } = await params;
 
-  const [episode, series, topics, transcript, mindMap, recommendations] = await Promise.all([
+  const [episode, series, topics, people, transcript, mindMap, recommendations] = await Promise.all([
     getEpisodeForAdmin(id),
     contentRepository.listAllSeries(),
     contentRepository.listTopics(),
+    listPeopleForAdmin(),
     getTranscriptForAdmin(id),
     getMindMapForAdmin(id),
     getRecommendationsForAdmin(id),
@@ -37,7 +39,7 @@ export default async function EditEpisodePage({ params }: { params: Promise<{ id
       back={{ label: "الحلقات", href: "/admin/episodes" }}
     >
       <div className="grid gap-6">
-        <EpisodeEditor episode={episode} series={series} topics={topics} />
+        <EpisodeEditor episode={episode} series={series} topics={topics} people={people} />
         <TranscriptEditor
           episodeId={episode.id}
           initialText={transcript?.text ?? ""}

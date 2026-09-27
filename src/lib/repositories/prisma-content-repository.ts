@@ -2,6 +2,8 @@ import type {
   Prisma,
   Episode as PrismaEpisode,
   EpisodeTopic as PrismaEpisodeTopic,
+  EpisodeParticipant as PrismaEpisodeParticipant,
+  Person as PrismaPerson,
   Series as PrismaSeries,
   Topic as PrismaTopic,
   Collection as PrismaCollection,
@@ -33,7 +35,10 @@ import { DEFAULT_PAGE_SIZE, paginateByCursor, toCursorPage } from "@/lib/paginat
 // and falls back to it only when no override has ever been set.
 // ---------------------------------------------------------------------------
 
-type EpisodeRow = PrismaEpisode & { topics: PrismaEpisodeTopic[] };
+type EpisodeRow = PrismaEpisode & {
+  topics: PrismaEpisodeTopic[];
+  participants: (PrismaEpisodeParticipant & { person: PrismaPerson })[];
+};
 
 function toEpisode(row: EpisodeRow): Episode {
   return {
@@ -51,6 +56,13 @@ function toEpisode(row: EpisodeRow): Episode {
     featured: row.featured,
     seriesId: row.seriesId ?? "",
     topicIds: row.topics.map((topic) => topic.topicId),
+    // Already ordered by position via episodeInclude's orderBy -- never
+    // re-sorted here, so this stays the single source of truth for order.
+    participants: row.participants.map((participant) => ({
+      id: participant.person.id,
+      name: participant.person.name,
+      imageUrl: participant.person.imageUrl,
+    })),
   };
 }
 
@@ -120,7 +132,10 @@ function toMindMap(row: PrismaMindMap): MindMap {
   };
 }
 
-const episodeInclude = { topics: true } as const;
+const episodeInclude = {
+  topics: true,
+  participants: { orderBy: { position: "asc" }, include: { person: true } },
+} as const;
 const isPublishedWhere = { status: "PUBLISHED" as const };
 
 // Editorial seriesOrder wins when set (an admin has manually ordered a

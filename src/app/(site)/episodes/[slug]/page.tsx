@@ -20,7 +20,6 @@ import { HostAvatars } from "@/components/host/host-avatars";
 import { resolveAudioUrls } from "@/lib/audio/podcast-feed";
 import { NO_NEIGHBORS, toMediaItem } from "@/lib/playback/item";
 import { toIso8601Duration } from "@/lib/utils/format";
-import { resolveEpisodeHosts } from "@/lib/utils/content";
 
 /**
  * Request-memoized (React cache()) so generateMetadata and the page body --
@@ -105,7 +104,7 @@ export default async function EpisodePage({
   const seriesById = new Map(seriesRows.map((s) => [s.id, s]));
   const series = seriesById.get(episode.seriesId) ?? null;
   const episodeUrl = `${siteConfig.url}/episodes/${episode.slug}`;
-  const episodeHosts = resolveEpisodeHosts(episode);
+  const episodeParticipants = episode.participants;
   const subtitle = series?.title ?? "";
   const toItem = (item: typeof episode) => toMediaItem(item, subtitle, audioUrls.get(item.id) ?? null);
   const mediaItem = toItem(episode);
@@ -240,15 +239,15 @@ export default async function EpisodePage({
                   </h1>
                   <EpisodeMeta episode={episode} className="meta mt-5" />
 
-                  {episodeHosts.length > 0 && (
+                  {episodeParticipants.length > 0 && (
                     <div className="mt-5 flex items-center gap-3">
                       <HostAvatars
-                        hosts={episodeHosts}
+                        people={episodeParticipants}
                         size="md"
                         ringColor="var(--canvas)"
                       />
                       <p className="text-sm font-bold text-[var(--ink-soft)]">
-                        {episodeHosts.map((host) => host.name).join(" · ")}
+                        {episodeParticipants.map((person) => person.name).join(" · ")}
                       </p>
                     </div>
                   )}

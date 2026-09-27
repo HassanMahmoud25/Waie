@@ -151,12 +151,45 @@ model Episode {
   recommendations Recommendation[]
   mindMap         MindMap?
   notifications   Notification[]
+  participants    EpisodeParticipant[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([seriesId])
   @@index([status, youtubePublishedAt])
+}
+
+/// A reusable person who can appear in one or many episodes (see
+/// docs/audit -- deliberately separate from the static Hosts system in
+/// src/data/hosts.ts, which stays untouched). One canonical name/image per
+/// person, reused across every episode they're tagged in via
+/// EpisodeParticipant -- never duplicated onto Episode itself.
+model Person {
+  id        String   @id @default(cuid())
+  name      String
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  episodeParticipants EpisodeParticipant[]
+}
+
+/// The episode-specific fact that a Person appeared in a specific Episode --
+/// intentionally a separate concept from Person itself (see schema comment
+/// above). `position` is the admin's own selection order, read back with
+/// `orderBy: { position: "asc" }` everywhere this is queried, so the public
+/// episode page's avatar row always renders in the order an editor chose.
+model EpisodeParticipant {
+  episodeId String
+  personId  String
+  position  Int      @default(0)
+
+  episode Episode @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  person  Person  @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@id([episodeId, personId])
+  @@index([personId])
 }
 
 model EpisodeTopic {

@@ -11,6 +11,7 @@ import {
   unpublishEpisode,
   deleteEpisode,
 } from "@/lib/admin/content/episodes";
+import { revalidatePublicEpisodePaths } from "@/lib/admin/content/revalidate";
 
 /**
  * The episode CMS's Server Actions -- create/update/publish/unpublish -- the
@@ -22,23 +23,13 @@ import {
  * userId -- requireAdmin() re-reads the role from the database off the
  * signed session, exactly like every other admin action in this project),
  * validates input, and revalidates the same small, predictable set of
- * public paths afterward (see revalidatePublicEpisodePaths below).
+ * public paths afterward (see revalidatePublicEpisodePaths, lib/admin/
+ * content/revalidate.ts -- also reused by person-actions.ts, since a
+ * Person's name/image edit can go stale on every episode page that person
+ * is tagged on).
  */
 
 type ActionResult<T> = { ok: true; data: T } | { ok: false; error: string };
-
-/**
- * Centralized, predictable cache invalidation -- the one place every episode
- * mutation calls, so the set of revalidated paths can't drift between
- * create/update/publish/unpublish. The whole app already renders on request
- * (`export const dynamic = "force-dynamic"` in the root layout), so this is
- * a defensive/router-cache measure, not what makes new data show up.
- */
-function revalidatePublicEpisodePaths(slug: string, seriesSlug: string | null): void {
-  revalidatePath(`/episodes/${slug}`);
-  revalidatePath("/");
-  if (seriesSlug) revalidatePath(`/series/${seriesSlug}`);
-}
 
 type CreateEpisodeActionResult =
   | { ok: true; data: { kind: "episode"; id: string; slug: string } }

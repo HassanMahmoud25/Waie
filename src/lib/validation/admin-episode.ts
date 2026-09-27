@@ -24,11 +24,23 @@ export type CreateEpisodeInput = z.infer<typeof createEpisodeSchema>;
  * kept separate so a general content edit can never accidentally flip
  * publication state.
  */
+/**
+ * Ordered participant ids -- order is significant (it becomes
+ * EpisodeParticipant.position, see updateEpisodeContent), so this rejects
+ * duplicates rather than silently deduping, which would hide a picker bug
+ * instead of surfacing it. An empty array is valid: an episode with no
+ * participants is the correct default, never an error.
+ */
+const participantIdsField = z
+  .array(z.string().trim().min(1))
+  .refine((ids) => new Set(ids).size === ids.length, { message: "لا يمكن اختيار الشخص نفسه أكثر من مرة." });
+
 export const updateEpisodeContentSchema = z.object({
   title: z.string().trim().min(3, "العنوان قصير جدًا.").max(160, "العنوان طويل جدًا.").optional(),
   description: z.string().trim().max(5000, "الوصف طويل جدًا.").optional(),
   seriesId: z.string().trim().min(1).nullable().optional(),
   topicIds: z.array(z.string().trim().min(1)).optional(),
+  participantIds: participantIdsField.optional(),
   episodeNumber: z.coerce.number().int().positive().nullable().optional(),
   featured: z.boolean().optional(),
   audioUrl: audioUrlField.optional(),
