@@ -8,9 +8,13 @@ import { IconButton } from "@/components/ui/icon-button";
 export function AdminTopbar() {
   return (
     <header className="admin-topbar">
-      <div className="site-header-bar mx-auto flex h-[60px] max-w-[1200px] items-center justify-between gap-4 rounded-[22px] px-4 sm:px-6">
+      <div className="site-header-bar mx-auto flex h-15 max-w-300 items-center justify-between gap-4 rounded-[22px] px-4 sm:px-6 bg-white/50 backdrop-blur-md">
         <div className="flex items-center gap-3">
-          <Link href="/admin" aria-label="وعي، لوحة الإدارة" className="shrink-0">
+          <Link
+            href="/admin"
+            aria-label="وعي، لوحة الإدارة"
+            className="shrink-0"
+          >
             <Image
               src="/brand/logo-deep.png"
               alt="وعي"
@@ -20,7 +24,9 @@ export function AdminTopbar() {
               className="h-8 w-auto brightness-0 sm:h-9"
             />
           </Link>
-          <span className="eyebrow-pill px-3 py-1.5 text-[.68rem]">الإدارة</span>
+          <span className="eyebrow-pill px-3 py-1.5 text-[.68rem]">
+            الإدارة
+          </span>
         </div>
         <div className="flex items-center gap-2">
           <IconButton href="/" aria-label="عرض الموقع">

@@ -86,7 +86,7 @@ export function SiteHeader({
                   "rounded-full px-4 py-2 transition-colors",
                   isActive
                     ? "bg-black text-white"
-                    : "text-[var(--ink-soft)] hover:text-black",
+                    : "text-(--ink-soft) hover:text-black",
                 )}
               >
                 {link.label}

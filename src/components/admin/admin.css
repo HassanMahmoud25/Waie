@@ -388,10 +388,22 @@
      ------------------------------------------------------------------------ */
   .admin-row {
     display: flex;
-    align-items: center;
+    /* Below 640px the title can wrap to 3 lines and the meta list stacks
+       one item per line (not enough width for them side by side), making
+       the content column much taller than the thumbnail/edit button --
+       center-aligning against that height leaves the thumb and button
+       floating mid-card instead of sitting with the title. Top-align there
+       and only re-center once the meta list reliably fits on one line. */
+    align-items: flex-start;
     gap: 1rem;
     padding: 0.85rem 1.25rem;
     transition: background 0.2s ease;
+  }
+
+  @media (min-width: 640px) {
+    .admin-row {
+      align-items: center;
+    }
   }
 
   .admin-row + .admin-row {

@@ -16,7 +16,7 @@ export function AdminSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="admin-sidebar site-header-bar">
+    <aside className="admin-sidebar site-header-bar bg-white/50 backdrop-blur-md">
       <div className="admin-sidebar__brand">
         <Link href="/admin" aria-label="وعي، لوحة الإدارة" className="shrink-0">
           <Image
