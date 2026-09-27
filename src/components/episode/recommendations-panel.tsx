@@ -69,10 +69,18 @@ function RecommendationCard({ recommendation }: { recommendation: Recommendation
       >
         {recommendation.imageUrl ? (
           <>
+            {/* unoptimized: imageUrl is an admin-entered URL to any external
+                host (a book cover, article thumbnail, social post image, …)
+                -- unlike episode thumbnails, which are always i.ytimg.com,
+                there's no fixed set of hosts to allow-list in next.config's
+                images.remotePatterns. Without this, next/image's optimizer
+                rejects any host it isn't configured for and the image never
+                renders, even though the URL itself is valid. */}
             <Image
               src={recommendation.imageUrl}
               alt=""
               fill
+              unoptimized
               sizes="(max-width: 640px) 90vw, (max-width: 1280px) 45vw, 360px"
               className="object-cover"
             />
