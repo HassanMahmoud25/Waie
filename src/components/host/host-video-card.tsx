@@ -1,5 +1,5 @@
-import Image from "next/image";
 import { Play } from "lucide-react";
+import { EpisodeThumbnail } from "@/components/content/episode-thumbnail";
 import type { HostVideo } from "@/data/host-profiles";
 import { getHostVideoThumbnail } from "@/data/host-profiles";
 import { formatDuration } from "@/lib/utils/format";
@@ -19,7 +19,10 @@ export function HostVideoCard({ video }: { video: HostVideo }) {
         rel="noreferrer"
         className="media relative block aspect-[16/9] min-w-0 overflow-hidden"
       >
-        <Image
+        {/* EpisodeThumbnail, not next/image: skips Vercel's image optimizer
+            (its quota is exhausted -> 402 for uncached i.ytimg.com widths)
+            and falls back to hqdefault if maxresdefault doesn't exist. */}
+        <EpisodeThumbnail
           src={getHostVideoThumbnail(video.id)}
           alt={video.title}
           fill
