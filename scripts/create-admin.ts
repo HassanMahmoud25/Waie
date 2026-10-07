@@ -8,11 +8,13 @@
  * that user's password and (re)grants the ADMIN role.
  *
  * Needs DATABASE_URL (from the environment, .env.local or .env) and a schema
- * that has the User.role / User.passwordHash columns (`npm run db:migrate`).
+ * that has the User.role / User.passwordHash / User.sessionVersion columns
+ * (`npm run db:migrate`).
  */
 import { createInterface } from "node:readline";
 import { PrismaClient } from "@prisma/client";
 import { hashPassword } from "../src/lib/auth/password";
+import { ADMIN_PASSWORD_MIN_LENGTH } from "../src/lib/auth/password-policy";
 
 for (const file of [".env.local", ".env"]) {
   try {
@@ -21,8 +23,6 @@ for (const file of [".env.local", ".env"]) {
     // file absent -- fine, the variable may already be in the environment
   }
 }
-
-const MIN_PASSWORD_LENGTH = 12;
 
 function promptHidden(question: string): Promise<string> {
   return new Promise((resolve) => {
@@ -53,8 +53,8 @@ async function main() {
   }
 
   const password = process.env.ADMIN_PASSWORD ?? (await promptHidden("Password: "));
-  if (password.length < MIN_PASSWORD_LENGTH) {
-    console.error(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
+  if (password.length < ADMIN_PASSWORD_MIN_LENGTH) {
+    console.error(`Password must be at least ${ADMIN_PASSWORD_MIN_LENGTH} characters.`);
     process.exit(1);
   }
   if (!process.env.ADMIN_PASSWORD && (await promptHidden("Repeat password: ")) !== password) {
@@ -70,7 +70,8 @@ async function main() {
     await prisma.user.upsert({
       where: { email },
       create: { email, name, passwordHash, role: "ADMIN" },
-      update: { passwordHash, role: "ADMIN", ...(name ? { name } : {}) },
+      // A new password signs the account out of every existing session (see User.sessionVersion).
+      update: { passwordHash, role: "ADMIN", sessionVersion: { increment: 1 }, ...(name ? { name } : {}) },
     });
     console.log(`${existing ? "Updated" : "Created"} admin ${email}. Sign in at /login.`);
   } finally {

@@ -16,7 +16,7 @@ function resolveSiteUrl(): string {
   if (explicit) return explicit.replace(/\/+$/, "");
   const vercelHost = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
   if (vercelHost) return `https://${vercelHost}`;
-  return "https://site-waie.vercel.app/";
+  return "https://site-waie.vercel.app";
 }
 
 export const siteConfig = {

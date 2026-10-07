@@ -20,22 +20,26 @@ enum UserRole {
 }
 
 model User {
-  id            String               @id @default(cuid())
-  email         String               @unique
-  name          String?
+  id             String               @id @default(cuid())
+  email          String               @unique
+  name           String?
   /// scrypt hash (see src/lib/auth/password.ts). Null for accounts that never
   /// got a server-side password -- those cannot sign in to the server session.
-  passwordHash  String?
+  passwordHash   String?
   /// Gates /admin. Checked against the database on every guarded request
   /// (src/lib/auth/server.ts), never trusted from the session cookie.
-  role          UserRole             @default(USER)
-  progresses    WatchProgress[]
-  saves         SavedEpisode[]
-  notes         Note[]
-  follows       FollowedSeries[]
-  resetTokens   PasswordResetToken[]
-  notifications Notification[]
-  createdAt     DateTime             @default(now())
+  role           UserRole             @default(USER)
+  /// Embedded in every session token (src/lib/auth/session.ts) and compared
+  /// on each server-side session read (src/lib/auth/server.ts). Bumping it
+  /// revokes every session issued before -- done on password reset/change.
+  sessionVersion Int                  @default(0)
+  progresses     WatchProgress[]
+  saves          SavedEpisode[]
+  notes          Note[]
+  follows        FollowedSeries[]
+  resetTokens    PasswordResetToken[]
+  notifications  Notification[]
+  createdAt      DateTime             @default(now())
 }
 
 /// A single-use, time-limited password reset request (Phase: password reset).
@@ -43,7 +47,9 @@ model User {
 /// src/lib/auth/reset-token.ts); the raw value exists only in the reset
 /// email/URL. `usedAt` is set once the token is consumed so it can never be
 /// replayed, and every other outstanding token for the same user is deleted
-/// the moment one is actually used (see resetPasswordAction).
+/// the moment one is actually used (see resetPasswordAction). Superseded
+/// tokens are expired rather than deleted so their `createdAt` can throttle
+/// repeat requests; rows are purged a day after expiry.
 model PasswordResetToken {
   id        String    @id @default(cuid())
   userId    String
@@ -72,22 +78,22 @@ model Topic {
 }
 
 model Series {
-  id               String        @id @default(cuid())
+  id               String           @id @default(cuid())
   title            String
-  slug             String        @unique
+  slug             String           @unique
   description      String?
   coverImage       String?
   /// Portrait crop of coverImage for narrow viewports; falls back to coverImage when unset
   /// (mirrors src/types/series.ts). Nullable/optional -- purely additive, no existing rows affected.
   coverImageMobile String?
   heroImage        String?
-  position         Int           @default(0)
-  status           ContentStatus @default(DRAFT)
-  featured         Boolean       @default(false)
+  position         Int              @default(0)
+  status           ContentStatus    @default(DRAFT)
+  featured         Boolean          @default(false)
   seoTitle         String?
   seoDescription   String?
   topicId          String?
-  topic            Topic?        @relation(fields: [topicId], references: [id])
+  topic            Topic?           @relation(fields: [topicId], references: [id])
   episodes         Episode[]
   followers        FollowedSeries[]
 
@@ -183,7 +189,7 @@ model Person {
 model EpisodeParticipant {
   episodeId String
   personId  String
-  position  Int      @default(0)
+  position  Int    @default(0)
 
   episode Episode @relation(fields: [episodeId], references: [id], onDelete: Cascade)
   person  Person  @relation(fields: [personId], references: [id], onDelete: Cascade)

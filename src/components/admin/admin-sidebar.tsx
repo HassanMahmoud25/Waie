@@ -3,9 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowUpLeft, Globe, LogOut } from "lucide-react";
+import { ArrowUpLeft, Globe, LogOut, ShieldCheck } from "lucide-react";
 import { logoutAction } from "@/lib/auth/actions";
-import { adminNav, isAdminNavActive } from "@/components/admin/admin-nav";
+import { ACCOUNT_HREF, adminNav, isAdminNavActive } from "@/components/admin/admin-nav";
 
 /**
  * Desktop navigation: a floating frosted-glass panel (the same surface as the
@@ -54,6 +54,14 @@ export function AdminSidebar() {
       </nav>
 
       <div className="admin-sidebar__footer">
+        <Link
+          href={ACCOUNT_HREF}
+          aria-current={pathname.startsWith(ACCOUNT_HREF) ? "page" : undefined}
+          className="admin-nav__link"
+        >
+          <ShieldCheck size={19} strokeWidth={pathname.startsWith(ACCOUNT_HREF) ? 2.2 : 1.9} aria-hidden="true" />
+          الحساب والأمان
+        </Link>
         <Link href="/" className="admin-nav__link">
           <Globe size={19} strokeWidth={1.9} aria-hidden="true" />
           عرض الموقع

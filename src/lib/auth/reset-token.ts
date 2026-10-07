@@ -16,6 +16,19 @@ const TOKEN_BYTES = 32;
 /** 30 minutes -- inside the 30-60 minute window a reset link should reasonably stay valid. */
 export const RESET_TOKEN_TTL_MS = 30 * 60 * 1000;
 
+/**
+ * Per-account throttle on reset emails (see requestPasswordResetAction): at
+ * most one per minute and five per rolling hour, counted from the token rows
+ * themselves -- no extra infrastructure. Stops the form being used to flood
+ * someone's inbox; requests over the limit are dropped silently, so the
+ * response is still identical.
+ */
+export const RESET_REQUEST_COOLDOWN_MS = 60 * 1000;
+export const RESET_REQUEST_WINDOW_MS = 60 * 60 * 1000;
+export const RESET_REQUESTS_PER_WINDOW = 5;
+/** Expired rows are kept this long (they feed the throttle), then purged. */
+export const RESET_TOKEN_RETENTION_MS = 24 * 60 * 60 * 1000;
+
 export function hashResetToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
 }
@@ -40,8 +53,11 @@ export async function getValidResetToken(token: string) {
   if (!token || !process.env.DATABASE_URL) return null;
 
   const tokenHash = hashResetToken(token);
-  const record = await prisma.passwordResetToken.findUnique({ where: { tokenHash } });
-  if (!record || record.usedAt || record.expiresAt < new Date()) return null;
+  const record = await prisma.passwordResetToken.findUnique({
+    where: { tokenHash },
+    include: { user: { select: { email: true, role: true } } },
+  });
+  if (!record || record.usedAt || record.expiresAt <= new Date()) return null;
 
   return record;
 }

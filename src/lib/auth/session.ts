@@ -7,6 +7,12 @@
  * every guarded request (src/lib/auth/server.ts), so demoting or deleting an
  * admin locks them out immediately instead of at token expiry.
  *
+ * `ver` is the user's `sessionVersion` at sign-in. The server compares it to
+ * the database on every read, so bumping that column (password reset or
+ * change) revokes every session issued before it. Tokens minted before `ver`
+ * existed read as version 0, the column's default -- nobody is signed out by
+ * the upgrade itself.
+ *
  * Format: base64url(JSON payload) + "." + base64url(HMAC-SHA256 signature).
  */
 export const SESSION_COOKIE = "waie_session";
@@ -18,7 +24,10 @@ export const SESSION_TTL_DEFAULT_S = 60 * 60 * 12;
 const MIN_SECRET_LENGTH = 32;
 const encoder = new TextEncoder();
 
-type SessionPayload = { sub: string; iat: number; exp: number };
+type SessionPayload = { sub: string; iat: number; exp: number; ver?: number };
+
+/** What a verified token tells the server: who, which session generation, and when it lapses. */
+export type SessionClaims = { userId: string; version: number; issuedAt: number; expiresAt: number };
 
 function toBase64Url(bytes: Uint8Array): string {
   let binary = "";
@@ -47,12 +56,12 @@ async function getKey(): Promise<CryptoKey | null> {
   ]);
 }
 
-export async function createSessionToken(userId: string, ttlSeconds: number): Promise<string> {
+export async function createSessionToken(userId: string, ttlSeconds: number, version = 0): Promise<string> {
   const key = await getKey();
   if (!key) throw new Error("AUTH_SECRET must be set to a random string of at least 32 characters.");
 
   const now = Math.floor(Date.now() / 1000);
-  const payload: SessionPayload = { sub: userId, iat: now, exp: now + ttlSeconds };
+  const payload: SessionPayload = { sub: userId, iat: now, exp: now + ttlSeconds, ver: version };
   const body = toBase64Url(encoder.encode(JSON.stringify(payload)));
   const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(body));
   return `${body}.${toBase64Url(new Uint8Array(signature))}`;
@@ -60,6 +69,11 @@ export async function createSessionToken(userId: string, ttlSeconds: number): Pr
 
 /** Returns the user id if the token is authentic and unexpired, otherwise null. */
 export async function verifySessionToken(token: string | undefined | null): Promise<string | null> {
+  return (await readSessionToken(token))?.userId ?? null;
+}
+
+/** The token's claims if it is authentic and unexpired, otherwise null. */
+export async function readSessionToken(token: string | undefined | null): Promise<SessionClaims | null> {
   if (!token) return null;
   const key = await getKey();
   if (!key) return null;
@@ -79,7 +93,14 @@ export async function verifySessionToken(token: string | undefined | null): Prom
     const payload = JSON.parse(new TextDecoder().decode(payloadBytes)) as Partial<SessionPayload>;
     if (typeof payload.sub !== "string" || typeof payload.exp !== "number") return null;
     if (payload.exp <= Math.floor(Date.now() / 1000)) return null;
-    return payload.sub;
+    const version = payload.ver ?? 0;
+    if (!Number.isInteger(version)) return null;
+    return {
+      userId: payload.sub,
+      version,
+      issuedAt: typeof payload.iat === "number" ? payload.iat : 0,
+      expiresAt: payload.exp,
+    };
   } catch {
     return null;
   }

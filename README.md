@@ -34,6 +34,25 @@ npm run db:seed
 
 بعد ذلك، انقل repository الخاص بالمحتوى تدريجيًا من `src/lib/content.ts` إلى Prisma. هذا الملف هو seed/demo فقط، وليس موضع المحتوى داخل مكونات React.
 
+### قاعدة التطوير المحلية ونسخ محتوى الإنتاج
+
+التطوير المحلي يعمل على قاعدة PostgreSQL محلية مستقلة (`waie_dev` عبر `brew install postgresql@17 && brew services start postgresql@17`)، ويشير إليها `DATABASE_URL` في `.env` و`.env.local`. روابط Supabase (الإنتاج) محفوظة في `.env.supabase.local` (مستبعد من git، ولا يقرؤه Next.js ولا Prisma تلقائيًا).
+
+```bash
+npm run db:deploy        # تطبيق المهاجرات على القاعدة المحلية
+npm run db:pull-content  # نسخ محتوى الإنتاج إلى القاعدة المحلية (قراءة فقط من الإنتاج)
+```
+
+`db:pull-content` (`scripts/pull-production-content.sh`) يقرأ من الإنتاج عبر `pg_dump --data-only` داخل معاملة READ ONLY، ويرفض الكتابة إلا إذا كان `DATABASE_URL` المحلي على `localhost`. ينسخ جداول المحتوى فقط: `Topic`، `Series`، `Episode`، `EpisodeTopic`، `Person`، `EpisodeParticipant`، `Short`، `Transcript`، `Recommendation`، `MindMap`، `Collection`، `CollectionItem`، `YouTubeChannel`، `Playlist`. لا ينسخ أبدًا المستخدمين أو كلمات المرور أو رموز إعادة التعيين أو بيانات المستخدمين (`WatchProgress`، `SavedEpisode`، `FollowedSeries`، `Note`، `Notification`) ولا `SyncRun`؛ الحسابات المحلية مستقلة تمامًا. التحميل معاملة واحدة (كل شيء أو لا شيء)، وإعادة التشغيل تُحدّث النسخة فقط، ثم يقارن عدد الصفوف بين الإنتاج والمحلي.
+
+لأن بيانات تفاعل المستخدمين لا تُنسخ، قسم «الأكثر مشاهدة» في الصفحة الرئيسية (المرتّب حسب مرات الحفظ) يعرض محليًا أحدث الحلقات بدلًا من ترتيب الإنتاج — هذا متوقع.
+
+تطبيق مهاجرة على الإنتاج يتم عمدًا فقط:
+
+```bash
+node --env-file=.env.supabase.local node_modules/.bin/prisma migrate deploy
+```
+
 ## حماية لوحة الإدارة
 
 `/admin` متاح للمسؤولين فقط. الحماية على الخادم عبر `src/middleware.ts` (فحص توقيع الجلسة) و`requireAdmin()` في `src/lib/auth/server.ts` (يتحقق من دور `ADMIN` في قاعدة البيانات) داخل الـlayout وكل صفحة وكل Server Action إداري. تسجيل الدخول من `/login` نفسها؛ بيانات الاعتماد الحقيقية تُفحص أولًا على الخادم، وإلا يعمل الدخول التجريبي المحلي للزوار كما كان.

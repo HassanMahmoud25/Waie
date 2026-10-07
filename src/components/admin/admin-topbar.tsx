@@ -1,8 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Globe, LogOut } from "lucide-react";
+import { Globe, LogOut, ShieldCheck } from "lucide-react";
 import { logoutAction } from "@/lib/auth/actions";
 import { IconButton } from "@/components/ui/icon-button";
+import { ACCOUNT_HREF } from "@/components/admin/admin-nav";
 
 /** Below `lg` the sidebar is gone: this is the landing header's floating bar, with the way back to the site. */
 export function AdminTopbar() {
@@ -29,6 +30,9 @@ export function AdminTopbar() {
           </span>
         </div>
         <div className="flex items-center gap-2">
+          <IconButton href={ACCOUNT_HREF} aria-label="الحساب والأمان">
+            <ShieldCheck size={18} />
+          </IconButton>
           <IconButton href="/" aria-label="عرض الموقع">
             <Globe size={18} />
           </IconButton>

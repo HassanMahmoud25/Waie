@@ -43,6 +43,13 @@ export const adminNav: AdminNavGroup[] = [
 
 export const adminNavItems = adminNav.flatMap((group) => group.items);
 
+/**
+ * The admin's own account/security page. Deliberately not in adminNav: it
+ * sits with "sign out" in the sidebar footer and as a top-bar icon on small
+ * screens, so it doesn't take a slot in the mobile tab bar.
+ */
+export const ACCOUNT_HREF = "/admin/account";
+
 export function isAdminNavActive(pathname: string, item: AdminNavItem) {
   return item.exact ? pathname === item.href : pathname.startsWith(item.href);
 }

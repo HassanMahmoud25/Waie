@@ -2,26 +2,33 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { AlertCircle, CheckCircle2, Loader2, Lock, ShieldAlert } from "lucide-react";
+import { AlertCircle, CheckCircle2, Loader2, Lock, LogIn, ShieldAlert } from "lucide-react";
 import { resetPasswordAction } from "@/lib/auth/actions";
 import { AuthField } from "@/components/auth/auth-field";
 import { PasswordStrength } from "@/components/auth/password-strength";
+import { PASSWORD_MIN_LENGTH, passwordTooShortMessage } from "@/lib/auth/password-policy";
 
 type Errors = { password?: string; confirm?: string };
 
 /** Step 3-4 of the reset flow. `initiallyValid` comes from the page's own server-side check; the actual mutation on submit re-validates the token again regardless (see resetPasswordAction). */
-export function ResetPasswordForm({ token, initiallyValid }: { token: string | null; initiallyValid: boolean }) {
-  const router = useRouter();
-
+export function ResetPasswordForm({
+  token,
+  initiallyValid,
+  minLength = PASSWORD_MIN_LENGTH,
+}: {
+  token: string | null;
+  initiallyValid: boolean;
+  minLength?: number;
+}) {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [errors, setErrors] = useState<Errors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [linkInvalid, setLinkInvalid] = useState(!token || !initiallyValid);
 
-  if (!token || !initiallyValid) {
+  if (!token || linkInvalid) {
     return (
       <div className="flex flex-col items-center gap-4 py-2 text-center">
         <span className="grid size-14 place-items-center rounded-full bg-[color-mix(in_srgb,#b3483a_14%,var(--paper))] text-[#b3483a]">
@@ -39,7 +46,7 @@ export function ResetPasswordForm({ token, initiallyValid }: { token: string | n
 
   function validate() {
     const next: Errors = {};
-    if (password.length < 8) next.password = "كلمة المرور يجب أن تكون 8 أحرف على الأقل.";
+    if (password.length < minLength) next.password = passwordTooShortMessage(minLength);
     if (confirm !== password) next.confirm = "كلمتا المرور غير متطابقتين.";
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -57,22 +64,26 @@ export function ResetPasswordForm({ token, initiallyValid }: { token: string | n
     setIsSubmitting(false);
 
     if (!result.ok) {
-      setFormError(result.error);
+      if (result.invalidToken) setLinkInvalid(true);
+      else setFormError(result.error);
       return;
     }
 
     setSuccess(true);
-    window.setTimeout(() => {
-      router.push("/login");
-      router.refresh();
-    }, 1500);
   }
 
   if (success) {
     return (
-      <div className="auth-alert auth-alert--success" role="status">
-        <CheckCircle2 size={18} className="mt-0.5 shrink-0" />
-        <span>تم تغيير كلمة المرور بنجاح، جارٍ تحويلك إلى تسجيل الدخول…</span>
+      <div className="flex flex-col items-center gap-4 py-2 text-center" role="status">
+        <span className="grid size-14 place-items-center rounded-full bg-[color-mix(in_srgb,var(--brand)_16%,var(--paper))] text-[var(--brand-deep)]">
+          <CheckCircle2 size={26} />
+        </span>
+        <p className="text-sm font-bold leading-7 text-[var(--ink-soft)]">
+          تم تغيير كلمة المرور بنجاح، وسُجّل خروجك من جميع الأجهزة. سجّل الدخول الآن بكلمة المرور الجديدة.
+        </p>
+        <Link href="/login" className="btn btn-primary mt-2 w-full">
+          <LogIn size={17} /> تسجيل الدخول
+        </Link>
       </div>
     );
   }
@@ -94,7 +105,7 @@ export function ResetPasswordForm({ token, initiallyValid }: { token: string | n
             type="password"
             value={password}
             onChange={setPassword}
-            placeholder="8 أحرف على الأقل"
+            placeholder={`${minLength} أحرف على الأقل`}
             autoComplete="new-password"
             error={errors.password}
           />
