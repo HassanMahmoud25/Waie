@@ -10,7 +10,7 @@ export default function AdminTopicsLoading() {
       <AdminHeaderSkeleton withBack />
 
       <div className="mt-8 md:mt-10">
-        <AdminCreateFormSkeleton />
+        <AdminCreateFormSkeleton buttonWidth="sm:w-[136px]" />
         <div className="mt-6">
           <AdminListSkeleton count={6} thumbnail={false} statusBadge={false} />
         </div>

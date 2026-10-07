@@ -4,11 +4,11 @@ import { AdminCreateFormSkeleton, AdminHeaderSkeleton, AdminListSkeleton, AdminT
 export default function AdminSeriesLoading() {
   return (
     <div>
-      <AdminHeaderSkeleton withBack />
+      <AdminHeaderSkeleton withBack description={[2, 1, 1]} />
 
       <div className="mt-8 md:mt-10">
-        <AdminCreateFormSkeleton />
-        <AdminTabsSkeleton />
+        <AdminCreateFormSkeleton buttonWidth="sm:w-[141px]" />
+        <AdminTabsSkeleton className="mt-6" />
         <div className="mt-4">
           <AdminListSkeleton count={6} thumbnail={false} statusBadge />
         </div>

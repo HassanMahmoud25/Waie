@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Globe, LogOut, ShieldCheck } from "lucide-react";
-import { logoutAction } from "@/lib/auth/actions";
+import { LogoutButton } from "@/components/auth/logout-confirm";
 import { IconButton } from "@/components/ui/icon-button";
 import { ACCOUNT_HREF } from "@/components/admin/admin-nav";
 
@@ -36,11 +36,9 @@ export function AdminTopbar() {
           <IconButton href="/" aria-label="عرض الموقع">
             <Globe size={18} />
           </IconButton>
-          <form action={logoutAction}>
-            <IconButton type="submit" aria-label="تسجيل الخروج">
-              <LogOut size={18} />
-            </IconButton>
-          </form>
+          <LogoutButton className="icon-btn" aria-label="تسجيل الخروج">
+            <LogOut size={18} />
+          </LogoutButton>
         </div>
       </div>
     </header>

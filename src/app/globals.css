@@ -2791,6 +2791,62 @@
     animation-name: note-modal-panel-out;
   }
 
+  /* --- Confirmation dialog (components/ui/confirm-dialog.tsx; e.g. logout) --
+     rides the note-modal-* keyframes above; only its own layout lives here.
+     The icon badge and danger tint are the .user-menu__item--danger family. */
+  .confirm-dialog {
+    padding: 1.5rem 1.4rem 1.4rem;
+  }
+
+  .confirm-dialog__icon {
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    margin: 0 auto 1rem;
+    border-radius: 50%;
+    color: #a3392c;
+    background: color-mix(in srgb, #c0392b 9%, var(--paper));
+    border: 1px solid color-mix(in srgb, #c0392b 14%, transparent);
+  }
+
+  .confirm-dialog__cancel {
+    background: color-mix(in srgb, var(--ink) 5%, transparent);
+  }
+
+  .confirm-dialog__cancel:hover {
+    background: color-mix(in srgb, var(--ink) 9%, transparent);
+  }
+
+  .confirm-dialog .btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .confirm-dialog .btn-danger:disabled {
+    opacity: 0.85;
+    cursor: progress;
+  }
+
+  .confirm-dialog__error {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.9rem;
+    padding: 0.6rem 0.8rem;
+    border-radius: 12px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #a3392c;
+    background: color-mix(in srgb, #c0392b 8%, var(--paper));
+  }
+
+  @media (min-width: 640px) {
+    .confirm-dialog {
+      padding: 1.75rem 1.75rem 1.6rem;
+    }
+  }
+
   /* --- Route content cross-fade (components/shared/page-transition.tsx) --- */
   @keyframes page-transition-in {
     from {

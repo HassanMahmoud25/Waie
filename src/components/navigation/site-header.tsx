@@ -3,11 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { LayoutDashboard, Library, LogOut, Search, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { primaryNav } from "@/config/site";
-import { logoutAction } from "@/lib/auth/actions";
+import { LogoutConfirmDialog } from "@/components/auth/logout-confirm";
 import type { SessionUser } from "@/lib/auth/server";
 import { IconButton } from "@/components/ui/icon-button";
 import { SearchModal } from "@/components/search/search-modal";
@@ -122,7 +122,12 @@ function HeaderAuth({ user }: { user: SessionUser | null }) {
   // open/close animation itself off the `data-state` attribute (see the
   // `.user-menu` keyframes in globals.css).
   const [shouldRender, setShouldRender] = useState(false);
+  // Lives here, not inside the menu: the menu closes (and unmounts) as the
+  // confirmation opens, and the dialog has to survive that.
+  const [isLogoutOpen, setIsLogoutOpen] = useState(false);
+  const closeLogout = useCallback(() => setIsLogoutOpen(false), []);
   const rootRef = useRef<HTMLDivElement>(null);
+  const avatarRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -169,6 +174,7 @@ function HeaderAuth({ user }: { user: SessionUser | null }) {
   return (
     <div className="relative" ref={rootRef}>
       <button
+        ref={avatarRef}
         type="button"
         className="avatar-btn"
         aria-haspopup="menu"
@@ -213,18 +219,24 @@ function HeaderAuth({ user }: { user: SessionUser | null }) {
               <LayoutDashboard size={16} /> لوحة التحكم
             </Link>
           )}
-          {/* Real server logout (see lib/auth/actions.ts) -- the same action /admin's logout uses. */}
-          <form action={logoutAction}>
-            <button
-              type="submit"
-              role="menuitem"
-              className="user-menu__item user-menu__item--danger w-full"
-            >
-              <LogOut size={16} /> تسجيل الخروج
-            </button>
-          </form>
+          {/* Asks first; the real server logout (lib/auth/actions.ts, the same
+              action /admin's logout uses) only runs from the dialog's Confirm. */}
+          <button
+            type="button"
+            role="menuitem"
+            aria-haspopup="dialog"
+            className="user-menu__item user-menu__item--danger w-full"
+            onClick={() => {
+              setIsOpen(false);
+              setIsLogoutOpen(true);
+            }}
+          >
+            <LogOut size={16} /> تسجيل الخروج
+          </button>
         </div>
       )}
+
+      <LogoutConfirmDialog open={isLogoutOpen} onClose={closeLogout} returnFocusRef={avatarRef} />
     </div>
   );
 }

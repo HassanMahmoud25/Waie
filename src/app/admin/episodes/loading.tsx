@@ -10,14 +10,14 @@ import {
 export default function AdminEpisodesLoading() {
   return (
     <div>
-      <AdminHeaderSkeleton withBack />
+      <AdminHeaderSkeleton withBack description={[2, 1, 1]} />
 
       <div className="mt-8 md:mt-10">
-        <AdminCreateFormSkeleton />
+        <AdminCreateFormSkeleton buttonWidth="sm:w-[141px]" />
         <div className="mt-6">
           <AdminSearchFieldSkeleton />
         </div>
-        <AdminTabsSkeleton />
+        <AdminTabsSkeleton className="mt-4" />
         <div className="mt-4">
           <AdminListSkeleton count={6} thumbnail statusBadge />
         </div>
