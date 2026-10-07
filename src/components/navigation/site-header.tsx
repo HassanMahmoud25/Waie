@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Library, LogOut, Search, UserRound } from "lucide-react";
+import { LayoutDashboard, Library, LogOut, Search, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { primaryNav } from "@/config/site";
 import { logoutAction } from "@/lib/auth/actions";
@@ -199,6 +199,20 @@ function HeaderAuth({ user }: { user: SessionUser | null }) {
           >
             <Library size={16} /> مكتبتي
           </Link>
+          {/* Convenience only: `role` comes from the same server-verified session,
+              so the item is in the first paint for admins and never rendered for
+              anyone else -- but /admin itself is guarded by middleware.ts and
+              requireAdmin(), not by this link being hidden. */}
+          {user.role === "ADMIN" && (
+            <Link
+              href="/admin"
+              role="menuitem"
+              className="user-menu__item"
+              onClick={() => setIsOpen(false)}
+            >
+              <LayoutDashboard size={16} /> لوحة التحكم
+            </Link>
+          )}
           {/* Real server logout (see lib/auth/actions.ts) -- the same action /admin's logout uses. */}
           <form action={logoutAction}>
             <button
