@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useInvalidateAfterMutation } from "@/hooks/use-content-queries";
 import Link from "next/link";
 import { CircleAlert, CircleCheck, ExternalLink, Layers, Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ type AdminSeries = NonNullable<Awaited<ReturnType<typeof getSeriesForAdmin>>>;
  */
 export function SeriesEditor({ series, topics }: { series: AdminSeries; topics: TopicWithStats[] }) {
   const router = useRouter();
+  const invalidateQueries = useInvalidateAfterMutation();
 
   const [status, setStatus] = useState(series.status);
   const [title, setTitle] = useState(series.title);
@@ -63,6 +65,7 @@ export function SeriesEditor({ series, topics }: { series: AdminSeries; topics: 
         return;
       }
       setSaveState({ success: true });
+      invalidateQueries("series");
       router.refresh();
     });
   }
@@ -77,6 +80,7 @@ export function SeriesEditor({ series, topics }: { series: AdminSeries; topics: 
         return;
       }
       setStatus(status === "PUBLISHED" ? "DRAFT" : "PUBLISHED");
+      invalidateQueries("series");
       router.refresh();
     });
   }
@@ -90,6 +94,7 @@ export function SeriesEditor({ series, topics }: { series: AdminSeries; topics: 
         setDeleteError(result.error);
         return;
       }
+      invalidateQueries("series");
       router.push("/admin/series");
     });
   }

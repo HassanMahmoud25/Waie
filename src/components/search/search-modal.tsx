@@ -1,14 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { ArrowLeft, Play, Search, SearchX, X } from "lucide-react";
 import type { Episode } from "@/types/episode";
 import type { SearchResults } from "@/types/search";
-import type { Topic } from "@/types/topic";
 import { RESULT_FORMS, formatCount, formatDuration } from "@/lib/utils/format";
-import { listQuickTopicsAction, searchContentAction } from "@/app/(site)/search/actions";
+import { useQuickTopics, useSearchResults } from "@/hooks/use-content-queries";
 import { TopicChipsSkeleton } from "@/components/content/loading-skeletons";
 import { SearchResultRow } from "./search-result-row";
 import { EpisodeThumbnail } from "@/components/content/episode-thumbnail";
@@ -26,6 +25,11 @@ const TRANSITION_MS = 220;
  * (`app/search/actions.ts`) rather than duplicating the matching logic —
  * the full `/search?q=` page keeps working unchanged as a direct-link /
  * no-JS fallback; this is just a faster way to reach the same results.
+ *
+ * Results and topics go through the shared query cache (hooks/
+ * use-content-queries.ts): reopening the modal or retyping a recent query
+ * shows its results instantly, and a slow response can never overwrite a
+ * newer query's results.
  */
 export function SearchModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [mounted, setMounted] = useState(false);
@@ -35,9 +39,13 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
   // is needed to kick off the enter animation.
   const [shouldRender, setShouldRender] = useState(false);
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  // What's on screen: kept while the next query loads (no flash per keystroke), cleared when the input is.
   const [results, setResults] = useState<SearchResults | null>(null);
-  const [topics, setTopics] = useState<Topic[] | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const topicsQuery = useQuickTopics(shouldRender);
+  const topics = topicsQuery.data ?? (topicsQuery.isError ? [] : null);
+  const search = useSearchResults(debouncedQuery);
+  const isPending = search.isFetching;
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => setMounted(true), []);
@@ -53,20 +61,16 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
     return () => clearTimeout(timeout);
   }, [open]);
 
-  // Lock page scroll, focus the input, and lazily load the quick-browse topics.
+  // Lock page scroll and focus the input (the quick-browse topics load via useQuickTopics once open).
   useEffect(() => {
     if (!shouldRender) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const raf = requestAnimationFrame(() => inputRef.current?.focus());
-    if (!topics) {
-      listQuickTopicsAction().then(setTopics).catch(() => setTopics([]));
-    }
     return () => {
       document.body.style.overflow = previousOverflow;
       cancelAnimationFrame(raf);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shouldRender]);
 
   // Reset once fully closed (after the exit transition) so the next open starts clean.
@@ -81,17 +85,18 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
   useEffect(() => {
     const trimmed = query.trim();
     if (!trimmed) {
+      setDebouncedQuery("");
       setResults(null);
       return;
     }
-    const handle = setTimeout(() => {
-      startTransition(async () => {
-        const next = await searchContentAction(trimmed);
-        setResults(next);
-      });
-    }, DEBOUNCE_MS);
+    const handle = setTimeout(() => setDebouncedQuery(trimmed), DEBOUNCE_MS);
     return () => clearTimeout(handle);
   }, [query]);
+
+  // Show a query's results once they exist -- immediately when cached.
+  useEffect(() => {
+    if (debouncedQuery && search.data) setResults(search.data);
+  }, [debouncedQuery, search.data]);
 
   useEffect(() => {
     if (!open) return;

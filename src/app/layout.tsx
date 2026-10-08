@@ -8,6 +8,8 @@ import { siteConfig } from "@/config/site";
 import { bootInlineScript } from "@/lib/boot/config";
 import { BootOverlay } from "@/components/boot/boot-overlay";
 import { GlobalPlayer } from "@/components/media/global-player";
+import { QueryProvider } from "@/components/providers/query-provider";
+import { RouterCacheFreshness } from "@/components/shared/router-cache-freshness";
 import "./globals.css";
 
 /**
@@ -86,10 +88,13 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: bootInlineScript }} />
       </head>
       <body className="header-glow">
-        <BootOverlay />
-        {children}
-        {/* Outside every route group so playback and its controls survive navigation between them. */}
-        <GlobalPlayer />
+        <QueryProvider>
+          <BootOverlay />
+          <RouterCacheFreshness />
+          {children}
+          {/* Outside every route group so playback and its controls survive navigation between them. */}
+          <GlobalPlayer />
+        </QueryProvider>
       </body>
     </html>
   );

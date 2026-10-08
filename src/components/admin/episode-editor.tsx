@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useInvalidateAfterMutation } from "@/hooks/use-content-queries";
 import Link from "next/link";
 import { CircleAlert, CircleCheck, ExternalLink, Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -45,6 +46,7 @@ export function EpisodeEditor({
   people: PickablePerson[];
 }) {
   const router = useRouter();
+  const invalidateQueries = useInvalidateAfterMutation();
 
   const [status, setStatus] = useState(episode.status);
   const [title, setTitle] = useState(episode.title ?? episode.youtubeTitle);
@@ -87,6 +89,7 @@ export function EpisodeEditor({
         return;
       }
       setSaveState({ success: true });
+      invalidateQueries("episode");
       router.refresh();
     });
   }
@@ -101,6 +104,7 @@ export function EpisodeEditor({
         return;
       }
       setStatus(status === "PUBLISHED" ? "DRAFT" : "PUBLISHED");
+      invalidateQueries("episode");
       router.refresh();
     });
   }
@@ -119,6 +123,7 @@ export function EpisodeEditor({
         setDeleteError(result.error);
         return;
       }
+      invalidateQueries("episode");
       router.push("/admin/episodes");
     });
   }

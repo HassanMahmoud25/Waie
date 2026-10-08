@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { AlertCircle, CheckCircle2, Loader2, Lock, LogIn, ShieldAlert } from "lucide-react";
 import { resetPasswordAction } from "@/lib/auth/actions";
+import { useClearViewerQueries } from "@/hooks/use-content-queries";
 import { AuthField } from "@/components/auth/auth-field";
 import { PasswordStrength } from "@/components/auth/password-strength";
 import { PASSWORD_MIN_LENGTH, passwordTooShortMessage } from "@/lib/auth/password-policy";
@@ -24,6 +25,7 @@ export function ResetPasswordForm({
   const [confirm, setConfirm] = useState("");
   const [errors, setErrors] = useState<Errors>({});
   const [formError, setFormError] = useState<string | null>(null);
+  const clearViewerQueries = useClearViewerQueries();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [linkInvalid, setLinkInvalid] = useState(!token || !initiallyValid);
@@ -69,6 +71,8 @@ export function ResetPasswordForm({
       return;
     }
 
+    // The reset signed this browser out.
+    clearViewerQueries();
     setSuccess(true);
   }
 

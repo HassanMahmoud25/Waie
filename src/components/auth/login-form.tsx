@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertCircle, Loader2, Lock, LogIn, Mail } from "lucide-react";
 import { serverLoginAction } from "@/lib/auth/actions";
+import { useClearViewerQueries } from "@/hooks/use-content-queries";
 import { AuthField } from "@/components/auth/auth-field";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -12,6 +13,7 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 /** `next` is where the visitor was headed when they got bounced here (e.g. /admin/episodes); the server re-validates it. */
 export function LoginForm({ next = null }: { next?: string | null }) {
   const router = useRouter();
+  const clearViewerQueries = useClearViewerQueries();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -43,6 +45,7 @@ export function LoginForm({ next = null }: { next?: string | null }) {
     setIsSubmitting(false);
 
     if (serverResult?.ok) {
+      clearViewerQueries();
       router.push(serverResult.redirectTo);
       router.refresh();
       return;

@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useInvalidateAfterMutation } from "@/hooks/use-content-queries";
 import { CircleAlert, Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createSeriesAction } from "@/lib/admin/content/series-actions";
@@ -15,6 +16,7 @@ import { createSeriesAction } from "@/lib/admin/content/series-actions";
  */
 export function CreateSeriesForm() {
   const router = useRouter();
+  const invalidateQueries = useInvalidateAfterMutation();
   const [title, setTitle] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -28,6 +30,7 @@ export function CreateSeriesForm() {
         setError(result.error);
         return;
       }
+      invalidateQueries("series");
       router.push(`/admin/series/${result.data.id}`);
     });
   }

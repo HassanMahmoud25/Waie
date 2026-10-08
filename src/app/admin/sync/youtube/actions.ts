@@ -28,11 +28,15 @@ async function run(operation: () => Promise<SyncResult>): Promise<SyncActionStat
 
   try {
     const result = await operation();
-    revalidatePath("/admin/sync/youtube");
-    revalidatePath("/");
     return { result };
   } catch (error) {
     return { error: error instanceof Error ? error.message : "حدث خطأ غير متوقع أثناء المزامنة." };
+  } finally {
+    // Also on failure: a sync can fail after already writing some episodes/series.
+    // (Every page renders on request, so this mainly makes Next drop the admin's
+    // client Router Cache -- every cached page may now show stale content.)
+    revalidatePath("/admin/sync/youtube");
+    revalidatePath("/");
   }
 }
 

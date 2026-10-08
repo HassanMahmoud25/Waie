@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useInvalidateAfterMutation } from "@/hooks/use-content-queries";
 import { CircleAlert, CircleCheck, Loader2, Trash2, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EPISODE_FORMS, formatArabicDate, formatCount } from "@/lib/utils/format";
@@ -21,6 +22,7 @@ type AdminPerson = NonNullable<Awaited<ReturnType<typeof getPersonForAdmin>>>;
  */
 export function PersonEditor({ person }: { person: AdminPerson }) {
   const router = useRouter();
+  const invalidateQueries = useInvalidateAfterMutation();
 
   const [name, setName] = useState(person.name);
   const [imageUrl, setImageUrl] = useState(person.imageUrl ?? "");
@@ -41,6 +43,7 @@ export function PersonEditor({ person }: { person: AdminPerson }) {
         return;
       }
       setSaveState({ success: true });
+      invalidateQueries("person");
       router.refresh();
     });
   }
@@ -58,6 +61,7 @@ export function PersonEditor({ person }: { person: AdminPerson }) {
         setDeleteError(result.error);
         return;
       }
+      invalidateQueries("person");
       router.push("/admin/people");
     });
   }

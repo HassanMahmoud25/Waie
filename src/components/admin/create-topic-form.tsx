@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useInvalidateAfterMutation } from "@/hooks/use-content-queries";
 import { CircleAlert, Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createTopicAction } from "@/lib/admin/content/topic-actions";
@@ -9,6 +10,7 @@ import { createTopicAction } from "@/lib/admin/content/topic-actions";
 /** Creates a new topic from just a title, then navigates to its editor. Mirrors create-series-form.tsx. */
 export function CreateTopicForm() {
   const router = useRouter();
+  const invalidateQueries = useInvalidateAfterMutation();
   const [title, setTitle] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -22,6 +24,7 @@ export function CreateTopicForm() {
         setError(result.error);
         return;
       }
+      invalidateQueries("topic");
       router.push(`/admin/topics/${result.data.id}`);
     });
   }

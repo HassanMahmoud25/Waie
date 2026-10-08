@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useInvalidateAfterMutation } from "@/hooks/use-content-queries";
 import Link from "next/link";
 import { CircleAlert, CircleCheck, ExternalLink, Loader2, Tag, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ type AdminTopic = NonNullable<Awaited<ReturnType<typeof getTopicForAdmin>>>;
  */
 export function TopicEditor({ topic }: { topic: AdminTopic }) {
   const router = useRouter();
+  const invalidateQueries = useInvalidateAfterMutation();
 
   const [title, setTitle] = useState(topic.title);
   const [description, setDescription] = useState(topic.description ?? "");
@@ -50,6 +52,7 @@ export function TopicEditor({ topic }: { topic: AdminTopic }) {
         return;
       }
       setSaveState({ success: true });
+      invalidateQueries("topic");
       router.refresh();
     });
   }
@@ -63,6 +66,7 @@ export function TopicEditor({ topic }: { topic: AdminTopic }) {
         setDeleteError(result.error);
         return;
       }
+      invalidateQueries("topic");
       router.push("/admin/topics");
     });
   }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Bookmark, CheckCircle2, Rss } from "lucide-react";
 import type { Episode } from "@/types/episode";
 import type { SeriesWithStats } from "@/types/series";
@@ -8,7 +8,7 @@ import type { ContinueWatchingItem } from "@/lib/library/continue-watching";
 import { useLibrary } from "@/hooks/use-library";
 import { useContinueWatching } from "@/hooks/use-continue-watching";
 import { useFollowedSeriesContext } from "@/components/library/followed-series-provider";
-import { getEpisodesByIdsAction, getSeriesCoverThumbnailsAction } from "@/lib/library/actions";
+import { useEpisodesByIds, useSeriesCoverThumbnails } from "@/hooks/use-content-queries";
 import { EpisodeCard } from "@/components/episode/episode-card";
 import { SeriesCard } from "@/components/series/series-card";
 import { ContinueWatchingCard } from "@/components/home/continue-watching-card";
@@ -43,58 +43,14 @@ export function LibraryContent({
     [progress],
   );
   const neededEpisodeIds = useMemo(() => [...new Set([...savedEpisodeIds, ...completedIds])], [savedEpisodeIds, completedIds]);
-  const neededEpisodeIdsKey = neededEpisodeIds.join(",");
 
-  // Grows only -- a toggled save/completion adds at most one id to fetch and
-  // never re-fetches (or drops) ids already resolved, so saving/unsaving an
-  // episode stays instant instead of re-showing the page skeleton.
-  const [episodesById, setEpisodesById] = useState<Map<string, Episode>>(new Map());
-  const [hasLoadedEpisodesOnce, setHasLoadedEpisodesOnce] = useState(false);
-
-  useEffect(() => {
-    const missingIds = neededEpisodeIds.filter((id) => !episodesById.has(id));
-    if (missingIds.length === 0) {
-      setHasLoadedEpisodesOnce(true);
-      return;
-    }
-    let cancelled = false;
-    getEpisodesByIdsAction(missingIds).then((episodes) => {
-      if (cancelled) return;
-      setEpisodesById((prev) => {
-        const next = new Map(prev);
-        for (const episode of episodes) next.set(episode.id, episode);
-        return next;
-      });
-      setHasLoadedEpisodesOnce(true);
-    });
-    return () => {
-      cancelled = true;
-    };
-    // neededEpisodeIdsKey is the real dependency -- neededEpisodeIds is a fresh array each render, and
-    // episodesById is only read to skip ids already resolved, not to react to.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [neededEpisodeIdsKey]);
-
-  const [seriesCoverThumbnails, setSeriesCoverThumbnails] = useState<Record<string, string>>({});
-  const [hasLoadedSeriesCoversOnce, setHasLoadedSeriesCoversOnce] = useState(false);
-  const followedSeriesIdsKey = followedSeriesIds.join(",");
-
-  useEffect(() => {
-    if (followedSeriesIds.length === 0) {
-      setHasLoadedSeriesCoversOnce(true);
-      return;
-    }
-    let cancelled = false;
-    getSeriesCoverThumbnailsAction(followedSeriesIds).then((thumbnails) => {
-      if (cancelled) return;
-      setSeriesCoverThumbnails((prev) => ({ ...prev, ...thumbnails }));
-      setHasLoadedSeriesCoversOnce(true);
-    });
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [followedSeriesIdsKey]);
+  // Shared, cached lookups (hooks/use-content-queries.ts): returning to this
+  // page renders the last resolved episodes/covers immediately instead of the
+  // skeleton, and a save/unsave keeps the previous list on screen while the
+  // changed id set resolves.
+  const { episodes: resolvedEpisodes, isLoaded: hasLoadedEpisodesOnce } = useEpisodesByIds(neededEpisodeIds);
+  const episodesById = useMemo(() => new Map(resolvedEpisodes.map((episode) => [episode.id, episode])), [resolvedEpisodes]);
+  const { thumbnails: seriesCoverThumbnails, isLoaded: hasLoadedSeriesCoversOnce } = useSeriesCoverThumbnails(followedSeriesIds);
 
   const followedSeries = followedSeriesIds
     .map((id) => seriesById.get(id))

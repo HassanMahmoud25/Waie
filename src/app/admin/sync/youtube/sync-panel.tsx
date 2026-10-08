@@ -3,6 +3,7 @@
 import { useState, useTransition, type ComponentType } from "react";
 import { Download, RefreshCw, FileText, ListVideo, Loader2, CircleCheck, CircleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useInvalidateAfterMutation } from "@/hooks/use-content-queries";
 import type { SyncActionState } from "./actions";
 import { importFullChannelAction, syncNewVideosAction, syncMetadataAction, syncPlaylistsAction } from "./actions";
 
@@ -52,11 +53,14 @@ export function SyncPanel() {
   const [pendingKey, setPendingKey] = useState<OperationKey | null>(null);
   const [results, setResults] = useState<Partial<Record<OperationKey, SyncActionState>>>({});
   const [isPending, startTransition] = useTransition();
+  const invalidateQueries = useInvalidateAfterMutation();
 
   function run(operation: Operation) {
     setPendingKey(operation.key);
     startTransition(async () => {
       const result = await operation.action();
+      // Even a failed run may have written some episodes/series before stopping.
+      invalidateQueries("sync");
       setResults((prev) => ({ ...prev, [operation.key]: result }));
       setPendingKey(null);
     });

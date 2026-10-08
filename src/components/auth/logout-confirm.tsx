@@ -4,6 +4,7 @@ import { unstable_rethrow } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition, type ReactNode, type RefObject } from "react";
 import { LogOut } from "lucide-react";
 import { logoutAction } from "@/lib/auth/actions";
+import { useClearViewerQueries } from "@/hooks/use-content-queries";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 /**
@@ -27,6 +28,7 @@ export function LogoutConfirmDialog({
 }) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const clearViewerQueries = useClearViewerQueries();
   // useTransition's flag lands a render late; this blocks a fast double click.
   const submittingRef = useRef(false);
 
@@ -45,6 +47,8 @@ export function LogoutConfirmDialog({
     setError(null);
     startTransition(async () => {
       try {
+        // Before the action: its success path ends in a redirect that never returns here.
+        clearViewerQueries();
         await logoutAction();
       } catch (caught) {
         // The successful path ends in redirect("/login"), which reaches the

@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useInvalidateAfterMutation } from "@/hooks/use-content-queries";
 import { CircleAlert, CircleCheck, Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createEpisodeAction } from "@/lib/admin/content/actions";
@@ -21,6 +22,7 @@ import { createEpisodeAction } from "@/lib/admin/content/actions";
  */
 export function CreateEpisodeForm() {
   const router = useRouter();
+  const invalidateQueries = useInvalidateAfterMutation();
   const [value, setValue] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [shortNotice, setShortNotice] = useState<string | null>(null);
@@ -41,6 +43,7 @@ export function CreateEpisodeForm() {
         setValue("");
         return;
       }
+      invalidateQueries("episode");
       router.push(`/admin/episodes/${result.data.id}`);
     });
   }

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertCircle, Loader2, Lock, Mail, User, UserPlus } from "lucide-react";
 import { serverSignupAction } from "@/lib/auth/actions";
+import { useClearViewerQueries } from "@/hooks/use-content-queries";
 import { AuthField } from "@/components/auth/auth-field";
 import { PasswordStrength } from "@/components/auth/password-strength";
 
@@ -14,6 +15,7 @@ type Errors = { name?: string; email?: string; password?: string; confirm?: stri
 
 export function SignupForm() {
   const router = useRouter();
+  const clearViewerQueries = useClearViewerQueries();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -56,6 +58,7 @@ export function SignupForm() {
 
     setIsSubmitting(false);
     setSuccess(true);
+    clearViewerQueries();
     window.setTimeout(() => {
       router.push(result.redirectTo);
       router.refresh();
