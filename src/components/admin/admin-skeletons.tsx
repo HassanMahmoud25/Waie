@@ -35,12 +35,25 @@ export function SkeletonLine({
 }
 
 /**
- * How many lines a piece of wrapping text takes per width band: below `sm` /
- * `sm` up to `xl` / `xl` and up (the admin content column grows from ~340px
- * on phones to 684px at 1024 and 940-1080px from 1280). A plain number means
- * the same count at every width.
+ * How many lines a piece of wrapping text takes per width band. The admin
+ * content column is ~340px on phones, ~720px on tablets, 684px at 1024 (the
+ * desktop sidebar appears) and 940-1080px from 1280, and two-column panels
+ * only split at `lg` -- so text can wrap *less* on a tablet than at 1024.
+ * A plain number means every width; `[mobile, tablet, wide]` covers below
+ * `sm` / `sm` to `xl` / `xl` up; `[mobile, sm, lg, xl]` splits the middle
+ * band at `lg`.
  */
-export type LineCounts = number | readonly [mobile: number, tablet: number, wide: number];
+export type LineCounts =
+  | number
+  | readonly [mobile: number, tablet: number, wide: number]
+  | readonly [mobile: number, sm: number, lg: number, xl: number];
+
+/** Normalizes LineCounts to one count per band: [below sm, sm, lg, xl]. */
+export function lineBands(lines: LineCounts): [number, number, number, number] {
+  if (typeof lines === "number") return [lines, lines, lines, lines];
+  if (lines.length === 3) return [lines[0], lines[1], lines[1], lines[2]];
+  return [lines[0], lines[1], lines[2], lines[3]];
+}
 
 /**
  * A paragraph of SkeletonLines that shows `lines` lines per width band, so
@@ -49,10 +62,10 @@ export type LineCounts = number | readonly [mobile: number, tablet: number, wide
  * paragraph.
  */
 export function SkeletonLines({ lines, box, bar }: { lines: LineCounts; box: string; bar: string }) {
-  const [mobile, tablet, wide] = typeof lines === "number" ? [lines, lines, lines] : lines;
-  const total = Math.max(mobile, tablet, wide);
+  const bands = lineBands(lines);
+  const total = Math.max(...bands);
   return Array.from({ length: total }).map((_, index) => {
-    const shown = [index < mobile, index < tablet, index < wide];
+    const shown = bands.map((count) => index < count);
     return (
       <div
         key={index}
@@ -61,7 +74,8 @@ export function SkeletonLines({ lines, box, bar }: { lines: LineCounts; box: str
           box,
           shown[0] ? "flex" : "hidden",
           shown[1] !== shown[0] && (shown[1] ? "sm:flex" : "sm:hidden"),
-          shown[2] !== shown[1] && (shown[2] ? "xl:flex" : "xl:hidden"),
+          shown[2] !== shown[1] && (shown[2] ? "lg:flex" : "lg:hidden"),
+          shown[3] !== shown[2] && (shown[3] ? "xl:flex" : "xl:hidden"),
         )}
       >
         <Skeleton className={cn(bar, index === total - 1 && total > 1 ? "w-2/3" : "w-full")} />
@@ -345,7 +359,7 @@ export function AdminIdentityCardSkeleton({ withAction = false, metaItems = 1 }:
           <SkeletonLines lines={withAction ? [2, 1, 1] : 1} box="h-6" bar="h-4 max-w-40" />
         </div>
         <div className="mt-1">
-          <SkeletonLines lines={withAction ? [metaItems, 1, 1] : 1} box="h-[1.7rem] sm:h-5" bar="h-3 max-w-56" />
+          <SkeletonLines lines={withAction ? [metaItems, 1, 1] : 1} box={withAction ? "h-[1.7rem] sm:h-5" : "h-5"} bar="h-3 max-w-56" />
         </div>
       </div>
       {withAction && <AdminButtonSkeleton className="w-40" />}

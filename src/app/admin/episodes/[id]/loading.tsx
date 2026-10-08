@@ -8,27 +8,40 @@ import {
   AdminListSkeleton,
   AdminPublishCardSkeleton,
   SkeletonLine,
+  SkeletonLines,
+  type LineCounts,
 } from "@/components/admin/admin-skeletons";
 
 /**
  * Mirrors one of the episode page's sub-editor sections (TranscriptEditor /
  * MindMapEditor / RecommendationEditor) in their usual state -- no content
  * yet: heading + note, the EmptyState box, then the section's action(s).
+ * `note` / `emptyNote` are line counts per width band (see LineCounts).
  */
-function SubEditorSkeleton({ noteLines, gap, footer = false }: { noteLines: number; gap: string; footer?: boolean }) {
+function SubEditorSkeleton({
+  note,
+  emptyNote = 1,
+  gap,
+  footer = false,
+}: {
+  note: LineCounts;
+  emptyNote?: LineCounts;
+  gap: string;
+  footer?: boolean;
+}) {
   return (
     <div className={`admin-panel grid p-5 sm:p-8 ${gap}`}>
       <div>
         <SkeletonLine box="h-7" bar="h-5 w-32" />
         <div className="mt-1">
-          {Array.from({ length: noteLines }).map((_, index) => (
-            <SkeletonLine key={index} box="h-7" bar={index === noteLines - 1 ? "h-3 w-2/3" : "h-3 w-full"} />
-          ))}
+          <SkeletonLines lines={note} box="h-7" bar="h-3" />
         </div>
       </div>
       <div className="empty-state">
         <SkeletonLine box="h-6 justify-center" bar="h-4 w-48 max-w-full" />
-        <SkeletonLine box="mt-1 h-5 justify-center" bar="h-3 w-64 max-w-full" />
+        <div className="mt-1">
+          <SkeletonLines lines={emptyNote} box="h-5 justify-center" bar="h-3 max-w-64" />
+        </div>
       </div>
       <AdminButtonSkeleton className="w-36" />
       {footer && (
@@ -74,7 +87,7 @@ export default function AdminEpisodeEditorLoading() {
               </div>
             </div>
             <SkeletonLine box="h-6" bar="h-4 w-24" />
-            <AdminFieldSkeleton labelWidth="w-36" hint={[5, 3, 2]} />
+            <AdminFieldSkeleton labelWidth="w-36" hint={[5, 2, 3, 2]} />
             <div className="grid gap-6 sm:grid-cols-2">
               <AdminFieldSkeleton labelWidth="w-32" />
               <AdminFieldSkeleton labelWidth="w-32" />
@@ -85,9 +98,9 @@ export default function AdminEpisodeEditorLoading() {
           <AdminDeletePanelSkeleton stackedBelow="xl" note={[3, 1, 1]} />
         </div>
 
-        <SubEditorSkeleton noteLines={1} gap="gap-5" />
-        <SubEditorSkeleton noteLines={2} gap="gap-6" />
-        <SubEditorSkeleton noteLines={2} gap="gap-6" footer />
+        <SubEditorSkeleton note={[2, 1, 1]} gap="gap-5" />
+        <SubEditorSkeleton note={[4, 2, 2]} emptyNote={[2, 1, 1]} gap="gap-6" />
+        <SubEditorSkeleton note={[4, 2, 2]} gap="gap-6" footer />
       </div>
     </div>
   );

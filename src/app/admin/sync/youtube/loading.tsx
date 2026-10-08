@@ -1,5 +1,18 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import { AdminButtonSkeleton, AdminHeaderSkeleton, SkeletonLine } from "@/components/admin/admin-skeletons";
+import {
+  AdminButtonSkeleton,
+  AdminHeaderSkeleton,
+  SkeletonLine,
+  SkeletonLines,
+  type LineCounts,
+} from "@/components/admin/admin-skeletons";
+
+const DESCRIPTION_LINES: LineCounts[] = [
+  [3, 3, 2],
+  [2, 2, 2],
+  [3, 3, 2],
+  [2, 3, 2],
+];
 
 /**
  * Mirrors app/admin/sync/youtube/page.tsx: header, SyncPanel's four operation
@@ -14,16 +27,15 @@ export default function AdminYouTubeSyncLoading() {
 
       <div className="mt-8 md:mt-10">
         <div className="grid gap-4 sm:grid-cols-2">
-          {Array.from({ length: 4 }).map((_, index) => (
+          {/* Description line counts per card (phone / tablet-desktop / wide), from the four real operation texts. */}
+          {DESCRIPTION_LINES.map((lines, index) => (
             <div key={index} className="admin-panel flex flex-col gap-5 p-5 sm:p-6">
               <div className="flex items-start gap-4">
                 <Skeleton className="size-11 shrink-0 rounded-[14px]" />
                 <div className="min-w-0 flex-1">
                   <SkeletonLine box="h-7" bar="h-4 w-40" />
                   <div className="mt-1">
-                    <SkeletonLine box="h-7" bar="h-3 w-full" />
-                    <SkeletonLine box="h-7" bar="h-3 w-full" />
-                    <SkeletonLine box="h-7" bar="h-3 w-1/2" />
+                    <SkeletonLines lines={lines} box="h-7" bar="h-3" />
                   </div>
                 </div>
               </div>

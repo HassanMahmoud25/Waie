@@ -2818,6 +2818,26 @@
     background: color-mix(in srgb, var(--ink) 9%, transparent);
   }
 
+  /* Single-line labels: a wrapped label would make the button taller. */
+  .confirm-dialog .btn {
+    white-space: nowrap;
+  }
+
+  .confirm-dialog__confirm {
+    position: relative;
+  }
+
+  .confirm-dialog__confirm[data-pending] .confirm-dialog__label {
+    visibility: hidden;
+  }
+
+  .confirm-dialog__spinner {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+  }
+
   .confirm-dialog .btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;

@@ -18,7 +18,7 @@ export default function AdminTopicEditorLoading() {
       <AdminHeaderSkeleton withBack />
 
       <div className="mt-8 grid gap-6 md:mt-10">
-        <AdminIdentityCardSkeleton withAction metaItems={6} />
+        <AdminIdentityCardSkeleton withAction metaItems={5} />
 
         <div className="admin-panel grid gap-6 p-5 sm:p-8">
           <AdminFieldSkeleton labelWidth="w-16" />

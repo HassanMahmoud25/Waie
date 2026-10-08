@@ -11,6 +11,7 @@ import {
 import { createPortal } from "react-dom";
 import { CircleAlert, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { VisuallyHidden } from "@/components/ui/visually-hidden";
 
 const TRANSITION_MS = 220;
 const FOCUSABLE =
@@ -197,14 +198,26 @@ export function ConfirmDialog({
           >
             {cancelLabel}
           </Button>
+          {/* The label stays in the layout (just invisible) while pending and
+              the spinner is overlaid, so the button never resizes or wraps;
+              the pending text is announced to screen readers instead. */}
           <Button
             type="button"
             variant="danger"
+            className="confirm-dialog__confirm"
+            data-pending={pending || undefined}
             onClick={onConfirm}
             disabled={pending}
-            iconPosition="start"
           >
-            {pending ? (pendingLabel ?? confirmLabel) : confirmLabel}
+            <span className="confirm-dialog__label">{confirmLabel}</span>
+            {pending && (
+              <>
+                <span className="confirm-dialog__spinner" aria-hidden="true">
+                  <Loader2 className="animate-spin" size={18} />
+                </span>
+                <VisuallyHidden>{pendingLabel ?? confirmLabel}</VisuallyHidden>
+              </>
+            )}
           </Button>
         </div>
       </div>

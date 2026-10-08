@@ -5,6 +5,7 @@ import {
   AdminHeaderSkeleton,
   AdminPanelHeadSkeleton,
   SkeletonLine,
+  SkeletonLines,
 } from "@/components/admin/admin-skeletons";
 
 /**
@@ -40,8 +41,7 @@ export default function AdminAccountLoading() {
           <div className="admin-panel__head flex-col items-start gap-1">
             <SkeletonLine box="h-[25px]" bar="h-4 w-32" />
             <div className="w-full">
-              <SkeletonLine box="h-7" bar="h-3 w-full" />
-              <SkeletonLine box="h-7" bar="h-3 w-1/2" />
+              <SkeletonLines lines={[2, 1, 2, 2]} box="h-7" bar="h-3" />
             </div>
           </div>
           <div className="flex flex-col gap-5 p-4 sm:p-5">

@@ -1,6 +1,14 @@
 import type { ReactNode } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AdminHeaderSkeleton, AdminPanelHeadSkeleton, AdminStatSkeleton, SkeletonLine } from "@/components/admin/admin-skeletons";
+import {
+  AdminHeaderSkeleton,
+  AdminPanelHeadSkeleton,
+  AdminStatSkeleton,
+  SkeletonLine,
+  SkeletonLines,
+  lineBands,
+  type LineCounts,
+} from "@/components/admin/admin-skeletons";
 import { cn } from "@/lib/utils/cn";
 
 /** `.admin-section-heading`: 34px icon chip + title, 1rem below. */
@@ -13,43 +21,82 @@ function SectionHeadingSkeleton() {
   );
 }
 
-/** The six-tile KPI grid both sections open with. */
-function KpiGridSkeleton() {
+/**
+ * Picks a one- or two-line height class per width band (see LineCounts) from
+ * literal class tables, so the fixed Arabic labels below that wrap at some
+ * widths reserve the right height.
+ */
+type HeightTable = readonly [Record<1 | 2, string>, Record<1 | 2, string>, Record<1 | 2, string>, Record<1 | 2, string>];
+function bandHeights(lines: LineCounts, table: HeightTable) {
+  const bands = lineBands(lines) as [1 | 2, 1 | 2, 1 | 2, 1 | 2];
+  return cn(...bands.map((count, band) => (band === 0 || count !== bands[band - 1] ? table[band][count] : false)));
+}
+const MINI_LABEL: HeightTable = [
+  { 1: "h-[18px]", 2: "h-[42px]" },
+  { 1: "sm:h-[18px]", 2: "sm:h-[42px]" },
+  { 1: "lg:h-[18px]", 2: "lg:h-[42px]" },
+  { 1: "xl:h-[18px]", 2: "xl:h-[42px]" },
+];
+const BAR_ROW: HeightTable = [
+  { 1: "h-[19px]", 2: "h-[38px]" },
+  { 1: "sm:h-[19px]", 2: "sm:h-[38px]" },
+  { 1: "lg:h-[19px]", 2: "lg:h-[38px]" },
+  { 1: "xl:h-[19px]", 2: "xl:h-[38px]" },
+];
+
+/** The six-tile KPI grid both sections open with; the Users labels wrap on phones and in the six-column row from `xl`. */
+function KpiGridSkeleton({ labelLines = 1 }: { labelLines?: LineCounts }) {
   return (
     <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-6">
       {Array.from({ length: 6 }).map((_, index) => (
-        <AdminStatSkeleton key={index} />
+        <AdminStatSkeleton key={index} labelLines={labelLines} />
       ))}
     </div>
   );
 }
 
-/** `.admin-mini-stat`: big number line, then its label line. */
-function MiniStatSkeleton() {
+/**
+ * `.admin-mini-stat`: big number line, then its label (`label` lines per
+ * width band). With a `note` (the small sub-line some minis add) the label
+ * is a block line and the note follows it.
+ */
+type MiniStat = { label?: LineCounts; note?: LineCounts };
+function MiniStatSkeleton({ label = 1, note }: MiniStat) {
   return (
     <div className="admin-mini-stat">
       <SkeletonLine box="h-[26px]" bar="h-5 w-10" />
-      <SkeletonLine box="h-[26px]" bar="h-2.5 w-20 max-w-full" />
+      {note ? (
+        <>
+          <SkeletonLine box="h-[17px]" bar="h-2.5 w-20 max-w-full" />
+          <div className="mt-1">
+            <SkeletonLines lines={note} box="h-4" bar="h-2 max-w-24" />
+          </div>
+        </>
+      ) : (
+        <div className={cn("mt-[5px] pt-1", bandHeights(label, MINI_LABEL))}>
+          <Skeleton className="h-2.5 w-20 max-w-full" />
+        </div>
+      )}
     </div>
   );
 }
 
-function MiniStatGridSkeleton({ count, className = "grid-cols-2" }: { count: number; className?: string }) {
+function MiniStatGridSkeleton({ items, className = "grid-cols-2" }: { items: MiniStat[]; className?: string }) {
   return (
     <div className={cn("grid gap-2", className)}>
-      {Array.from({ length: count }).map((_, index) => (
-        <MiniStatSkeleton key={index} />
+      {items.map((item, index) => (
+        <MiniStatSkeleton key={index} {...item} />
       ))}
     </div>
   );
 }
 
-/** StatBarList: label | track | value rows. */
-function BarListSkeleton({ rows }: { rows: number }) {
+/** StatBarList: label | track | value rows; `tall` marks rows whose (fixed) label wraps to two lines, per width band. */
+function BarListSkeleton({ rows, tall = {} }: { rows: number; tall?: Record<number, LineCounts> }) {
   return (
     <div className="admin-bar-list">
       {Array.from({ length: rows }).map((_, index) => (
-        <div className="admin-bar-row" key={index}>
+        <div className={cn("admin-bar-row", bandHeights(tall[index] ?? 1, BAR_ROW))} key={index}>
           <SkeletonLine box="h-[19px]" bar="h-3 w-3/4" />
           <Skeleton className="h-2.5 rounded-full" />
           <Skeleton className="h-3 w-5" />
@@ -58,6 +105,8 @@ function BarListSkeleton({ rows }: { rows: number }) {
     </div>
   );
 }
+
+const plain = (count: number): MiniStat[] => Array.from({ length: count }, () => ({}));
 
 /** MiniChart: the SVG keeps a fixed 600:160 aspect ratio, then its axis-label strip. */
 function ChartSkeleton() {
@@ -111,16 +160,16 @@ const TWO_COLUMNS = "grid gap-6 p-4 sm:p-5 lg:grid-cols-2";
 export default function AdminStatisticsLoading() {
   return (
     <div>
-      <AdminHeaderSkeleton withBack description={[4, 2, 2]} />
+      <AdminHeaderSkeleton withBack description={[3, 2, 2]} />
 
       <div className="mt-8 md:mt-10">
         <section className="admin-users-section">
           <SectionHeadingSkeleton />
-          <KpiGridSkeleton />
+          <KpiGridSkeleton labelLines={[2, 1, 2]} />
 
           <PanelSkeleton titleWidth="w-28" className="mt-6">
             <div className="p-4 sm:p-5">
-              <MiniStatGridSkeleton count={5} className="grid-cols-2 sm:grid-cols-3 lg:grid-cols-5" />
+              <MiniStatGridSkeleton items={plain(5)} className="grid-cols-2 sm:grid-cols-3 lg:grid-cols-5" />
             </div>
           </PanelSkeleton>
 
@@ -151,12 +200,22 @@ export default function AdminStatisticsLoading() {
           <PanelSkeleton titleWidth="w-36" className="mt-6">
             <div className={TWO_COLUMNS}>
               <ColumnSkeleton>
-                <MiniStatGridSkeleton count={6} />
+                <MiniStatGridSkeleton
+                  items={[
+                    { label: [2, 1, 2, 1] },
+                    { label: [2, 1, 2, 1] },
+                    { label: [2, 1, 2, 1] },
+                    { label: [2, 1, 2, 1] },
+                    { label: [2, 1, 1, 1] },
+                    { label: [2, 1, 1, 1] },
+                  ]}
+                />
               </ColumnSkeleton>
               <ColumnSkeleton>
-                <BarListSkeleton rows={6} />
-                <SkeletonLine box="mt-3 h-4" bar="h-2.5 w-full" />
-                <SkeletonLine box="h-4" bar="h-2.5 w-1/2" />
+                <BarListSkeleton rows={6} tall={{ 0: [2, 1, 1], 2: 2 }} />
+                <div className="mt-3">
+                  <SkeletonLines lines={[2, 1, 2, 2]} box="h-4" bar="h-2.5" />
+                </div>
               </ColumnSkeleton>
             </div>
           </PanelSkeleton>
@@ -180,10 +239,10 @@ export default function AdminStatisticsLoading() {
           <PanelSkeleton titleWidth="w-48" className="mt-6 sm:mt-8">
             <div className={TWO_COLUMNS}>
               <ColumnSkeleton>
-                <MiniStatGridSkeleton count={4} />
+                <MiniStatGridSkeleton items={[{}, { note: [2, 1, 2, 1] }, { note: 1 }, { note: 1 }]} />
               </ColumnSkeleton>
               <ColumnSkeleton>
-                <BarListSkeleton rows={6} />
+                <BarListSkeleton rows={7} />
               </ColumnSkeleton>
             </div>
           </PanelSkeleton>
@@ -200,7 +259,7 @@ export default function AdminStatisticsLoading() {
                 <BarListSkeleton rows={4} />
               </ColumnSkeleton>
               <ColumnSkeleton>
-                <MiniStatGridSkeleton count={3} />
+                <MiniStatGridSkeleton items={[{ label: [2, 1, 2, 1] }, { label: [2, 1, 2, 1] }, {}]} />
               </ColumnSkeleton>
             </div>
           </PanelSkeleton>
