@@ -98,7 +98,7 @@ export function EpisodeNotes({ episodeId, durationSeconds }: { episodeId: string
               />
             </button>
           )}
-          {isAuthenticated && notes.length > 0 && composer === null && (
+          {isAuthenticated && notes.length > 0 && composer?.mode !== "edit" && (
             <Button
               variant="secondary"
               icon={<Plus size={16} aria-hidden="true" />}
@@ -157,7 +157,7 @@ export function EpisodeNotes({ episodeId, durationSeconds }: { episodeId: string
                   </ul>
                 )}
 
-                {notes.length === 0 && composer === null && (
+                {notes.length === 0 && composer?.mode !== "edit" && (
                   <EmptyState
                     icon={NotebookPen}
                     title="لا توجد ملاحظات بعد"

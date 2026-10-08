@@ -33,9 +33,8 @@ export default async function AdminEpisodesPage({
   const activeTab = statusTabs.find((tab) => tab.key === statusParam) ?? statusTabs[0];
   const query = q?.trim() ?? "";
 
-  // Tab counts come from one GROUP BY (never listAllEpisodes().length), and
-  // listAllSeries() mirrors listAllEpisodes()'s "admin sees every status"
-  // behavior so a draft series' title still resolves here instead of
+  // Tab counts come from one GROUP BY, and listAllSeries() includes every
+  // status so a draft series' title still resolves here instead of
   // showing "بلا سلسلة". The actual rendered list is the first cursor-
   // paginated batch matching the active tab/query -- AdminEpisodeListLoader
   // fetches further batches itself as the admin clicks "تحميل المزيد", so

@@ -4,14 +4,11 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { CircleAlert, Loader2, TriangleAlert, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-const TRANSITION_MS = 220;
+import { useDialog } from "@/hooks/use-dialog";
 
 /**
- * Confirms a permanent episode delete before it fires -- same portal/
- * backdrop/alertdialog plumbing as note-delete-modal.tsx (the one other
- * place this app uses a real modal instead of window.confirm for a delete),
- * sized up to explain the cascade's real scope: deleting an episode also
+ * Confirms a permanent episode delete before it fires (focus and Escape
+ * handling: useDialog), sized up to explain the cascade's real scope: deleting an episode also
  * removes every user's notes/saves/watch-progress for it, not just the
  * episode row (see prisma/schema.prisma -- every Episode relation is ON
  * DELETE CASCADE).
@@ -36,67 +33,40 @@ export function EpisodeDeleteModal({
   onConfirm: () => void;
 }) {
   const open = episode !== null;
-  const [mounted, setMounted] = useState(false);
-  const [shouldRender, setShouldRender] = useState(false);
   // Kept around locally so the title doesn't blank out mid-close-animation
   // once the caller clears its selection.
   const [displayedEpisode, setDisplayedEpisode] = useState<{ id: string; title: string } | null>(null);
 
-  useEffect(() => setMounted(true), []);
-
   useEffect(() => {
     if (episode) setDisplayedEpisode(episode);
   }, [episode]);
-
-  useEffect(() => {
-    if (open) {
-      setShouldRender(true);
-      return;
-    }
-    const timeout = setTimeout(() => setShouldRender(false), TRANSITION_MS);
-    return () => clearTimeout(timeout);
-  }, [open]);
-
-  useEffect(() => {
-    if (!shouldRender) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [shouldRender]);
 
   function handleCancel() {
     if (isDeleting) return;
     onCancel();
   }
 
-  useEffect(() => {
-    if (!open) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !isDeleting) onCancel();
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [open, isDeleting, onCancel]);
+  const { isRendered, state, panelRef } = useDialog({ open, onClose: onCancel, canClose: !isDeleting });
 
-  if (!mounted || !shouldRender || !displayedEpisode) return null;
+  if (!isRendered || !displayedEpisode) return null;
 
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
       <div
         className="note-modal-backdrop absolute inset-0 bg-[var(--cinematic)]/70 backdrop-blur-md"
-        data-state={open ? "open" : "closed"}
+        data-state={state}
         onClick={handleCancel}
         aria-hidden="true"
       />
 
       <div
+        ref={panelRef}
+        tabIndex={-1}
         role="alertdialog"
         aria-modal="true"
         aria-label="حذف الحلقة"
-        data-state={open ? "open" : "closed"}
-        className="note-modal-panel glass-strong relative z-10 w-full max-w-xl overflow-hidden rounded-[28px] shadow-[var(--shadow-lg)]"
+        data-state={state}
+        className="note-modal-panel glass-strong relative z-10 outline-none w-full max-w-xl overflow-hidden rounded-[28px] shadow-[var(--shadow-lg)]"
       >
         <div className="flex items-center justify-between gap-3 border-b border-white/50 px-5 py-4">
           <h2 className="text-base font-black">حذف هذه الحلقة؟</h2>
@@ -130,7 +100,7 @@ export function EpisodeDeleteModal({
           )}
 
           <div className="mt-5 flex justify-end gap-2">
-            <Button type="button" variant="ghost" onClick={handleCancel} disabled={isDeleting}>
+            <Button type="button" variant="ghost" onClick={handleCancel} disabled={isDeleting} data-autofocus>
               إلغاء
             </Button>
             <Button

@@ -5,15 +5,15 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { ArrowLeft, Play, Search, SearchX, X } from "lucide-react";
 import type { Episode } from "@/types/episode";
-import type { SearchResults } from "@/types/search";
+import type { SearchPreview } from "@/types/search";
 import { RESULT_FORMS, formatCount, formatDuration } from "@/lib/utils/format";
 import { useQuickTopics, useSearchResults } from "@/hooks/use-content-queries";
 import { TopicChipsSkeleton } from "@/components/content/loading-skeletons";
 import { SearchResultRow } from "./search-result-row";
 import { EpisodeThumbnail } from "@/components/content/episode-thumbnail";
+import { useDialog } from "@/hooks/use-dialog";
 
 const DEBOUNCE_MS = 250;
-const TRANSITION_MS = 220;
 
 /**
  * Command-palette-style search: a portal-rendered overlay so it always
@@ -32,54 +32,25 @@ const TRANSITION_MS = 220;
  * newer query's results.
  */
 export function SearchModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [mounted, setMounted] = useState(false);
-  // Keeps the modal in the DOM for the closing animation; the CSS drives the
-  // open/close animation itself off the `data-state` attribute (see the
-  // `.search-modal-*` keyframes in globals.css), so no JS-timed class flip
-  // is needed to kick off the enter animation.
-  const [shouldRender, setShouldRender] = useState(false);
+  // Exit animation, scroll lock, Escape and focus (the input is autofocused): useDialog.
+  const { isRendered, state, panelRef } = useDialog({ open, onClose });
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   // What's on screen: kept while the next query loads (no flash per keystroke), cleared when the input is.
-  const [results, setResults] = useState<SearchResults | null>(null);
-  const topicsQuery = useQuickTopics(shouldRender);
+  const [results, setResults] = useState<SearchPreview | null>(null);
+  const topicsQuery = useQuickTopics(isRendered);
   const topics = topicsQuery.data ?? (topicsQuery.isError ? [] : null);
   const search = useSearchResults(debouncedQuery);
   const isPending = search.isFetching;
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => setMounted(true), []);
-
-  // Mount immediately on open; on close, stay mounted long enough to play
-  // the exit animation, then unmount.
-  useEffect(() => {
-    if (open) {
-      setShouldRender(true);
-      return;
-    }
-    const timeout = setTimeout(() => setShouldRender(false), TRANSITION_MS);
-    return () => clearTimeout(timeout);
-  }, [open]);
-
-  // Lock page scroll and focus the input (the quick-browse topics load via useQuickTopics once open).
-  useEffect(() => {
-    if (!shouldRender) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    const raf = requestAnimationFrame(() => inputRef.current?.focus());
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      cancelAnimationFrame(raf);
-    };
-  }, [shouldRender]);
-
   // Reset once fully closed (after the exit transition) so the next open starts clean.
   useEffect(() => {
-    if (!shouldRender) {
+    if (!isRendered) {
       setQuery("");
       setResults(null);
     }
-  }, [shouldRender]);
+  }, [isRendered]);
 
   // Debounced live search.
   useEffect(() => {
@@ -98,35 +69,28 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
     if (debouncedQuery && search.data) setResults(search.data);
   }, [debouncedQuery, search.data]);
 
-  useEffect(() => {
-    if (!open) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [open, onClose]);
-
-  if (!mounted || !shouldRender) return null;
+  if (!isRendered) return null;
 
   const trimmed = query.trim();
-  const totalResults = results ? results.episodes.length + results.series.length + results.topics.length : 0;
+  const totalResults = results ? results.totalEpisodes + results.series.length + results.topics.length : 0;
 
   return createPortal(
     <div className="fixed inset-0 z-[100] flex justify-center px-4 pt-[8vh] sm:pt-[12vh]">
       <div
         className="search-modal-backdrop absolute inset-0 bg-[var(--cinematic)]/70 backdrop-blur-md"
-        data-state={open ? "open" : "closed"}
+        data-state={state}
         onClick={onClose}
         aria-hidden="true"
       />
 
       <div
+        ref={panelRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-label="البحث في وعي"
-        data-state={open ? "open" : "closed"}
-        className="search-modal-panel glass-strong relative z-10 h-fit max-h-[76vh] w-full max-w-2xl overflow-hidden rounded-[28px] shadow-[var(--shadow-lg)]"
+        data-state={state}
+        className="search-modal-panel glass-strong relative z-10 outline-none h-fit max-h-[76vh] w-full max-w-2xl overflow-hidden rounded-[28px] shadow-[var(--shadow-lg)]"
       >
         <div className="flex items-center gap-3 border-b border-white/50 px-5 py-4 sm:px-6">
           <span className="grid size-9 shrink-0 place-items-center rounded-full bg-black/5 text-[var(--ink-soft)]">
@@ -134,6 +98,7 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
           </span>
           <input
             ref={inputRef}
+            data-autofocus
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="ابحث عن صحابي، أو موضوع، أو حلقة..."
@@ -215,7 +180,7 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
               {results.episodes.length > 0 && (
                 <div className="flex flex-col gap-1.5">
                   <p className="px-1 text-xs font-black tracking-[.02em] text-[var(--muted)]">الحلقات</p>
-                  {results.episodes.slice(0, 8).map((episode) => (
+                  {results.episodes.map((episode) => (
                     <EpisodeResultRow episode={episode} onClick={onClose} key={episode.id} />
                   ))}
                 </div>

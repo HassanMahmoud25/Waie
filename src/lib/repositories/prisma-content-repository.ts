@@ -229,15 +229,6 @@ export const prismaContentRepository: ContentRepository = {
     return toCursorPage(rows.map(toEpisode), limit, (episode) => episode.id);
   },
 
-  async listFeaturedEpisodes() {
-    const rows = await prisma.episode.findMany({
-      where: { ...isPublishedWhere, featured: true },
-      include: episodeInclude,
-      orderBy: { youtubePublishedAt: "desc" },
-    });
-    return rows.map(toEpisode);
-  },
-
   async listLatestEpisodes(limit = 6) {
     const rows = await prisma.episode.findMany({
       where: isPublishedWhere,
@@ -289,6 +280,7 @@ export const prismaContentRepository: ContentRepository = {
           where: { seriesId: source.seriesId, id: { not: episodeId }, ...isPublishedWhere },
           include: episodeInclude,
           orderBy: { youtubePublishedAt: "desc" },
+          take: limit,
         })
       : [];
 
@@ -303,10 +295,11 @@ export const prismaContentRepository: ContentRepository = {
             },
             include: episodeInclude,
             orderBy: { youtubePublishedAt: "desc" },
+            take: remaining,
           })
         : [];
 
-    return [...sameSeries, ...sameTopic].slice(0, limit).map(toEpisode);
+    return [...sameSeries, ...sameTopic].map(toEpisode);
   },
 
   async getAdjacentEpisodes(episodeId) {
@@ -336,11 +329,6 @@ export const prismaContentRepository: ContentRepository = {
     if (!row) return null;
     const count = await prisma.episode.count({ where: { seriesId: row.id, ...isPublishedWhere } });
     return { ...toSeries(row), episodeCount: count } satisfies SeriesWithStats;
-  },
-
-  async getSeriesById(id) {
-    const row = await prisma.series.findUnique({ where: { id } });
-    return row ? toSeries(row) : null;
   },
 
   async getSeriesByIds(ids) {
@@ -379,8 +367,8 @@ export const prismaContentRepository: ContentRepository = {
   async listTopics() {
     const [rows, episodeCounts, seriesCounts] = await Promise.all([
       prisma.topic.findMany(),
-      prisma.episodeTopic.groupBy({ by: ["topicId"], _count: { _all: true } }),
-      prisma.series.groupBy({ by: ["topicId"], where: { topicId: { not: null } }, _count: { _all: true } }),
+      prisma.episodeTopic.groupBy({ by: ["topicId"], where: { episode: isPublishedWhere }, _count: { _all: true } }),
+      prisma.series.groupBy({ by: ["topicId"], where: { topicId: { not: null }, ...isPublishedWhere }, _count: { _all: true } }),
     ]);
     const episodeCountByTopic = new Map(episodeCounts.map((row) => [row.topicId, row._count._all]));
     const seriesCountByTopic = new Map(seriesCounts.map((row) => [row.topicId as string, row._count._all]));
@@ -398,16 +386,10 @@ export const prismaContentRepository: ContentRepository = {
     const row = await prisma.topic.findUnique({ where: { slug } });
     if (!row) return null;
     const [episodeCount, seriesCount] = await Promise.all([
-      prisma.episodeTopic.count({ where: { topicId: row.id } }),
-      prisma.series.count({ where: { topicId: row.id } }),
+      prisma.episodeTopic.count({ where: { topicId: row.id, episode: isPublishedWhere } }),
+      prisma.series.count({ where: { topicId: row.id, ...isPublishedWhere } }),
     ]);
     return { ...toTopic(row), episodeCount, seriesCount } satisfies TopicWithStats;
-  },
-
-  async getTopicsByIds(ids) {
-    if (ids.length === 0) return [];
-    const rows = await prisma.topic.findMany({ where: { id: { in: ids } } });
-    return rows.map(toTopic);
   },
 
   async listCollections() {
@@ -420,7 +402,6 @@ export const prismaContentRepository: ContentRepository = {
     return row ? toCollection(row) : null;
   },
 
-
   async getEpisodesByIds(ids) {
     if (ids.length === 0) return [];
     // Public-facing (see (site)/collections/**): a collection referencing a
@@ -428,11 +409,6 @@ export const prismaContentRepository: ContentRepository = {
     const rows = await prisma.episode.findMany({ where: { id: { in: ids }, ...isPublishedWhere }, include: episodeInclude });
     const byId = new Map(rows.map((row) => [row.id, row]));
     return ids.map((id) => byId.get(id)).filter((row): row is EpisodeRow => Boolean(row)).map(toEpisode);
-  },
-
-  async listAllEpisodes() {
-    const rows = await prisma.episode.findMany({ include: episodeInclude, orderBy: { youtubePublishedAt: "desc" } });
-    return rows.map(toEpisode);
   },
 
   async countEpisodesByStatus() {
@@ -513,19 +489,6 @@ export const prismaContentRepository: ContentRepository = {
     return paginateByCursor(matched.map(toEpisode), cursor, (episode) => episode.id, limit);
   },
 
-  async getEpisodeById(id) {
-    const row = await prisma.episode.findUnique({ where: { id }, include: episodeInclude });
-    return row ? toEpisode(row) : null;
-  },
-
-  async updateEpisode(id, patch) {
-    try {
-      const row = await prisma.episode.update({ where: { id }, data: patch, include: episodeInclude });
-      return toEpisode(row);
-    } catch {
-      return null;
-    }
-  },
 
   async getRecommendationsByEpisode(episodeId) {
     const rows = await prisma.recommendation.findMany({ where: { episodeId }, orderBy: { order: "asc" } });

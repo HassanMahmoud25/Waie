@@ -23,7 +23,7 @@ export type ContentOverview = {
   totalDurationSeconds: number;
 };
 
-/** One GROUP BY plus three COUNTs -- never listAllEpisodes()/listAllSeries() just to read a length. */
+/** One GROUP BY plus three COUNTs -- never a full listing just to read a length. */
 export async function getContentOverview(): Promise<ContentOverview> {
   const [statusRows, totalSeries, totalPeople, durationAgg] = await Promise.all([
     prisma.episode.groupBy({ by: ["status"], _count: { _all: true } }),

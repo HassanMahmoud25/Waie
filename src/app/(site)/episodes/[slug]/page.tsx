@@ -20,6 +20,7 @@ import { HostAvatars } from "@/components/host/host-avatars";
 import { resolveAudioUrls } from "@/lib/audio/podcast-feed";
 import { NO_NEIGHBORS, toMediaItem } from "@/lib/playback/item";
 import { toIso8601Duration } from "@/lib/utils/format";
+import { youtubeThumbnailVariant } from "@/lib/utils/youtube-thumbnail";
 
 /**
  * Request-memoized (React cache()) so generateMetadata and the page body --
@@ -27,6 +28,8 @@ import { toIso8601Duration } from "@/lib/utils/format";
  * instead of two. Same pattern as getSessionUser() (lib/auth/server.ts).
  */
 const getEpisode = cache((slug: string) => contentRepository.getEpisodeBySlug(slug));
+
+const META_DESCRIPTION_MAX = 160;
 
 export async function generateMetadata({
   params,
@@ -42,10 +45,14 @@ export async function generateMetadata({
   if (!episode) return {};
 
   const path = `/episodes/${slug}`;
+  // YouTube descriptions run to thousands of characters; search results and link previews show ~160.
+  const flatDescription = episode.description.replace(/\s+/g, " ").trim();
+  const description =
+    flatDescription.length > META_DESCRIPTION_MAX ? `${flatDescription.slice(0, META_DESCRIPTION_MAX - 1).trimEnd()}…` : flatDescription;
 
   return {
     title: episode.title,
-    description: episode.description,
+    description,
     alternates: {
       canonical: path,
     },
@@ -57,14 +64,14 @@ export async function generateMetadata({
       siteName: siteConfig.name,
       locale: "ar_AR",
       title: episode.title,
-      description: episode.description,
+      description,
       url: path,
       images: [{ url: episode.thumbnailUrl }],
     },
     twitter: {
       card: "summary_large_image",
       title: episode.title,
-      description: episode.description,
+      description,
       images: [episode.thumbnailUrl],
     },
   };
@@ -189,7 +196,8 @@ export default async function EpisodePage({
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        // Titles/descriptions come from YouTube: escape "<" so a "</script>" in them can't end this tag.
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
       <main>
         <EpisodePlayerProvider item={mediaItem}>
@@ -205,8 +213,11 @@ export default async function EpisodePage({
               className="pointer-events-none absolute inset-0 -z-10"
               aria-hidden="true"
             >
+              {/* Blurred to a wash at 25% opacity, so the 320px variant looks identical
+                  to the 1280px original -- and stops this decoration being the page's
+                  LCP element (8.5s on throttled mobile with the full-size image). */}
               <EpisodeThumbnail
-                src={episode.thumbnailUrl}
+                src={youtubeThumbnailVariant(episode.thumbnailUrl, "mqdefault") ?? episode.thumbnailUrl}
                 alt=""
                 fill
                 sizes="100vw"

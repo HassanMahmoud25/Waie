@@ -39,12 +39,17 @@ const displayFont = Cairo({
   display: "swap",
 });
 
-/** Long-form reading only (episode transcripts) — a traditional Naskh serif. */
+/**
+ * Long-form reading only (episode transcripts) — a traditional Naskh serif.
+ * Not preloaded: only the transcript tab uses it, and preloading put ~110 KB
+ * of font on every page, competing with the content that is actually shown.
+ */
 const readingFont = Noto_Naskh_Arabic({
   subsets: ["arabic", "latin"],
   weight: ["400", "500", "600", "700"],
   variable: "--font-reading",
   display: "swap",
+  preload: false,
 });
 
 export const metadata: Metadata = {

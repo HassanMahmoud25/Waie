@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Image from "next/image";
+import { ArtDirectedImage } from "@/components/shared/art-directed-image";
 import { notFound } from "next/navigation";
 import { contentRepository } from "@/lib/repositories";
 import { Breadcrumbs } from "@/components/navigation/breadcrumbs";
@@ -39,30 +39,17 @@ export default async function SeriesDetailPage({
     contentRepository.getSeriesCoverThumbnails([series.id]),
   ]);
   const coverImageUrl = series.coverImage ?? coverThumbnails[series.id];
-  const coverImageMobileUrl = series.coverImageMobile ?? coverImageUrl;
 
   return (
     <main>
       <section className="relative -mt-[80px] overflow-hidden sm:-mt-[84px]">
         <div className="relative h-[100svh] w-full">
-          {coverImageMobileUrl && (
-            <Image
-              src={coverImageMobileUrl}
-              alt=""
-              fill
-              priority
-              sizes="100vw"
-              className="object-cover md:hidden"
-            />
-          )}
           {coverImageUrl && (
-            <Image
+            <ArtDirectedImage
               src={coverImageUrl}
+              mobileSrc={series.coverImageMobile ?? coverImageUrl}
               alt=""
-              fill
-              priority
-              sizes="100vw"
-              className="hidden object-cover md:block"
+              className="object-cover"
             />
           )}
           <span className="scrim" aria-hidden="true" />

@@ -227,5 +227,4 @@ export const hostProfiles: Record<string, HostProfile> = {
   },
 };
 
-export const getHostProfile = (hostId: string): HostProfile | undefined => hostProfiles[hostId];
 export const getHostVideoThumbnail = thumbnail;

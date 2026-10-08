@@ -7,7 +7,7 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint .",
-    "test": "tsx --test src/lib/search/*.test.ts src/lib/*.test.ts src/lib/auth/*.test.ts src/lib/validation/*.test.ts src/lib/admin/content/*.test.ts src/lib/admin/users/*.test.ts src/lib/query/*.test.ts",
+    "test": "tsx --test \"src/**/*.test.ts\"",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",

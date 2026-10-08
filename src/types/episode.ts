@@ -1,5 +1,4 @@
 import type { ContentStatus } from "./content-status";
-import type { Series } from "./series";
 import type { Person } from "./person";
 
 export type Episode = {
@@ -35,11 +34,6 @@ export type Episode = {
    * record, not one of the show's three fixed hosts.
    */
   participants: Person[];
-};
-
-/** Episode enriched with its resolved series — used wherever a card needs the series title. */
-export type EpisodeWithSeries = Episode & {
-  series: Series | null;
 };
 
 /**

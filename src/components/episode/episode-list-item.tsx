@@ -74,7 +74,7 @@ export function EpisodeListItem({
         <div className="min-w-0 max-w-xl flex flex-col gap-1">
           <h3 className="episode-card__title line-clamp-2 sm:line-clamp-1">{episode.title}</h3>
           <p className="episode-card__description line-clamp-1 sm:line-clamp-2">{episode.description}</p>
-          <EpisodeMeta episode={episode} className="meta" isCompleted={isCompleted} />
+          <EpisodeMeta episode={episode} className="meta" />
           {typeof progressPercent === "number" && progressPercent > 0 && !isCompleted && (
             <ProgressBar percent={progressPercent} tone={isCurrent ? "current" : "default"} />
           )}

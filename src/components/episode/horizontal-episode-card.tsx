@@ -27,7 +27,7 @@ export function HorizontalEpisodeCard({
         <span className="media">
           <EpisodeThumbnail
             src={episode.thumbnailUrl}
-            alt=""
+            alt={episode.title}
             fill
             sizes="(max-width: 640px) 100vw, 220px"
             className="object-cover"

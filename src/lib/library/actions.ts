@@ -312,8 +312,9 @@ export async function deleteNoteAction(noteId: string): Promise<DeleteNoteResult
  * here to leak, since every returned episode is already public content.
  */
 export async function getEpisodesByIdsAction(ids: string[]): Promise<Episode[]> {
-  if (!Array.isArray(ids) || ids.length === 0) return [];
-  return contentRepository.getEpisodesByIds(ids);
+  const validIds = toIdList(ids);
+  if (validIds.length === 0) return [];
+  return contentRepository.getEpisodesByIds(validIds);
 }
 
 /**
@@ -324,6 +325,16 @@ export async function getEpisodesByIdsAction(ids: string[]): Promise<Episode[]> 
  * signed-in user's followed-series ids.
  */
 export async function getSeriesCoverThumbnailsAction(seriesIds: string[]): Promise<Record<string, string>> {
-  if (!Array.isArray(seriesIds) || seriesIds.length === 0) return {};
-  return contentRepository.getSeriesCoverThumbnails(seriesIds);
+  const validIds = toIdList(seriesIds);
+  if (validIds.length === 0) return {};
+  return contentRepository.getSeriesCoverThumbnails(validIds);
+}
+
+/** Generous for any real library (it's one IN query), but stops a crafted request from asking for an unbounded one. */
+const MAX_LOOKUP_IDS = 500;
+
+/** These two lookups are public endpoints: accept only a bounded list of non-empty strings. */
+function toIdList(ids: unknown): string[] {
+  if (!Array.isArray(ids)) return [];
+  return ids.filter((id): id is string => typeof id === "string" && id.length > 0).slice(0, MAX_LOOKUP_IDS);
 }

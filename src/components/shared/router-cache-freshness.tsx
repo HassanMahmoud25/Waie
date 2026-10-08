@@ -4,10 +4,7 @@ import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { revalidateClientRouterCacheAction } from "@/lib/router-cache/actions";
 
-/**
- * Upper bound on how old a page served from Next's client Router Cache can
- * get. Keep equal to `experimental.staleTimes.dynamic` in next.config.ts.
- */
+/** How old a page served from Next's client Router Cache can get. Keep equal to `experimental.staleTimes.dynamic` in next.config.ts. */
 const ROUTER_CACHE_MAX_AGE_MS = 900_000;
 /** After a failed background refresh (offline, server hiccup), try again this much later rather than on every navigation. */
 const RETRY_AFTER_FAILURE_MS = 30_000;
@@ -20,11 +17,12 @@ let isRefreshing = false;
  * Stale-while-revalidate for server-rendered pages.
  *
  * `staleTimes.dynamic` lets a revisited page render instantly from the Router
- * Cache instead of re-showing its loading.tsx skeleton. But that window
- * slides -- every revisit extends it -- so a page someone keeps coming back
- * to could otherwise stay stale indefinitely. On the first navigation (or
- * return to the tab) after the max age, this revalidates in the background:
- * the current page keeps showing its cached content while a fresh render
+ * Cache instead of re-showing its loading.tsx skeleton, and expires each
+ * entry ROUTER_CACHE_MAX_AGE_MS after it was first shown. The page that's
+ * currently open isn't covered by that, though: a tab left on one page (or
+ * in the background) keeps showing what it rendered. So on the first
+ * navigation, or return to the tab, after the max age, this revalidates in
+ * the background: the current page keeps its content while a fresh render
  * loads (a transition -- no skeleton, client state preserved), and the rest
  * of the Router Cache is dropped so other pages load fresh next time.
  *

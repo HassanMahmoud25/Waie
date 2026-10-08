@@ -47,16 +47,6 @@ export async function uniqueTopicSlug(preferredBase: string): Promise<string> {
   return candidate;
 }
 
-export async function uniqueCollectionSlug(preferredBase: string): Promise<string> {
-  let candidate = preferredBase;
-  let n = 1;
-  while (await prisma.collection.findUnique({ where: { slug: candidate }, select: { id: true } })) {
-    n += 1;
-    candidate = `${preferredBase}-${n}`;
-  }
-  return candidate;
-}
-
 /** A slug guaranteed not to collide with an existing Short. Mirrors uniqueEpisodeSlug -- Shorts, like Episodes, always have a natural ASCII fallback (their YouTube video id). */
 export async function uniqueShortSlug(preferredBase: string): Promise<string> {
   let candidate = preferredBase;

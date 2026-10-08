@@ -16,9 +16,8 @@ const iconFor = (href: string) => adminNavItems.find((item) => item.href === hre
 
 export default async function AdminPage() {
   await requireAdmin();
-  // Episode count/recent-list come from a GROUP BY and a `take: 5` query
-  // (never listAllEpisodes()) -- this tile never loads the whole catalog
-  // just to show a count and a five-episode preview.
+  // Episode count/recent-list come from a GROUP BY and a `take: 5` query --
+  // never the whole catalog just to show a count and a five-episode preview.
   const [episodeStats, series, topics, recentEpisodes] = await Promise.all([
     contentRepository.countEpisodesByStatus(),
     contentRepository.listAllSeries(),

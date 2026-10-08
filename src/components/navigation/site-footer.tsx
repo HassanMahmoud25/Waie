@@ -4,16 +4,24 @@ import { ArrowUpLeft } from "lucide-react";
 import { footerNav, siteConfig, youtubeChannelUrl } from "@/config/site";
 import { contentRepository } from "@/lib/repositories";
 import { hosts } from "@/data/hosts";
-import { Reveal } from "@/components/shared/reveal";
 import { YoutubeGlyph } from "@/components/icons/platform-glyphs";
 import type { SeriesWithStats } from "@/types/series";
 
-/** The whole catalog is a handful of series, so the footer lists all of them, most active first. */
+/**
+ * The whole catalog is a handful of series, so the footer lists all of them, most active first.
+ * Fails soft: the footer renders in the (site) layout, outside every error.tsx boundary, so a
+ * throw here would replace the whole site -- header included -- with the root error page.
+ */
 async function getFeaturedSeries(): Promise<SeriesWithStats[]> {
-  const series = await contentRepository.listSeries();
-  return series
-    .filter((s) => s.status === "PUBLISHED" && s.episodeCount > 0)
-    .sort((a, b) => b.episodeCount - a.episodeCount);
+  try {
+    const series = await contentRepository.listSeries();
+    return series
+      .filter((s) => s.status === "PUBLISHED" && s.episodeCount > 0)
+      .sort((a, b) => b.episodeCount - a.episodeCount);
+  } catch (error) {
+    console.error("SiteFooter: couldn't load series links:", error);
+    return [];
+  }
 }
 
 export async function SiteFooter() {

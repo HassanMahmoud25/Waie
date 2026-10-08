@@ -14,10 +14,8 @@ import {
 import { revalidatePublicEpisodePaths } from "@/lib/admin/content/revalidate";
 
 /**
- * The episode CMS's Server Actions -- create/update/publish/unpublish -- the
- * only way any admin UI mutates an episode. The old narrow title/description/
- * status/audioUrl edit form (src/app/admin/episodes/[id]/actions.ts) was
- * retired in Phase 3B once the richer editor below replaced its only caller.
+ * The episode CMS's Server Actions -- create/update/publish/unpublish/delete --
+ * the only way any admin UI mutates an episode.
  *
  * Every one of them: requires ADMIN (never trusts a client-supplied role or
  * userId -- requireAdmin() re-reads the role from the database off the
@@ -55,13 +53,7 @@ export async function createEpisodeAction(youtubeUrlOrId: string): Promise<Creat
   try {
     const result = await createDraftContentFromYouTube(parsed.data.youtubeUrlOrId);
     revalidatePath("/admin/episodes");
-    // The overview's "recent episodes" tile (src/app/admin/page.tsx) reads
-    // the same listAllEpisodes() data and was the one admin route this
-    // helper's revalidation set silently missed -- a session that had /admin
-    // open before a create/publish, then soft-navigated back to it, could
-    // keep showing a stale list (missing thumbnail included) until a hard
-    // reload (Phase 4C.1 thumbnail-reliability fix).
-    revalidatePath("/admin");
+    revalidatePath("/admin"); // the overview's "recent episodes" tile
     if (result.kind === "short") {
       return { ok: true, data: { kind: "short", title: result.short.youtubeTitle } };
     }

@@ -7,3 +7,6 @@ export type SearchResults = {
   series: Series[];
   topics: Topic[];
 };
+
+/** What the live search modal receives: the top episodes only, plus how many matched in total. */
+export type SearchPreview = SearchResults & { totalEpisodes: number };

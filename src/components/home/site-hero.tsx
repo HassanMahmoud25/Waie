@@ -1,10 +1,10 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { CSSProperties } from "react";
 import { ArrowLeft, Headphones, Layers, Play, Tag } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { Episode } from "@/types/episode";
 import { siteConfig } from "@/config/site";
+import { ArtDirectedImage } from "@/components/shared/art-directed-image";
 
 export type HeroStatKey = "episodes" | "series" | "topics";
 
@@ -46,21 +46,11 @@ export function SiteHero({
   return (
     <section className="relative -mt-[80px] w-full overflow-hidden bg-[var(--cinematic)] sm:-mt-[84px]">
       <div className="relative h-[100svh] min-h-[420px] w-full">
-        <Image
-          src={HERO_IMAGE_MOBILE}
-          alt={HERO_IMAGE_ALT}
-          fill
-          priority
-          sizes="100vw"
-          className="hero-image-in hero-drift object-cover md:hidden"
-        />
-        <Image
+        <ArtDirectedImage
           src={HERO_IMAGE}
+          mobileSrc={HERO_IMAGE_MOBILE}
           alt={HERO_IMAGE_ALT}
-          fill
-          priority
-          sizes="100vw"
-          className="hero-image-in hero-drift hidden object-cover md:block"
+          className="hero-image-in hero-drift object-cover"
         />
         <span className="scrim" aria-hidden="true" />
         <span

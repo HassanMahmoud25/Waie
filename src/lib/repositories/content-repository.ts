@@ -1,6 +1,6 @@
 import type { Episode, EpisodeJourneySummary } from "@/types/episode";
 import type { Series, SeriesWithStats } from "@/types/series";
-import type { Topic, TopicWithStats } from "@/types/topic";
+import type { TopicWithStats } from "@/types/topic";
 import type { Collection } from "@/types/collection";
 import type { Recommendation } from "@/types/recommendation";
 import type { Transcript } from "@/types/transcript";
@@ -63,7 +63,6 @@ export interface ContentRepository {
     topicId: string,
     params: { cursor?: string | null; limit?: number },
   ): Promise<CursorPage<Episode>>;
-  listFeaturedEpisodes(): Promise<Episode[]>;
   listLatestEpisodes(limit?: number): Promise<Episode[]>;
   listPopularEpisodes(limit?: number): Promise<Episode[]>;
   listRelatedEpisodes(episodeId: string, limit?: number): Promise<Episode[]>;
@@ -71,7 +70,6 @@ export interface ContentRepository {
 
   listSeries(): Promise<SeriesWithStats[]>;
   getSeriesBySlug(slug: string): Promise<SeriesWithStats | null>;
-  getSeriesById(id: string): Promise<Series | null>;
   /** Targeted batch lookup (no stats) -- for resolving a handful of series by id, e.g. an episode's own series plus its related episodes', without loading the whole table. */
   getSeriesByIds(ids: string[]): Promise<Series[]>;
   /**
@@ -84,27 +82,17 @@ export interface ContentRepository {
    * that previously fetched every episode just to find one thumbnail.
    */
   getSeriesCoverThumbnails(seriesIds: string[]): Promise<Record<string, string>>;
-  /** Admin-only: every series regardless of status (drafts/archived included). Mirrors listAllEpisodes. */
+  /** Admin-only: every series regardless of status (drafts/archived included). */
   listAllSeries(): Promise<SeriesWithStats[]>;
 
   listTopics(): Promise<TopicWithStats[]>;
   getTopicBySlug(slug: string): Promise<TopicWithStats | null>;
-  /** Targeted batch lookup (no stats) -- mirrors getSeriesByIds. */
-  getTopicsByIds(ids: string[]): Promise<Topic[]>;
 
   listCollections(): Promise<Collection[]>;
   getCollectionBySlug(slug: string): Promise<Collection | null>;
   getEpisodesByIds(ids: string[]): Promise<Episode[]>;
 
-  /**
-   * Admin-only: every episode regardless of status (drafts/archived
-   * included) -- kept only for call sites that need the true complete set
-   * (there are none left in the app's own UI; see searchAdminEpisodesCursor
-   * for the admin episodes list). Do not add a new UI collection against
-   * this.
-   */
-  listAllEpisodes(): Promise<Episode[]>;
-  /** Admin-only: total episodes per status (plus the grand total) -- one GROUP BY, never listAllEpisodes().length, for the admin episodes list's status tab counts. */
+  /** Admin-only: total episodes per status (plus the grand total) -- one GROUP BY, for the admin episodes list's status tab counts. */
   countEpisodesByStatus(): Promise<{ total: number; byStatus: Record<ContentStatus, number> }>;
   /** Admin-only: the `limit` most recently published episodes regardless of status -- for the admin overview's "latest episodes" tile. */
   listRecentEpisodes(limit?: number): Promise<Episode[]>;
@@ -131,11 +119,6 @@ export interface ContentRepository {
     cursor?: string | null;
     limit?: number;
   }): Promise<CursorPage<Episode>>;
-  getEpisodeById(id: string): Promise<Episode | null>;
-  updateEpisode(
-    id: string,
-    patch: Partial<Pick<Episode, "title" | "description" | "status" | "audioUrl">>,
-  ): Promise<Episode | null>;
 
   getRecommendationsByEpisode(episodeId: string): Promise<Recommendation[]>;
   getTranscriptByEpisode(episodeId: string): Promise<Transcript | null>;
